@@ -6,7 +6,7 @@ Symfony application for property concierge services.
 
 1. Clone the repository on your server:
    ```bash
-   git clone https://github.com/TDEBRITO/concierge.git
+   git clone https://github.com/marakuya73-lang/concierge.git
    cd concierge
    ```
 
