@@ -128,7 +128,7 @@ class Property
     private int $maxGuests = 5;
 
     #[ORM\Column(length: 500)]
-    private string $mapUrl = 'https://maps.google.com/?q=-14.1306,-47.5083';
+    private string $mapUrl = 'https://maps.app.goo.gl/ZbJV4Bdd977fVCyV7';
 
     #[ORM\Column(length: 50)]
     private string $latitude = '-14.1306';
