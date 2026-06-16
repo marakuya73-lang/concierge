@@ -1,0 +1,86 @@
+{% import 'admin/_csrf.html.twig' as csrf %}
+
+{% macro spot_label(spot) %}
+    {% if spot.type == 'hero' %}
+        Mensagem de boas-vindas
+    {% elseif spot.type == 'region' %}
+        Sobre a região
+    {% else %}
+        {{ spot.titlePt ?: ('Curiosidade #' ~ spot.sortOrder) }}
+    {% endif %}
+{% endmacro %}
+
+{% import _self as guide %}
+
+<section class="admin-section" id="welcome-content">
+    <div class="admin-section-header">
+        <h3 class="admin-section-title">Boas-vindas (concierge)</h3>
+        <p class="admin-section-desc">Textos e imagens da aba Boas-vindas na estadia do hóspede. Sem imagem no hero, usa a primeira foto de preview.</p>
+    </div>
+
+    <div class="admin-guide-list">
+        {% for spot in guideSpots %}
+            <article class="admin-guide-item">
+                <div class="admin-guide-item-header">
+                    <h4 class="admin-guide-item-title">{{ guide.spot_label(spot) }}</h4>
+                    <span class="admin-guide-item-type">{{ spot.type }}</span>
+                </div>
+
+                <div class="admin-guide-layout">
+                    <div class="admin-guide-preview">
+                        {% if spot.publicPath %}
+                            <img src="{{ spot.publicPath }}" alt="">
+                            <form method="post" action="{{ path('admin_guide_spot_remove_image', {id: spot.id}) }}">
+                                {{ csrf.csrf() }}
+                                <button type="submit" class="btn btn-outline btn-sm">Remover imagem</button>
+                            </form>
+                        {% else %}
+                            <div class="admin-guide-preview-empty">Sem imagem</div>
+                        {% endif %}
+                    </div>
+
+                    <form method="post" action="{{ path('admin_guide_spot_update', {id: spot.id}) }}" enctype="multipart/form-data" class="form-grid admin-guide-form">
+                        {{ csrf.csrf() }}
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Título (PT)</label>
+                                <input type="text" name="titlePt" value="{{ spot.titlePt }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Título (EN)</label>
+                                <input type="text" name="titleEn" value="{{ spot.titleEn }}">
+                            </div>
+                        </div>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Texto (PT)</label>
+                                <textarea name="bodyPt" rows="4">{{ spot.bodyPt }}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Texto (EN)</label>
+                                <textarea name="bodyEn" rows="4">{{ spot.bodyEn }}</textarea>
+                            </div>
+                        </div>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Imagem</label>
+                                <input type="file" name="photo" accept="image/*">
+                            </div>
+                            <div class="form-group admin-guide-active">
+                                <label class="admin-checkbox">
+                                    <input type="checkbox" name="active" value="1" {{ spot.active ? 'checked' : '' }}>
+                                    Visível para hóspedes
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-accent btn-sm">Salvar bloco</button>
+                        </div>
+                    </form>
+                </div>
+            </article>
+        {% else %}
+            <p style="color:var(--muted-foreground);font-size:.875rem;margin:0">Nenhum conteúdo de boas-vindas. Execute as migrations.</p>
+        {% endfor %}
+    </div>
+</section>

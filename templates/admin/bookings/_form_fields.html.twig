@@ -1,0 +1,20 @@
+{{ form_start(form, {attr: {class: 'form-grid'}}) }}
+    <div class="form-row-2">
+        <div class="form-group">{{ form_label(form.guestName) }}{{ form_widget(form.guestName) }}</div>
+        <div class="form-group">{{ form_label(form.guestWhatsapp) }}{{ form_widget(form.guestWhatsapp) }}</div>
+    </div>
+    <div class="form-row-2">
+        <div class="form-group">{{ form_label(form.checkIn) }}{{ form_widget(form.checkIn) }}</div>
+        <div class="form-group">{{ form_label(form.checkOut) }}{{ form_widget(form.checkOut) }}</div>
+    </div>
+    <div class="form-row-2">
+        <div class="form-group">{{ form_label(form.guests) }}{{ form_widget(form.guests) }}</div>
+        <div class="form-group">{{ form_label(form.stayPrice) }}{{ form_widget(form.stayPrice) }}</div>
+    </div>
+    <div class="form-row-2">
+        <div class="form-group">{{ form_label(form.source) }}{{ form_widget(form.source) }}</div>
+        <div class="form-group">{{ form_label(form.status) }}{{ form_widget(form.status) }}</div>
+    </div>
+    <div class="form-group">{{ form_label(form.notes) }}{{ form_widget(form.notes) }}</div>
+    <button type="submit" class="btn btn-primary">Salvar alterações</button>
+{{ form_end(form) }}

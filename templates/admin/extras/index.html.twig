@@ -1,0 +1,38 @@
+{% extends 'admin/base.html.twig' %}
+{% import 'admin/_csrf.html.twig' as csrf %}
+{% block title %}Extras{% endblock %}
+{% block admin %}
+<div class="admin-content">
+    <div class="admin-header">
+        <div>
+            <h2 class="admin-page-title">Extras & serviços</h2>
+            <p class="admin-page-desc">Catálogo de serviços que os hóspedes podem solicitar.</p>
+        </div>
+        <a href="{{ path('admin_extra_new') }}" class="btn btn-primary btn-sm">+ Novo extra</a>
+    </div>
+    <div class="admin-table-wrap">
+        <table>
+            <thead><tr><th>Nome (PT)</th><th>Categoria</th><th>Preço</th><th>Ativo</th><th></th></tr></thead>
+            <tbody>
+            {% for extra in extras %}
+                <tr>
+                    <td>{{ extra.namePt }}</td>
+                    <td>{{ extra.category }}</td>
+                    <td>R$ {{ extra.price|number_format(2, ',', '.') }}</td>
+                    <td>{{ extra.active ? '✓' : '-' }}</td>
+                    <td>
+                        <a href="{{ path('admin_extra_edit', {id: extra.id}) }}">Editar</a>
+                        <form method="post" action="{{ path('admin_extra_delete', {id: extra.id}) }}" style="display:inline" onsubmit="return confirm('Remover?')">
+                            {{ csrf.csrf() }}
+                            <button type="submit" style="background:none;border:none;color:var(--destructive);cursor:pointer;margin-left:.5rem">Remover</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" style="text-align:center;color:var(--muted-foreground);padding:2rem">Nenhum extra cadastrado.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

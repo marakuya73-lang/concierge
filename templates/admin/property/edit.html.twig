@@ -1,0 +1,147 @@
+{% extends 'admin/base.html.twig' %}
+{% import 'admin/_csrf.html.twig' as csrf %}
+{% import 'admin/_list_macros.html.twig' as list %}
+{% block title %}Propriedade{% endblock %}
+{% block admin %}
+<div class="admin-content admin-property" data-controller="property-tabs">
+    <header class="admin-property-header">
+        <div>
+            <h2 class="admin-page-title">Propriedade</h2>
+            <p class="admin-page-desc">Conteúdo e configurações exibidos no concierge digital dos hóspedes.</p>
+        </div>
+    </header>
+
+    <nav class="admin-property-tabs" aria-label="Seções da propriedade">
+        <button type="button" class="admin-property-tab is-active" data-property-tabs-target="tab" data-tab="settings" data-action="property-tabs#select" aria-selected="true">Configuração</button>
+        <button type="button" class="admin-property-tab" data-property-tabs-target="tab" data-tab="welcome" data-action="property-tabs#select" aria-selected="false">Boas-vindas</button>
+        <button type="button" class="admin-property-tab" data-property-tabs-target="tab" data-tab="faq-rules" data-action="property-tabs#select" aria-selected="false">FAQ & Regras</button>
+        <button type="button" class="admin-property-tab" data-property-tabs-target="tab" data-tab="experiences" data-action="property-tabs#select" aria-selected="false">Experiências</button>
+        <button type="button" class="admin-property-tab" data-property-tabs-target="tab" data-tab="food" data-action="property-tabs#select" aria-selected="false">Alimentação</button>
+    </nav>
+
+    <div class="admin-property-panels">
+        {# ── Configuração ── #}
+        <div class="admin-property-panel is-active" data-property-tabs-target="panel" data-tab="settings">
+            <section class="admin-section admin-subsection">
+                <div class="admin-section-header">
+                    <h3 class="admin-section-title">Fotos de preview</h3>
+                    <p class="admin-section-desc">Carrossel da página inicial e fallback do hero de boas-vindas.</p>
+                </div>
+
+                {% if photos|length > 0 %}
+                    <ul class="admin-media-strip">
+                        {% for photo in photos %}
+                            <li class="admin-media-card">
+                                <div class="admin-media-card-visual">
+                                    <img src="{{ photo.publicPath }}" alt="{{ photo.captionPt ?: 'Preview' }}">
+                                    <span class="admin-media-card-order">{{ loop.index }}</span>
+                                </div>
+                                <div class="admin-media-card-meta">
+                                    <p class="admin-media-card-caption">{{ photo.captionPt ?: 'Sem legenda' }}</p>
+                                    <div class="admin-media-card-toolbar">
+                                        {{ list.reorder_buttons('admin_property_photo_move', photo.id, loop, photos|length) }}
+                                        {{ list.delete_button('admin_property_photo_delete', photo.id, 'Remover foto?') }}
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="admin-empty-hint">Nenhuma foto ainda. Envie as primeiras abaixo.</p>
+                {% endif %}
+
+                <div class="admin-dropzone">
+                    <form method="post" action="{{ path('admin_property_photo_upload') }}" enctype="multipart/form-data" class="form-grid">
+                        {{ csrf.csrf() }}
+                        <p class="admin-dropzone-label">Nova foto de preview</p>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label for="photo">Imagem</label>
+                                <input type="file" id="photo" name="photo" accept="image/*" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="captionPt">Legenda (PT)</label>
+                                <input type="text" id="captionPt" name="captionPt" placeholder="Ex.: Vista da varanda">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="captionEn">Legenda (EN)</label>
+                            <input type="text" id="captionEn" name="captionEn" placeholder="Ex.: Balcony view">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-accent btn-sm">+ Adicionar foto</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            {{ form_start(form, {attr: {class: 'form-grid admin-property-form'}}) }}
+                <section class="admin-section admin-subsection">
+                    <div class="admin-section-header">
+                        <h3 class="admin-section-title">Conteúdo PT / EN</h3>
+                        <p class="admin-section-desc">Nome, descrição e instruções visíveis na página inicial e na estadia.</p>
+                    </div>
+                    <div class="form-row-2">{{ form_row(form.namePt) }}{{ form_row(form.nameEn) }}</div>
+                    <div class="form-row-2">{{ form_row(form.taglinePt) }}{{ form_row(form.taglineEn) }}</div>
+                    <div class="form-row-2">{{ form_row(form.descriptionPt) }}{{ form_row(form.descriptionEn) }}</div>
+                    <div class="form-row-2">{{ form_row(form.checkInInstructionsPt) }}{{ form_row(form.checkInInstructionsEn) }}</div>
+                    <div class="form-row-2">{{ form_row(form.checkOutInstructionsPt) }}{{ form_row(form.checkOutInstructionsEn) }}</div>
+                    <div class="form-row-2">{{ form_row(form.locationDetailsPt) }}{{ form_row(form.locationDetailsEn) }}</div>
+                    <div class="form-row-2">{{ form_row(form.addressPt) }}{{ form_row(form.addressEn) }}</div>
+                    <div class="form-row-2">{{ form_row(form.arrivalInstructionsPt) }}{{ form_row(form.arrivalInstructionsEn) }}</div>
+                </section>
+
+                <section class="admin-section admin-subsection">
+                    <div class="admin-section-header">
+                        <h3 class="admin-section-title">Operacional</h3>
+                        <p class="admin-section-desc">Wi‑Fi, horários, políticas da casa e dados do imóvel.</p>
+                    </div>
+                    <div class="form-row-2">{{ form_row(form.wifiName) }}{{ form_row(form.wifiPassword) }}</div>
+                    <div class="form-row-2">{{ form_row(form.wifiSecondaryName) }}{{ form_row(form.wifiSecondaryPassword) }}</div>
+                    <div class="form-row-2">{{ form_row(form.checkInTime) }}{{ form_row(form.checkInTimeEnd) }}</div>
+                    {{ form_row(form.checkOutTime) }}
+                    <div class="form-row-2">{{ form_row(form.petsPolicy) }}{{ form_row(form.smokingPolicy) }}</div>
+                    <div class="form-row-2">{{ form_row(form.silencePolicy) }}{{ form_row(form.visitsPolicy) }}</div>
+                    <div class="form-row-2">{{ form_row(form.rating) }}{{ form_row(form.pixKey) }}</div>
+                    <div class="form-row-2">{{ form_row(form.contactPhone) }}{{ form_row(form.contactEmail) }}</div>
+                    <div class="form-row-2">{{ form_row(form.instagramHandle) }}{{ form_row(form.bedrooms) }}</div>
+                    <div class="form-row-2">{{ form_row(form.bathrooms) }}{{ form_row(form.maxGuests) }}</div>
+                </section>
+
+                <section class="admin-section admin-subsection">
+                    <div class="admin-section-header">
+                        <h3 class="admin-section-title">Localização & integrações</h3>
+                        <p class="admin-section-desc">Mapa, coordenadas e calendário Airbnb para sincronizar reservas.</p>
+                    </div>
+                    <div class="form-row-2">{{ form_row(form.mapUrl) }}{{ form_row(form.airbnbIcalUrl) }}</div>
+                    <div class="form-row-2">{{ form_row(form.latitude) }}{{ form_row(form.longitude) }}</div>
+                    <div class="form-actions form-actions--sticky">
+                        <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                    </div>
+                </section>
+            {{ form_end(form) }}
+        </div>
+
+        {# ── Boas-vindas ── #}
+        <div class="admin-property-panel" data-property-tabs-target="panel" data-tab="welcome" hidden>
+            {% include 'admin/property/_guide_spots.html.twig' %}
+        </div>
+
+        {# ── FAQ & Regras ── #}
+        <div class="admin-property-panel" data-property-tabs-target="panel" data-tab="faq-rules" hidden>
+            {% include 'admin/property/_faq_items.html.twig' %}
+            {% include 'admin/property/_house_rules.html.twig' %}
+        </div>
+
+        {# ── Experiências ── #}
+        <div class="admin-property-panel" data-property-tabs-target="panel" data-tab="experiences" hidden>
+            {% include 'admin/property/_activity_items.html.twig' %}
+        </div>
+
+        {# ── Alimentação ── #}
+        <div class="admin-property-panel" data-property-tabs-target="panel" data-tab="food" hidden>
+            {% include 'admin/property/_kitchen.html.twig' %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+<p class="admin-sync-status">
+    {% if lastIcalSyncAt %}
+        Última sincronização: {{ lastIcalSyncAt|date('d/m/Y H:i') }} (Brasília).
+    {% else %}
+        Ainda não sincronizado, use o botão acima ou aguarde a sincronização automática.
+    {% endif %}
+    Sincronização automática todos os dias às 06:00 (horário de Brasília).
+</p>

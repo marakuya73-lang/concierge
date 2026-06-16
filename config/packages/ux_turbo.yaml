@@ -1,0 +1,4 @@
+# Disable Turbo header CSRF check — admin uses standard form tokens
+framework:
+    csrf_protection:
+        check_header: false

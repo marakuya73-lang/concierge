@@ -1,0 +1,228 @@
+{% import 'admin/_csrf.html.twig' as csrf %}
+{% import 'admin/_list_macros.html.twig' as list %}
+
+<section class="admin-section" id="kitchen-content">
+    <div class="admin-section-header">
+        <h3 class="admin-section-title">Alimentação</h3>
+        <p class="admin-section-desc">Conteúdo da aba Alimentação na estadia: cozinha, fotos, equipamentos e serviços reserváveis (café da manhã e chef nos Extras).</p>
+    </div>
+
+    {# Intro #}
+    <article class="admin-block admin-block--intro">
+        <div class="admin-block-head">
+            <div>
+                <h4 class="admin-block-title font-serif">Cozinha ao ar livre</h4>
+                <p class="admin-block-desc">Texto de abertura exibido abaixo do título na estadia.</p>
+            </div>
+            <span class="admin-block-badge">introdução</span>
+        </div>
+        <form method="post" action="{{ path('admin_kitchen_intro_update') }}" class="form-grid admin-block-form">
+            {{ csrf.csrf() }}
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label>Introdução (PT)</label>
+                    <textarea name="kitchenIntroPt" rows="3">{{ property.kitchenIntroPt }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Introdução (EN)</label>
+                    <textarea name="kitchenIntroEn" rows="3">{{ property.kitchenIntroEn }}</textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-accent btn-sm">Salvar introdução</button>
+            </div>
+        </form>
+    </article>
+
+    {# Photos #}
+    <article class="admin-block">
+        <div class="admin-block-head">
+            <div>
+                <h4 class="admin-block-title font-serif">Galeria da cozinha</h4>
+                <p class="admin-block-desc">A primeira foto é o destaque; as demais aparecem na faixa inferior.</p>
+            </div>
+            <span class="admin-block-badge">{{ kitchenPhotos|length }} foto{{ kitchenPhotos|length != 1 ? 's' : '' }}</span>
+        </div>
+
+        {% if kitchenPhotos|length > 0 %}
+            <ul class="admin-media-strip">
+                {% for photo in kitchenPhotos %}
+                    <li class="admin-media-card">
+                        <div class="admin-media-card-visual">
+                            <img src="{{ photo.publicPath }}" alt="{{ photo.captionPt ?: 'Cozinha' }}">
+                            <span class="admin-media-card-order">{{ loop.index }}</span>
+                            {% if not photo.active %}
+                                <span class="admin-media-card-hidden">Oculta</span>
+                            {% endif %}
+                        </div>
+                        <div class="admin-media-card-meta">
+                            <p class="admin-media-card-caption">{{ photo.captionPt ?: 'Sem legenda' }}</p>
+                            <div class="admin-media-card-toolbar">
+                                {{ list.reorder_buttons('admin_kitchen_photo_move', photo.id, loop, kitchenPhotos|length) }}
+                                {{ list.delete_button('admin_kitchen_photo_delete', photo.id, 'Remover foto?') }}
+                            </div>
+                        </div>
+                        <details class="admin-media-card-edit">
+                            <summary>Editar foto</summary>
+                            <form method="post" action="{{ path('admin_kitchen_photo_update', {id: photo.id}) }}" enctype="multipart/form-data" class="form-grid admin-block-form">
+                                {{ csrf.csrf() }}
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label>Legenda (PT)</label>
+                                        <input type="text" name="captionPt" value="{{ photo.captionPt }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Legenda (EN)</label>
+                                        <input type="text" name="captionEn" value="{{ photo.captionEn }}">
+                                    </div>
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label>Substituir imagem</label>
+                                        <input type="file" name="photo" accept="image/*">
+                                    </div>
+                                    <div class="form-group admin-guide-active">
+                                        <label class="admin-checkbox">
+                                            <input type="checkbox" name="active" value="1" {{ photo.active ? 'checked' : '' }}>
+                                            Visível para hóspedes
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-accent btn-sm">Salvar foto</button>
+                                </div>
+                            </form>
+                        </details>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="admin-empty-hint">Nenhuma foto da cozinha ainda. Adicione a primeira abaixo.</p>
+        {% endif %}
+
+        <div class="admin-dropzone">
+            <form method="post" action="{{ path('admin_kitchen_photo_upload') }}" enctype="multipart/form-data" class="form-grid">
+                {{ csrf.csrf() }}
+                <p class="admin-dropzone-label">Nova foto</p>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="kitchen-photo">Imagem</label>
+                        <input type="file" id="kitchen-photo" name="photo" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="kitchen-caption-pt">Legenda (PT)</label>
+                        <input type="text" id="kitchen-caption-pt" name="captionPt" placeholder="Ex.: Bancada da cozinha">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="kitchen-caption-en">Legenda (EN)</label>
+                    <input type="text" id="kitchen-caption-en" name="captionEn" placeholder="Ex.: Kitchen counter">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-accent btn-sm">+ Adicionar foto</button>
+                </div>
+            </form>
+        </div>
+    </article>
+
+    {# Equipment list #}
+    <article class="admin-block">
+        <div class="admin-block-head">
+            <div>
+                <h4 class="admin-block-title font-serif">Equipamentos</h4>
+                <p class="admin-block-desc">Lista exibida na estadia. Reordene com as setas; edite cada item para alterar nome e categoria.</p>
+            </div>
+            <span class="admin-block-badge">{{ kitchenUtensils|length }} itens</span>
+        </div>
+
+        {% if kitchenUtensils|length > 0 %}
+            <ul class="admin-sortable-list">
+                {% for item in kitchenUtensils %}
+                    <li class="admin-sortable-item">
+                        <div class="admin-sortable-item-main">
+                            <span class="admin-sortable-order" aria-hidden="true">{{ loop.index }}</span>
+                            <div class="admin-sortable-info">
+                                <p class="admin-sortable-name">{{ item.namePt ?: ('Item #' ~ item.sortOrder) }}</p>
+                                <p class="admin-sortable-meta">
+                                    <span class="admin-sortable-category">{{ item.categoryPt }}</span>
+                                    {% if not item.active %}
+                                        <span class="admin-sortable-status">Oculto</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="admin-sortable-toolbar">
+                                {{ list.reorder_buttons('admin_kitchen_utensil_move', item.id, loop, kitchenUtensils|length) }}
+                                {{ list.delete_button('admin_kitchen_utensil_delete', item.id, 'Remover este item?') }}
+                            </div>
+                        </div>
+                        <details class="admin-sortable-edit">
+                            <summary>Editar item</summary>
+                            <form method="post" action="{{ path('admin_kitchen_utensil_update', {id: item.id}) }}" class="form-grid admin-block-form">
+                                {{ csrf.csrf() }}
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label>Nome (PT)</label>
+                                        <input type="text" name="namePt" value="{{ item.namePt }}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Nome (EN)</label>
+                                        <input type="text" name="nameEn" value="{{ item.nameEn }}" required>
+                                    </div>
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label>Categoria (PT)</label>
+                                        <input type="text" name="categoryPt" value="{{ item.categoryPt }}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Categoria (EN)</label>
+                                        <input type="text" name="categoryEn" value="{{ item.categoryEn }}" required>
+                                    </div>
+                                </div>
+                                <div class="form-actions" style="justify-content:space-between">
+                                    <label class="admin-checkbox">
+                                        <input type="checkbox" name="active" value="1" {{ item.active ? 'checked' : '' }}>
+                                        Visível para hóspedes
+                                    </label>
+                                    <button type="submit" class="btn btn-accent btn-sm">Salvar item</button>
+                                </div>
+                            </form>
+                        </details>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="admin-empty-hint">Nenhum equipamento cadastrado. Adicione o primeiro abaixo.</p>
+        {% endif %}
+
+        <div class="admin-dropzone admin-dropzone--compact">
+            <form method="post" action="{{ path('admin_kitchen_utensil_create') }}" class="form-grid">
+                {{ csrf.csrf() }}
+                <p class="admin-dropzone-label">Adicionar equipamento</p>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label>Nome (PT)</label>
+                        <input type="text" name="namePt" required placeholder="Ex.: Panela de pressão">
+                    </div>
+                    <div class="form-group">
+                        <label>Nome (EN)</label>
+                        <input type="text" name="nameEn" required placeholder="Ex.: Pressure cooker">
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label>Categoria (PT)</label>
+                        <input type="text" name="categoryPt" placeholder="Ex.: Panelas" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria (EN)</label>
+                        <input type="text" name="categoryEn" placeholder="Ex.: Cookware" required>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-accent btn-sm">+ Adicionar à lista</button>
+                </div>
+            </form>
+        </div>
+    </article>
+</section>

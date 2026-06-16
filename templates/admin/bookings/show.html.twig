@@ -1,0 +1,268 @@
+{% extends 'admin/base.html.twig' %}
+{% import 'admin/_csrf.html.twig' as csrf %}
+{% block title %}Reserva: {{ booking.guestName }}{% endblock %}
+
+{% block admin %}
+<div class="admin-content">
+    <div class="admin-header">
+        <div>
+            <a href="{{ path('admin_bookings') }}" class="admin-back-link">← Reservas</a>
+            <h2 class="admin-page-title" style="margin:.35rem 0 0">{{ booking.guestName }}</h2>
+            <p class="admin-page-desc">
+                {{ booking.guestEmail }}
+                {% if guestWhatsappWelcomeUrl %}
+                    · <a href="{{ guestWhatsappWelcomeUrl }}" target="_blank" rel="noopener" class="admin-whatsapp-link">{{ booking.guestWhatsapp }} ↗</a>
+                {% endif %}
+            </p>
+        </div>
+        <div class="admin-header-actions">
+            {% if not isEditing %}
+                <a href="{{ path('admin_booking_show', {id: booking.id, edit: 1}) }}" class="btn btn-outline btn-sm">Editar</a>
+            {% endif %}
+            {% if guestWhatsappWelcomeUrl %}
+                <a href="{{ guestWhatsappWelcomeUrl }}" target="_blank" rel="noopener" class="btn btn-accent btn-sm">WhatsApp ↗</a>
+            {% endif %}
+            <form method="post" action="{{ path('admin_booking_regenerate_code', {id: booking.id}) }}">
+                {{ csrf.csrf() }}
+                <button type="submit" class="btn btn-outline btn-sm">↻ Novo código</button>
+            </form>
+            <form method="post" action="{{ path('admin_booking_delete', {id: booking.id}) }}" onsubmit="return confirm('Remover reserva?')">
+                {{ csrf.csrf() }}
+                <button type="submit" class="btn btn-outline btn-sm" style="color:var(--destructive)">Remover</button>
+            </form>
+        </div>
+    </div>
+
+    {% if booking.needsGuestInfo %}
+        <div class="admin-notice">
+            Reserva Site importada do calendário Airbnb. Preencha o nome e o valor da estadia, o código <strong>{{ booking.accessCode }}</strong> já pode ser enviado ao hóspede.
+        </div>
+    {% endif %}
+
+    {% if isEditing %}
+        {{ form_start(form, {attr: {
+            class: 'admin-booking-edit-form',
+            'data-controller': 'booking-form',
+            'data-action': 'change->booking-form#sync',
+            'data-booking-form-rajaaram-value': constant('App\\Entity\\Booking::SOURCE_RAJAARAM'),
+        }}) }}
+    {% endif %}
+
+    <div class="admin-access-code">
+        <p class="admin-kicker admin-kicker--light">Código de acesso</p>
+        {% if isEditing %}
+                <div class="admin-access-code-row">
+                    <div class="form-group admin-access-code-field">
+                        {{ form_label(form.accessCode) }}
+                        {{ form_widget(form.accessCode) }}
+                        {{ form_errors(form.accessCode) }}
+                    </div>
+                </div>
+                <p class="admin-page-desc" style="margin:.5rem 0 0">5 caracteres, partilhe com o hóspede para acesso ao concierge privado.</p>
+        {% else %}
+            <div class="admin-access-code-row">
+                <span class="admin-access-code-value">{{ booking.accessCode }}</span>
+                <div style="display:flex;gap:.5rem">
+                    <a href="{{ path('admin_booking_show', {id: booking.id, edit: 1}) }}" class="btn btn-outline-light btn-sm">Editar</a>
+                    <button type="button" class="btn btn-outline-light btn-sm" data-copy-code="{{ booking.accessCode }}">Copiar</button>
+                </div>
+            </div>
+            <p class="admin-page-desc" style="margin:.5rem 0 0">Compartilhe com o hóspede para acesso ao concierge privado.</p>
+        {% endif %}
+    </div>
+
+    <div class="admin-detail-grid">
+        <section class="admin-section">
+            {% if isEditing %}
+                <div class="admin-section-header">
+                    <h3 class="admin-section-title">Editando reserva</h3>
+                </div>
+                    <div class="form-grid">
+                    <div class="form-row-2">
+                        <div class="form-group">{{ form_label(form.guestName) }}{{ form_widget(form.guestName) }}</div>
+                        <div class="form-group">
+                            {{ form_label(form.guestWhatsapp) }}
+                            {{ form_widget(form.guestWhatsapp) }}
+                            {% if guestWhatsappWelcomeUrl and not form.vars.submitted %}
+                                <p class="form-help"><a href="{{ guestWhatsappWelcomeUrl }}" target="_blank" rel="noopener">Enviar mensagem de boas-vindas no WhatsApp ↗</a></p>
+                            {% endif %}
+                            {{ form_errors(form.guestWhatsapp) }}
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">{{ form_label(form.checkIn) }}{{ form_widget(form.checkIn) }}</div>
+                        <div class="form-group">{{ form_label(form.checkOut) }}{{ form_widget(form.checkOut) }}</div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">{{ form_label(form.guests) }}{{ form_widget(form.guests) }}</div>
+                        <div class="form-group">{{ form_label(form.stayPrice) }}{{ form_widget(form.stayPrice) }}</div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">{{ form_label(form.source) }}{{ form_widget(form.source) }}</div>
+                        <div class="form-group">{{ form_label(form.status) }}{{ form_widget(form.status) }}</div>
+                    </div>
+                    {% include 'admin/bookings/_rajaaram_fields.html.twig' %}
+                    <div class="form-group">{{ form_label(form.notes) }}{{ form_widget(form.notes) }}</div>
+                    <div class="form-actions">
+                        <a href="{{ path('admin_booking_show', {id: booking.id}) }}" class="btn btn-outline">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                    </div>
+                </div>
+            {% else %}
+                <div class="admin-detail-rows">
+                    <div class="admin-detail-row">
+                        <span>WhatsApp</span>
+                        <strong>
+                            {% if guestWhatsappWelcomeUrl %}
+                                <a href="{{ guestWhatsappWelcomeUrl }}" target="_blank" rel="noopener">{{ booking.guestWhatsapp }} ↗</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div class="admin-detail-row">
+                        <span>Check-in</span>
+                        <strong>{{ booking.checkIn|date('d/m/Y') }}</strong>
+                    </div>
+                    <div class="admin-detail-row">
+                        <span>Check-out</span>
+                        <strong>{{ booking.checkOut|date('d/m/Y') }}</strong>
+                    </div>
+                    <div class="admin-detail-row">
+                        <span>Hóspedes</span>
+                        <strong>{{ booking.guests }}</strong>
+                    </div>
+                    <div class="admin-detail-row">
+                        <span>Valor da estadia</span>
+                        <strong>{% if booking.stayPrice %}R$ {{ booking.stayPrice|number_format(2, ',', '.') }}{% else %}-{% endif %}</strong>
+                    </div>
+                    <div class="admin-detail-row">
+                        <span>Origem</span>
+                        <strong>{{ booking.source }}</strong>
+                    </div>
+                    {% if booking.isRajaaram %}
+                        <div class="admin-detail-row">
+                            <span>Terapia</span>
+                            <strong>{{ booking.rajaaramTherapyLabel('pt') ?? '-' }}</strong>
+                        </div>
+                        <div class="admin-detail-row">
+                            <span>Horário da terapia</span>
+                            <strong>{{ booking.rajaaramTherapyTime ?? '-' }}</strong>
+                        </div>
+                        <div class="admin-detail-row">
+                            <span>Café da manhã</span>
+                            <strong>{% if booking.rajaaramBreakfastIncluded %}Incluído{% elseif booking.rajaaramBreakfastIncluded is same as(false) %}Não incluído{% else %}-{% endif %}</strong>
+                        </div>
+                    {% endif %}
+                    <div class="admin-detail-row">
+                        <span>Status</span>
+                        <strong><span class="status-pill status-{{ booking.status == 'confirmed' ? 'confirmed' : (booking.status == 'completed' ? 'paid' : 'cancelled') }}">{{ booking.status == 'confirmed' ? 'Confirmada' : (booking.status == 'completed' ? 'Concluída' : 'Cancelada') }}</span></strong>
+                    </div>
+                    <div class="admin-detail-row">
+                        <span>Criada em</span>
+                        <strong>{{ booking.createdAt|date('d/m/Y') }}</strong>
+                    </div>
+                    {% if booking.lastSyncedAt %}
+                        <div class="admin-detail-row">
+                            <span>Última verificação Airbnb</span>
+                            <strong>{{ booking.lastSyncedAt|date('d/m/Y H:i') }}</strong>
+                        </div>
+                    {% endif %}
+                    {% if booking.icalSummary %}
+                        <div class="admin-detail-row admin-detail-row--stack">
+                            <span>Calendário Airbnb</span>
+                            <p>{{ booking.icalSummary }}</p>
+                        </div>
+                    {% endif %}
+                    {% if booking.notes %}
+                        <div class="admin-detail-row admin-detail-row--stack">
+                            <span>Notas especiais</span>
+                            <p>{{ booking.notes|nl2br }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </section>
+    </div>
+
+    {% if isEditing %}
+        {{ form_end(form) }}
+    {% endif %}
+
+    <section class="admin-section admin-section--extras">
+        <div class="admin-section-header">
+            <h3 class="admin-section-title">Extras da reserva</h3>
+            <p class="admin-section-desc">Adicione serviços extras à estadia do hóspede.</p>
+        </div>
+        {% for be in bookingExtras %}
+            <div class="admin-extra-item">
+                <div class="admin-extra-item-head">
+                    <strong>{{ be.extra ? be.extra.namePt : 'Extra removido' }}</strong>
+                    <span class="status-pill status-{{ be.status }}">{{ be.status }}</span>
+                </div>
+                {% if be.priceAtBooking is not null %}
+                    <p class="admin-extra-price">
+                        {% if be.priceAtBooking == 0 %}Grátis{% else %}R$ {{ (be.priceAtBooking * be.quantity)|number_format(2, ',', '.') }}{% endif %}
+                        {% if be.quantity > 1 %}<span class="admin-extra-qty">× {{ be.quantity }}</span>{% endif %}
+                    </p>
+                {% endif %}
+                {% if be.notes %}<p class="admin-extra-notes">{{ be.notes }}</p>{% endif %}
+                <div class="admin-extra-actions">
+                    {% for status in ['requested', 'paid', 'confirmed', 'cancelled'] %}
+                        <form method="post" action="{{ path('admin_booking_extra_status', {id: booking.id, extraId: be.id}) }}">
+                            {{ csrf.csrf() }}
+                            <input type="hidden" name="status" value="{{ status }}">
+                            <button type="submit" class="btn btn-outline btn-sm">{{ status }}</button>
+                        </form>
+                    {% endfor %}
+                    <form method="post" action="{{ path('admin_booking_extra_delete', {id: booking.id, extraId: be.id}) }}">
+                        {{ csrf.csrf() }}
+                        <button type="submit" class="btn btn-outline btn-sm">✕</button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <p class="admin-empty">Nenhum extra nesta reserva.</p>
+        {% endfor %}
+
+        {% if availableExtras|length > 0 %}
+            <form method="post" action="{{ path('admin_booking_add_extra', {id: booking.id}) }}" class="admin-add-extra-form">
+                {{ csrf.csrf() }}
+                <div class="form-group">
+                    <label for="extraId">Extra</label>
+                    <select id="extraId" name="extraId" required>
+                        <option value="">Selecionar extra...</option>
+                        {% for extra in availableExtras %}
+                            <option value="{{ extra.id }}">{{ extra.namePt }}, {% if extra.price > 0 %}R$ {{ extra.price|number_format(2, ',', '.') }}{% else %}Grátis{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="admin-add-extra-row">
+                    <div class="form-group">
+                        <label for="extraQty">Qtd.</label>
+                        <input id="extraQty" type="number" name="quantity" value="1" min="1">
+                    </div>
+                    <div class="form-group admin-add-extra-notes">
+                        <label for="extraNotes">Notas</label>
+                        <input id="extraNotes" type="text" name="notes" placeholder="Observações (opcional)">
+                    </div>
+                    <button type="submit" class="btn btn-accent btn-sm admin-add-extra-btn">+ Adicionar</button>
+                </div>
+            </form>
+        {% else %}
+            <p class="admin-empty" style="margin-top:1rem">Nenhum extra activo disponível. <a href="{{ path('admin_extras') }}">Gerir extras →</a></p>
+        {% endif %}
+    </section>
+</div>
+
+<script>
+document.querySelector('[data-copy-code]')?.addEventListener('click', async (e) => {
+    const code = e.currentTarget.dataset.copyCode;
+    try {
+        await navigator.clipboard.writeText(code);
+        e.currentTarget.textContent = 'Copiado!';
+        setTimeout(() => { e.currentTarget.textContent = 'Copiar'; }, 2000);
+    } catch (_) {}
+});
+</script>
+{% endblock %}

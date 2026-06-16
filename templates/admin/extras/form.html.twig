@@ -1,0 +1,25 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}{{ extra ? 'Editar extra' : 'Novo extra' }}{% endblock %}
+{% block admin %}
+<div class="admin-content">
+    <header style="margin-bottom:2rem">
+        <h2 class="admin-page-title">{{ extra ? 'Editar extra' : 'Novo extra' }}</h2>
+        <p class="admin-page-desc">Serviços adicionais que os hóspedes podem solicitar durante a estadia.</p>
+    </header>
+
+    <section class="admin-section">
+        {{ form_start(form, {attr: {class: 'form-grid'}}) }}
+            <div class="form-row-2">{{ form_row(form.namePt) }}{{ form_row(form.nameEn) }}</div>
+            <div class="form-row-2">{{ form_row(form.descriptionPt) }}{{ form_row(form.descriptionEn) }}</div>
+            <div class="form-row-2">{{ form_row(form.price) }}{{ form_row(form.category) }}</div>
+            <div class="form-row-2">{{ form_row(form.minGuests) }}{{ form_row(form.maxGuests) }}</div>
+            <div class="form-row-2">{{ form_row(form.leadTimeHours) }}{{ form_row(form.icon) }}</div>
+            {{ form_row(form.active) }}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a href="{{ path('admin_extras') }}" class="btn btn-outline">Cancelar</a>
+            </div>
+        {{ form_end(form) }}
+    </section>
+</div>
+{% endblock %}

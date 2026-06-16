@@ -1,0 +1,56 @@
+{% import 'admin/_csrf.html.twig' as csrf %}
+
+<section class="admin-section" id="faq-content">
+    <div class="admin-section-header">
+        <h3 class="admin-section-title">FAQ (concierge)</h3>
+        <p class="admin-section-desc">Perguntas e respostas da aba FAQ na estadia do hóspede.</p>
+    </div>
+
+    <div class="admin-guide-list">
+        {% for item in faqItems %}
+            <article class="admin-guide-item">
+                <div class="admin-guide-item-header">
+                    <h4 class="admin-guide-item-title">{{ item.questionPt ?: ('FAQ #' ~ item.sortOrder) }}</h4>
+                    <span class="admin-guide-item-type">faq</span>
+                </div>
+
+                <form method="post" action="{{ path('admin_faq_item_update', {id: item.id}) }}" class="form-grid admin-guide-form admin-guide-form--full">
+                    {{ csrf.csrf() }}
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label>Pergunta (PT)</label>
+                            <input type="text" name="questionPt" value="{{ item.questionPt }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Pergunta (EN)</label>
+                            <input type="text" name="questionEn" value="{{ item.questionEn }}">
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label>Resposta (PT)</label>
+                            <textarea name="answerPt" rows="4">{{ item.answerPt }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Resposta (EN)</label>
+                            <textarea name="answerEn" rows="4">{{ item.answerEn }}</textarea>
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group admin-guide-active">
+                            <label class="admin-checkbox">
+                                <input type="checkbox" name="active" value="1" {{ item.active ? 'checked' : '' }}>
+                                Visível para hóspedes
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-accent btn-sm">Salvar pergunta</button>
+                    </div>
+                </form>
+            </article>
+        {% else %}
+            <p style="color:var(--muted-foreground);font-size:.875rem;margin:0">Nenhuma pergunta FAQ. Execute as migrations.</p>
+        {% endfor %}
+    </div>
+</section>

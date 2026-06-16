@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Login | Domo Xangô{% endblock %}
+
+{% block body_attrs %}data-turbo="false"{% endblock %}
+
+{% block body %}
+<div class="login-page">
+    <div class="login-card">
+        <img src="/images/logo.png" alt="Domo Xangô" class="site-logo login-logo">
+        <h1 class="font-serif" style="text-align:center;margin:0 0 .5rem">Domo Xangô</h1>
+        <p style="text-align:center;color:var(--muted-foreground);font-size:.875rem;margin:0 0 2rem">Painel do anfitrião</p>
+        {% if error %}
+            <div class="alert alert-error">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+        {% endif %}
+        <form method="post" action="{{ path('admin_login') }}">
+            <input type="hidden" name="_username" value="admin">
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" name="password" required autofocus>
+            </div>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top:1rem">Entrar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

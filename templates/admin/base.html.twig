@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt" data-turbo="false">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="turbo-visit-control" content="reload">
+    <title>{% block title %}Admin{% endblock %} | Domo Xangô</title>
+    <link rel="icon" href="/images/favicon.png">
+    {% block stylesheets %}{% endblock %}
+    {% block javascripts %}{% block importmap %}{{ importmap('app') }}{% endblock %}{% endblock %}
+</head>
+<body data-turbo="false">
+<div class="admin-layout" data-controller="admin-nav">
+    <div class="admin-nav-backdrop" data-action="click->admin-nav#close"></div>
+    <aside class="admin-sidebar" id="admin-sidebar">
+        <div class="admin-sidebar-brand">
+            <img src="/images/logo.png" alt="Domo Xangô" class="site-logo site-logo-sm">
+            <h1>Domo Xangô</h1>
+        </div>
+        <nav class="admin-nav" data-action="click->admin-nav#closeOnNav">
+            <a href="{{ path('admin_dashboard') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_dashboard' ? 'active' : '' }}">Dashboard</a>
+            <a href="{{ path('admin_bookings') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_booking' ? 'active' : '' }}">Reservas</a>
+            <a href="{{ path('admin_extras') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_extra' ? 'active' : '' }}">Extras</a>
+            <a href="{{ path('admin_property') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_property' ? 'active' : '' }}">Propriedade</a>
+            <div class="admin-nav-divider"></div>
+            <a href="{{ path('guest_home') }}" target="_blank">Ver site ↗</a>
+            <a href="{{ path('admin_logout') }}">Sair</a>
+        </nav>
+    </aside>
+    <div class="admin-shell">
+        <header class="admin-topbar">
+            <button
+                type="button"
+                class="admin-menu-toggle"
+                aria-label="Abrir menu"
+                aria-expanded="false"
+                aria-controls="admin-sidebar"
+                data-admin-nav-target="toggle"
+                data-action="admin-nav#toggle"
+            >
+                <span class="admin-menu-icon" aria-hidden="true"></span>
+            </button>
+            <div class="admin-topbar-brand">
+                <img src="/images/logo.png" alt="" class="site-logo site-logo-sm" aria-hidden="true">
+                <span>Domo Xangô</span>
+            </div>
+        </header>
+        <main class="admin-main">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="flash flash-{{ label }}">{{ message }}</div>
+                {% endfor %}
+            {% endfor %}
+            {% block admin %}{% endblock %}
+        </main>
+    </div>
+</div>
+</body>
+</html>

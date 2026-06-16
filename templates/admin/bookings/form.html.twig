@@ -1,0 +1,43 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}{{ booking ? 'Editar reserva' : 'Nova reserva' }}{% endblock %}
+{% block admin %}
+<div class="admin-content">
+    <header style="margin-bottom:2rem">
+        <h2 class="admin-page-title">{{ booking ? 'Editar reserva' : 'Nova reserva' }}</h2>
+        <p class="admin-page-desc">Dados do hóspede, datas e código de acesso ao concierge.</p>
+    </header>
+
+    <section class="admin-section">
+        {{ form_start(form, {attr: {
+            class: 'form-grid',
+            'data-controller': 'booking-form',
+            'data-action': 'change->booking-form#sync',
+            'data-booking-form-rajaaram-value': constant('App\\Entity\\Booking::SOURCE_RAJAARAM'),
+        }}) }}
+            <div class="form-row-2">
+                {{ form_row(form.guestName) }}
+                {{ form_row(form.guestWhatsapp) }}
+            </div>
+            <div class="form-row-2">
+                {{ form_row(form.checkIn) }}
+                {{ form_row(form.checkOut) }}
+            </div>
+            <div class="form-row-2">
+                {{ form_row(form.guests) }}
+                {{ form_row(form.stayPrice) }}
+            </div>
+            <div class="form-row-2">
+                {{ form_row(form.source) }}
+                {% if booking %}{{ form_row(form.status) }}{% endif %}
+            </div>
+            {% include 'admin/bookings/_rajaaram_fields.html.twig' %}
+            {{ form_row(form.notes) }}
+            {{ form_errors(form) }}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a href="{{ path('admin_bookings') }}" class="btn btn-outline">Cancelar</a>
+            </div>
+        {{ form_end(form) }}
+    </section>
+</div>
+{% endblock %}

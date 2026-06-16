@@ -1,0 +1,9 @@
+# Session-based CSRF for forms and login (works without JavaScript token refresh)
+framework:
+    form:
+        csrf_protection:
+            token_id: submit
+
+    csrf_protection:
+        stateless_token_ids:
+            - logout

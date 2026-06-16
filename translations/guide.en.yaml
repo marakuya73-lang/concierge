@@ -1,0 +1,101 @@
+welcome:
+  greeting: "Dear guest,"
+  intro: "Welcome to Domo Xangô! Here, nature and sophistication intertwine for a sensory, memorable experience. Slow down, gaze at the starry sky, and inhabit the silence of this sacred refuge."
+  closing: "We are nearby with care and attention whenever you need us."
+  region_title: "Alto Paraíso, a frequency"
+  region_text: "A land where the cerrado meets quartzite, ancestral wisdom meets modern cosmology, and every sunrise seems to inaugurate something new. Being here means slowing down enough to feel that Chapada beats at a different frequency."
+
+curiosity:
+  parallel_title: "14th Parallel South"
+  parallel_text: "Alto Paraíso sits on the 14th Parallel South, the same geographic line that crosses Machu Picchu in Peru. Esoteric traditions and geographers call it a \"line of consciousness\": two ancient sacred sites, separated by an ocean, aligned on the same thread of the planet."
+  quartz_title: "Quartz Crystal Plate"
+  quartz_text: "Beneath your feet, Chapada dos Veadeiros rests on one of the largest quartz crystal formations on Earth. The rock amplifies vibrations, which is why so many visitors report feelings of healing, sharpened intuition, and deep presence in this land."
+  sky_title: "Sky sightings"
+  sky_text: "Lights that shift color, objects moving across the sky in impossible ways, stories repeated for decades. Alto Paraíso earned the affectionate nickname \"E.T. Valley\". On new moon nights, Chapada's dark sky makes the spectacle even more vivid."
+  portal_title: "Natural portal"
+  portal_text: "Some say Alto Paraíso is a portal, a place where the veil between the visible and invisible grows thin. Untouched nature, deep silence, and elevated vibration draw seekers, artists, and travelers from every continent, many saying \"something shifted\" after their first visit."
+  park_title: "Chapada dos Veadeiros National Park"
+  park_text: "A UNESCO World Heritage Site since 2001, the park holds one of the planet's oldest cerrado ecosystems: waterfalls, quartzite canyons, highland fields, and biodiversity that still surprises scientists. It is the green lung the Dome opens onto every day."
+  waters_title: "Cradle of waters"
+  waters_text: "Chapada's cerrado is known as Brazil's \"cradle of waters\": pure springs feed rivers that cross the country. The water you find here comes from underground aquifers protected by layers of quartz and native vegetation."
+
+location:
+  transfer_title: "Need a transfer?"
+  transfer_text: "We arrange transfers between Alto Paraíso and Domo Xangô with advance booking. Price: R$ 150 round trip. Subject to availability."
+
+rules:
+  intro: "We want your stay here to be memorable. To help with that, we ask you to follow a few essential guidelines that preserve the comfort, safety, and harmony of this sacred space:"
+  rule1_title: "Shoes? Outside only."
+  rule1_text: "Inside the dome, please remain barefoot or in clean socks. This practice helps keep the space cozy, pure, and welcoming for everyone who arrives."
+  rule2_title: "Fire? Only the soul's."
+  rule2_text: "We are in an RPPN (Private Natural Heritage Reserve), and any open flame poses a fire risk. For this reason, we do not use candles, burning incense, or any experiments with fire.\n\n— NO SMOKING —\n(Subject to IBAMA fine)"
+  rule3_title: "On the deck edge, stay present."
+  rule3_text: "The view is truly breathtaking, but for your safety we ask for attention and presence when walking near the edge. We want you to take it in — with your feet on the ground."
+  rule4_title: "Our dogs are part of the experience."
+  rule4_text: "They love affection and will be nearby to welcome you. If you prefer to keep your distance, just let us know — we will do our best to ensure you feel completely at ease."
+  rule5_title: "Minibar & à la carte items"
+  rule5_text: "Available products are listed in the menu. Feel free to enjoy them, and if you have questions about prices or payment methods, talk to us — we are here to help."
+
+faq:
+  voltage_q: "What is the outlet voltage?"
+  voltage_a: "All outlets are 220V. Check your devices for compatibility."
+  lights_q: "How do I turn on lights and outlets?"
+  lights_a: "The main switch is above the sink. Outlets work only when lights are on."
+  dogs_q: "Are the dogs friendly?"
+  dogs_a: "Yes, they are sweet and part of the soul of this place. Let us know if you prefer distance."
+  ac_q: "Is there air conditioning?"
+  ac_a: "No, we seek integration with nature. The dome is well ventilated and the deck offers pleasant shade."
+  deck_q: "Do I have access to the deck?"
+  deck_a: "Yes, exclusive to guests, ideal for sunrise or moon gazing."
+  phone_q: "Will my phone work?"
+  phone_a: "Probably not, deep silence area. Fiber Wi-Fi works very well."
+  wifi_q: "Is Wi-Fi reliable?"
+  wifi_a: "Yes! High-quality fiber. During rare power outages, signal may drop."
+  car_q: "My car is low. Can I get there?"
+  car_a: "14 km on a dirt road. Many guests arrive in regular cars, drive calmly. WhatsApp available for guidance."
+  water_q: "About the water"
+  water_a: "Pure water from a regularly refilled tank. Let us know if supply seems low."
+
+food:
+  breakfast_title: "Breakfast"
+  breakfast_text: "Served at 8am at Kuya Deck. Artisan breads, fruit, yogurt, coffee or tea."
+  chef_title: "Personal Chef"
+  chef_text: "Exclusive chef at your dome door. Personalized menu with fresh ingredients."
+
+activities:
+  waterfalls_title: "Anjos & Arcanjos Waterfalls"
+  waterfalls_text: "A short walk away, turquoise water spills over quartzite cliffs, one of the Chapada's most enchanting falls, almost in Domo's backyard."
+  massage_title: "Rajaaram Massages"
+  massage_text: "Rajaaram offers deep presence therapies here at Domo.\n\nReset Express (1h30) R$ 585 · Reset Ceremony (3h) R$ 830 · Deep Dive (3h) R$ 1,130."
+  medicine_title: "Sacred Medicine Ceremonies"
+  medicine_text: "Ancestral experiences conducted with care, preparation, and intention. Contact us to learn about dates, guidance, and what to expect."
+  ufo_title: "Celestial Phenomena Watching"
+  ufo_text: "Alto Paraíso is the \"E.T. Valley\". On new moon nights, the sky opens without light pollution. Contemplate from the deck or visit spots in the region."
+  guides_title: "Local guides"
+  guides_text: "We have recommendations for local guides if you need them: trails, waterfalls, and Chapada with those who know every corner."
+  horse_title: "Horseback riding"
+  horse_text: "Rides through open fields, gentle trails, and Chapada silence at the horse's pace. Ask us about options and times."
+  fair_title: "Local markets"
+  fair_text: "Fresh produce straight from growers. Market on Sat, Tue, Thu; on Sundays, the Popular Family Agriculture Fair fills the town with color and flavor."
+
+markets:
+  intro: "Suggestions to stock up for your stay, in Alto Paraíso or a short walk from the dome, in Moinho."
+  alto_title: "In Alto Paraíso"
+  fernandes: "Fernandes, the most complete market in town ($$$)."
+  smart: "Smart, good value ($$)."
+  hortifruti: "Hortifruti, fresh fruits and vegetables ($$)."
+  moinho_title: "In Moinho (5 min walk)"
+  louro: "Louro & Zita, artisan breads, sweets, and banana chips."
+  cici: "Cici, delicious artisan cheese bread."
+  irani: "Irani, family grocery with daily essentials."
+
+kits:
+  intro: "Surprise someone you love with personalized kits:"
+  birthday: "Birthday Kit, from R$ 280. Festive decor, mini cake, sparkling wine or juice."
+  custom: "Custom kits, book at least one week in advance."
+
+social:
+  thanks: "Thank you for choosing us!"
+  follow: "Post, tag, and follow us on Instagram"
+  feedback: "Your feedback is precious, it helps us create authentic experiences."
+  return: "Return whenever your heart calls."

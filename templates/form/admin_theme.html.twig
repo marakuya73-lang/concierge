@@ -1,0 +1,45 @@
+{% use "form_div_layout.html.twig" %}
+
+{%- block form_row -%}
+    {%- set row_attr = row_attr|merge({class: (row_attr.class|default('') ~ ' form-group')|trim}) -%}
+    {%- set attr = {} -%}
+    {%- set aria_describedby = [] -%}
+    {%- if help -%}
+        {%- set aria_describedby = aria_describedby|merge([id ~ '_help']) -%}
+    {%- endif -%}
+    {%- if errors|length > 0 -%}
+        {%- set aria_describedby = aria_describedby|merge(errors|map((_, index) => id ~ '_error' ~ (index + 1))) -%}
+    {%- endif -%}
+    {%- if aria_describedby|length > 0 -%}
+        {%- set attr = attr|merge({'aria-describedby': aria_describedby|join(' ')}) -%}
+    {%- endif -%}
+    {%- if errors|length > 0 -%}
+        {%- set attr = attr|merge({'aria-invalid': 'true'}) -%}
+    {%- endif -%}
+    {%- set widget_attr = {attr: attr} -%}
+    {{- block('form_row_render') -}}
+{%- endblock form_row -%}
+
+{%- block form_errors -%}
+    {%- if errors|length > 0 -%}
+        <ul class="form-errors">
+            {%- for error in errors -%}
+                <li>{{ error.message }}</li>
+            {%- endfor -%}
+        </ul>
+    {%- endif -%}
+{%- endblock form_errors -%}
+
+{%- block checkbox_widget -%}
+    <input type="checkbox" {{ block('widget_attributes') }}{% if value %} checked="checked"{% endif %} />
+{%- endblock checkbox_widget -%}
+
+{%- block checkbox_row -%}
+    {%- set row_attr = row_attr|merge({class: (row_attr.class|default('') ~ ' form-group form-group--checkbox')|trim}) -%}
+    <div{% with {attr: row_attr} %}{{ block('attributes') }}{% endwith %}>
+        {{- form_widget(form) -}}
+        {{- form_label(form) -}}
+        {{- form_errors(form) -}}
+        {{- form_help(form) -}}
+    </div>
+{%- endblock checkbox_row -%}

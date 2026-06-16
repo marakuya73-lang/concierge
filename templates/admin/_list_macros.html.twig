@@ -1,0 +1,21 @@
+{% macro reorder_buttons(move_route, id, loop, total) %}
+    <div class="admin-sortable-actions" role="group" aria-label="Reordenar">
+        <form method="post" action="{{ path(move_route, {id: id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('admin_action') }}">
+            <input type="hidden" name="direction" value="up">
+            <button type="submit" class="admin-sortable-btn" title="Mover para cima"{% if loop.first %} disabled{% endif %} aria-label="Mover para cima">↑</button>
+        </form>
+        <form method="post" action="{{ path(move_route, {id: id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('admin_action') }}">
+            <input type="hidden" name="direction" value="down">
+            <button type="submit" class="admin-sortable-btn" title="Mover para baixo"{% if loop.last %} disabled{% endif %} aria-label="Mover para baixo">↓</button>
+        </form>
+    </div>
+{% endmacro %}
+
+{% macro delete_button(delete_route, id, confirm) %}
+    <form method="post" action="{{ path(delete_route, {id: id}) }}" onsubmit="return confirm('{{ confirm }}')">
+        <input type="hidden" name="_token" value="{{ csrf_token('admin_action') }}">
+        <button type="submit" class="admin-sortable-btn admin-sortable-btn--danger" title="Remover" aria-label="Remover">✕</button>
+    </form>
+{% endmacro %}

@@ -1,0 +1,197 @@
+{% extends 'base.html.twig' %}
+{% import 'guest/_icons.html.twig' as icon %}
+{% import 'guest/_facilities.html.twig' as facilities %}
+
+{% block title %}{{ property.name(app.request.locale) }} | Domo Xangô{% endblock %}
+
+{% block body %}
+<div class="guest-page">
+    <header class="hero">
+        <div class="hero-glow"></div>
+        <div class="lang-toggle lang-toggle--hero">
+            <a href="?{{ app.request.query.all|merge({'_locale': 'pt'})|url_encode }}" class="{{ app.request.locale == 'pt' ? 'active' : '' }}">PT</a>
+            <a href="?{{ app.request.query.all|merge({'_locale': 'en'})|url_encode }}" class="{{ app.request.locale == 'en' ? 'active' : '' }}">EN</a>
+        </div>
+        <div class="hero-inner">
+            <img src="/images/logo.png" alt="Domo Xangô" class="hero-logo">
+            <p class="hero-location">{{ 'app.location_label'|trans }}</p>
+            <h1 class="hero-title font-serif">{{ property.name(app.request.locale) }}</h1>
+            {% if property.tagline(app.request.locale) %}
+                <p class="hero-tagline">{{ property.tagline(app.request.locale) }}</p>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="landing-shell">
+        <section class="landing-block">
+            {% if photos|length > 0 %}
+                <div class="photo-grid">
+                    <div class="photo-main">
+                        <img src="{{ photos[0].publicPath }}" alt="{{ photos[0].caption(app.request.locale) ?? property.name(app.request.locale) }}">
+                    </div>
+                    <div class="photo-side">
+                        {% for photo in photos|slice(1, 2) %}
+                            <img src="{{ photo.publicPath }}" alt="{{ photo.caption(app.request.locale) ?? '' }}">
+                        {% endfor %}
+                        {% if photos|length == 1 %}
+                            <div class="photo-placeholder accent"></div>
+                            <div class="photo-placeholder"></div>
+                        {% elseif photos|length == 2 %}
+                            <div class="photo-placeholder accent"></div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="photo-grid photo-grid-empty">
+                    <div class="photo-main photo-empty">
+                        <img src="/images/logo.png" alt="" class="photo-empty-logo" aria-hidden="true">
+                        <p class="font-serif photo-empty-text">{{ 'app.welcome_domo'|trans }}</p>
+                    </div>
+                    <div class="photo-side">
+                        <div class="photo-placeholder accent"></div>
+                        <div class="photo-placeholder"></div>
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="landing-block">
+            <p class="section-label">{{ 'app.stay_shortcuts'|trans }}</p>
+            <div class="shortcuts-grid">
+                <div class="shortcut-card">
+                    <span class="shortcut-icon">{{ icon.wifi('icon-accent') }}</span>
+                    <p class="shortcut-label">Wi-Fi</p>
+                    <p class="shortcut-sub">{{ 'app.wifi_private'|trans }}</p>
+                </div>
+                <div class="shortcut-card">
+                    <span class="shortcut-icon">{{ icon.users('icon-accent') }}</span>
+                    <p class="shortcut-label">{{ 'app.checkin_label'|trans }}</p>
+                    <p class="shortcut-sub">{{ property.checkInTime }}</p>
+                </div>
+                <div class="shortcut-card">
+                    <span class="shortcut-icon">{{ icon.bed('icon-accent') }}</span>
+                    <p class="shortcut-label">{{ 'app.bedrooms'|trans }}</p>
+                    <p class="shortcut-sub">{{ property.bedrooms }} {{ 'app.rooms'|trans }}</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-block" data-controller="access-code">
+            <div class="access-card">
+                <p class="access-label">{{ 'app.stay_access'|trans }}</p>
+                <h2 class="access-title font-serif">{{ 'app.enter_code'|trans }}</h2>
+                <p class="access-hint">{{ 'app.code_private_hint'|trans }}</p>
+
+                <form data-action="submit->access-code#submit">
+                    <div class="code-inputs code-inputs--dark">
+                        {% for i in 0..4 %}
+                            <input type="text" maxlength="1" class="code-input code-input--dark" data-access-code-target="input"
+                                   data-action="input->access-code#onInput keydown->access-code#onKeydown paste->access-code#onPaste"
+                                   inputmode="text" autocomplete="off">
+                        {% endfor %}
+                    </div>
+                    <div class="alert alert-error alert-error--dark" data-access-code-target="error" hidden></div>
+                    <button type="submit" class="btn btn-accent btn-block btn-access" data-access-code-target="submit">
+                        {{ icon.lock('') }}
+                        {{ 'app.access_concierge'|trans }}
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section class="landing-block landing-block--wide">
+            <h2 class="welcome-heading font-serif">
+                {{ 'app.happy_to_welcome'|trans }}
+                <span class="welcome-heading-name">{{ property.name(app.request.locale) }}</span>
+            </h2>
+            <p class="about-text">{{ property.description(app.request.locale) }}</p>
+
+            <div class="spec-list">
+                <div class="spec-row">
+                    <div class="spec-icon-wrap">{{ icon.bed('') }}</div>
+                    <div>
+                        <p class="spec-label">{{ 'app.bedrooms_in_stay'|trans }}</p>
+                        <p class="spec-value">{{ 'app.bedrooms_detail'|trans({'%number%': property.bedrooms}) }}</p>
+                    </div>
+                </div>
+                <div class="spec-row">
+                    <div class="spec-icon-wrap">{{ icon.bath('') }}</div>
+                    <div>
+                        <p class="spec-label">{{ 'app.bathrooms'|trans }}</p>
+                        <p class="spec-value">{{ 'app.bathrooms_detail'|trans({'%number%': property.bathrooms}) }}</p>
+                    </div>
+                </div>
+                <div class="spec-row">
+                    <div class="spec-icon-wrap">{{ icon.users('') }}</div>
+                    <div>
+                        <p class="spec-label">{{ 'app.guests'|trans }}</p>
+                        <p class="spec-value">{{ 'app.guests_max'|trans({'%number%': property.maxGuests}) }}</p>
+                    </div>
+                </div>
+                <div class="spec-row">
+                    <div class="spec-icon-wrap">{{ icon.wifi('') }}</div>
+                    <div>
+                        <p class="spec-label">Wi-Fi</p>
+                        <p class="spec-value">{{ 'app.wifi_detail'|trans }}</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-block landing-facilities">
+            <p class="section-label">{{ 'app.tab_facilities'|trans }}</p>
+            <h2 class="welcome-heading font-serif">{{ 'app.facilities_heading'|trans }}</h2>
+            {{ facilities.facilities_list(false) }}
+        </section>
+
+        <section class="landing-block">
+            <div class="info-card">
+                <h3 class="info-card-title font-serif">{{ 'app.location_title'|trans }}</h3>
+                <p class="info-card-meta">{{ 'app.location_label'|trans }} -</p>
+                <p class="info-card-text">{{ 'app.location_teaser'|trans }}</p>
+            </div>
+        </section>
+
+        <section class="landing-block">
+            <h3 class="landing-subheading font-serif">{{ 'app.house_rules_title'|trans }}</h3>
+            <div class="rules-list">
+                <div class="rule-row"><span class="rule-label">{{ 'app.checkin_label'|trans }}</span><span class="rule-value">{{ property.checkInTime }}</span></div>
+                <div class="rule-row"><span class="rule-label">{{ 'app.checkout_label'|trans }}</span><span class="rule-value">{{ property.checkOutTime }}</span></div>
+                <div class="rule-row"><span class="rule-label">{{ 'app.pets'|trans }}</span><span class="rule-value">{{ property.petsPolicy }}</span></div>
+                <div class="rule-row"><span class="rule-label">{{ 'app.smoking'|trans }}</span><span class="rule-value">{{ property.smokingPolicy }}</span></div>
+                <div class="rule-row"><span class="rule-label">{{ 'app.silence'|trans }}</span><span class="rule-value">{{ property.silencePolicy }}</span></div>
+                <div class="rule-row"><span class="rule-label">{{ 'app.visits'|trans }}</span><span class="rule-value">{{ property.visitsPolicy }}</span></div>
+            </div>
+        </section>
+
+        <section class="landing-block">
+            <h3 class="landing-subheading font-serif">{{ 'app.trust_title'|trans }}</h3>
+            <div class="trust-card">
+                <div class="trust-rating">
+                    {{ icon.star('trust-star-icon') }}
+                    <span class="trust-value font-serif">{{ property.rating }}</span>
+                </div>
+                <p class="trust-text">{{ 'app.trust_text'|trans }}</p>
+            </div>
+        </section>
+
+        <section class="landing-block">
+            <div class="landing-cta">
+                <h3 class="landing-cta-title font-serif">{{ 'app.enter_code_cta'|trans }}</h3>
+                <p class="landing-cta-hint">{{ 'app.code_private_hint'|trans }}</p>
+                <div class="landing-cta-dots" aria-hidden="true">
+                    {% for i in 0..4 %}<span></span>{% endfor %}
+                </div>
+                <button type="button" class="btn btn-accent btn-block btn-access" onclick="document.querySelector('.code-input')?.focus()">
+                    {{ icon.lock('') }}
+                    {{ 'app.access_concierge'|trans }}
+                </button>
+            </div>
+        </section>
+
+        <footer class="landing-footer">
+            <a href="{{ path('admin_login') }}" class="host-link">{{ 'app.host_access'|trans }}</a>
+        </footer>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% import 'admin/_csrf.html.twig' as csrf %}
+
+<section class="admin-section" id="rules-content">
+    <div class="admin-section-header">
+        <h3 class="admin-section-title">Regras da casa</h3>
+        <p class="admin-section-desc">Introdução e regras exibidas na aba Regras na estadia do hóspede.</p>
+    </div>
+
+    <article class="admin-guide-item admin-guide-item--intro">
+        <div class="admin-guide-item-header">
+            <h4 class="admin-guide-item-title">Introdução</h4>
+            <span class="admin-guide-item-type">texto</span>
+        </div>
+        <form method="post" action="{{ path('admin_house_rules_intro_update') }}" class="form-grid admin-guide-form admin-guide-form--full">
+            {{ csrf.csrf() }}
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label>Introdução (PT)</label>
+                    <textarea name="rulesIntroPt" rows="2">{{ property.rulesIntroPt }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Introdução (EN)</label>
+                    <textarea name="rulesIntroEn" rows="2">{{ property.rulesIntroEn }}</textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-accent btn-sm">Salvar introdução</button>
+            </div>
+        </form>
+    </article>
+
+    <div class="admin-guide-list">
+        {% for rule in houseRules %}
+            <article class="admin-guide-item">
+                <div class="admin-guide-item-header">
+                    <h4 class="admin-guide-item-title">{{ rule.titlePt ?: ('Regra #' ~ rule.sortOrder) }}</h4>
+                    <span class="admin-guide-item-type">regra</span>
+                </div>
+
+                <form method="post" action="{{ path('admin_house_rule_update', {id: rule.id}) }}" class="form-grid admin-guide-form admin-guide-form--full">
+                    {{ csrf.csrf() }}
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label>Título (PT)</label>
+                            <input type="text" name="titlePt" value="{{ rule.titlePt }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Título (EN)</label>
+                            <input type="text" name="titleEn" value="{{ rule.titleEn }}">
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label>Texto (PT)</label>
+                            <textarea name="bodyPt" rows="3">{{ rule.bodyPt }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Texto (EN)</label>
+                            <textarea name="bodyEn" rows="3">{{ rule.bodyEn }}</textarea>
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group admin-guide-active">
+                            <label class="admin-checkbox">
+                                <input type="checkbox" name="active" value="1" {{ rule.active ? 'checked' : '' }}>
+                                Visível para hóspedes
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-accent btn-sm">Salvar regra</button>
+                    </div>
+                </form>
+            </article>
+        {% else %}
+            <p style="color:var(--muted-foreground);font-size:.875rem;margin:0">Nenhuma regra cadastrada. Execute as migrations.</p>
+        {% endfor %}
+    </div>
+</section>

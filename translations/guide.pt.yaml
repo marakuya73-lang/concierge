@@ -1,0 +1,101 @@
+welcome:
+  greeting: "Querido hóspede,"
+  intro: "Bem-vindo ao Domo Xangô! Aqui, natureza e sofisticação se entrelaçam para oferecer uma vivência sensorial e memorável. Permita-se desacelerar, contemplar o céu estrelado e habitar o silêncio deste refúgio sagrado."
+  closing: "Estamos por perto, com carinho e atenção, sempre que precisar."
+  region_title: "Alto Paraíso, uma frequência"
+  region_text: "Um território onde o cerrado encontra o quartzito, a sabedoria ancestral conversa com a cosmologia moderna, e cada nascer do sol parece inaugurar algo novo. Estar aqui é desacelerar o suficiente para perceber que a Chapada pulsa em outra frequência."
+
+curiosity:
+  parallel_title: "Paralelo 14 Sul"
+  parallel_text: "Alto Paraíso repousa sobre o Paralelo 14 Sul, a mesma linha geográfica que atravessa Machu Picchu, no Peru. Esoteristas e geógrafos a chamam de \"linha de consciência\": dois sítios sagrados ancestrais, separados por um oceano, alinhados no mesmo fio do planeta."
+  quartz_title: "Placa de Cristal de Quartzo"
+  quartz_text: "Por baixo dos pés, a Chapada dos Veadeiros está assentada sobre uma das maiores formações de quartzo cristalino do mundo. A rocha amplifica vibrações, por isso tantos visitantes relatam sensações de cura, intuição aguçada e profunda presença neste território."
+  sky_title: "Avistamentos no céu"
+  sky_text: "Luzes que mudam de cor, objetos no céu em movimentos impossíveis, relatos que se repetem há décadas. Alto Paraíso ganhou o apelido carinhoso de \"Vale dos E.T.s\". Em noites de lua nova, o céu escuro da Chapada intensifica o espetáculo."
+  portal_title: "Portal natural"
+  portal_text: "Há quem diga que Alto Paraíso é um portal, um lugar onde o véu entre o visível e o invisível se torna tênue. A combinação de natureza intocada, silêncio profundo e vibração elevada atrai buscadores, artistas e viajantes de todos os continentes, muitos dizendo que \"algo mudou\" depois da primeira visita."
+  park_title: "Parque Nacional Chapada dos Veadeiros"
+  park_text: "Patrimônio Mundial da UNESCO desde 2001, o parque guarda um dos cerrados mais antigos do planeta: cachoeiras, cânions de quartzito, campos de altitude e uma biodiversidade que surpreende até cientistas. É o pulmão verde ao qual o Domo se abre todos os dias."
+  waters_title: "Berço das águas"
+  waters_text: "O cerrado da Chapada é conhecido como o \"berço das águas\" do Brasil: nascentes puras alimentam rios que atravessam o país. As águas que você encontra aqui vêm de lençóis subterrâneos protegidos por camadas de quartzo e vegetação nativa."
+
+location:
+  transfer_title: "Precisa de transfer?"
+  transfer_text: "Organizamos transfer entre Alto Paraíso e o Domo Xangô mediante reserva antecipada. Valor: R$ 150 (ida e volta). Sujeito à disponibilidade."
+
+rules:
+  intro: "Nosso desejo é que sua estadia aqui seja memorável. Para isso, pedimos atenção a algumas orientações essenciais que preservam o conforto, a segurança e a harmonia deste espaço sagrado:"
+  rule1_title: "Calçados? Só do lado de fora."
+  rule1_text: "Dentro do domo, pedimos que permaneça descalço ou de meias limpas. Essa prática ajuda a manter o espaço aconchegante, puro e acolhedor para todos que aqui chegam."
+  rule2_title: "Fogo? Somente o da alma."
+  rule2_text: "Estamos em uma RPPN (Reserva Particular do Patrimônio Natural), e qualquer chama aberta representa risco de incêndio. Por isso, não utilizamos velas, incensos em brasa ou quaisquer experimentos com fogo.\n\n— PROIBIDO FUMAR —\n(Sob risco de multa do IBAMA)"
+  rule3_title: "Na beira do deck, com presença."
+  rule3_text: "A vista é realmente de tirar o fôlego, mas por segurança, pedimos atenção e presença ao caminhar próximo à borda. Queremos que você contemple — com os pés no chão."
+  rule4_title: "Nossos cães são parte da experiência."
+  rule4_text: "Eles adoram carinho e estarão por perto para dar boas-vindas. Se preferir manter distância, basta nos avisar — faremos o possível para que você se sinta totalmente à vontade."
+  rule5_title: "Frigobar & Itens à parte"
+  rule5_text: "Os produtos disponíveis estão listados no menu. Sinta-se à vontade para consumir e, caso tenha dúvidas sobre valores ou formas de pagamento, fale conosco — estamos por aqui para ajudar."
+
+faq:
+  voltage_q: "Qual a voltagem das tomadas?"
+  voltage_a: "Todas as tomadas são 220V. Verifique a compatibilidade dos seus aparelhos."
+  lights_q: "Como ligo as luzes e tomadas?"
+  lights_a: "O interruptor principal está acima da pia. As tomadas funcionam apenas com as luzes ligadas."
+  dogs_q: "Os cães são mansos?"
+  dogs_a: "Sim, são dóceis e fazem parte da alma do lugar. Avise se preferir distância."
+  ac_q: "Tem ar-condicionado?"
+  ac_a: "Não, buscamos integração com a natureza. O domo é ventilado e o deck oferece sombra agradável."
+  deck_q: "Tenho acesso ao deck?"
+  deck_a: "Sim, uso exclusivo dos hóspedes, ideal para nascer do sol ou contemplar a lua."
+  phone_q: "Meu telefone vai funcionar?"
+  phone_a: "Provavelmente não, área de silêncio profundo. Wi-Fi por fibra ótica funciona muito bem."
+  wifi_q: "O Wi-Fi é confiável?"
+  wifi_a: "Sim! Fibra ótica de alta qualidade. Em quedas de energia, o sinal pode ser interrompido."
+  car_q: "Meu carro é baixo. Consigo chegar?"
+  car_a: "14 km por estrada de terra. Muitos hóspedes chegam com carros comuns, dirija com calma. WhatsApp disponível para orientar."
+  water_q: "Sobre a água"
+  water_a: "Água pura de caixa d'água abastecida regularmente. Avise se sentir o fornecimento baixo."
+
+food:
+  breakfast_title: "Café da manhã"
+  breakfast_text: "Servido às 8h no Kuya Deck. Pães artesanais, frutas, iogurtes, café ou chás."
+  chef_title: "Personal Chef"
+  chef_text: "Chef exclusivo na porta do seu domo. Menu personalizado com ingredientes frescos."
+
+activities:
+  waterfalls_title: "Cachoeiras Anjos e Arcanjos"
+  waterfalls_text: "A poucos minutos a pé, águas turquesa caem entre paredões de quartzito, uma das cachoeiras mais encantadas da Chapada, quase no quintal do Domo."
+  massage_title: "Massagens Rajaaram"
+  massage_text: "Rajaaram conduz terapias de presença profunda aqui no Domo.\n\nReset Express (1h30) R$ 585 · Cerimônia Reset (3h) R$ 830 · Mergulho Profundo (3h) R$ 1.130."
+  medicine_title: "Cerimônias de Medicinas Sagradas"
+  medicine_text: "Vivências ancestrais conduzidas com cuidado, preparo e intenção. Fale conosco para saber mais sobre datas, orientação e o que esperar."
+  ufo_title: "Observação de Fenômenos Celestes"
+  ufo_text: "Alto Paraíso é o \"Vale dos E.T.s\". Em noites de lua nova, o céu se abre sem poluição luminosa. Contemple do deck ou visite pontos da região."
+  guides_title: "Guias locais"
+  guides_text: "Temos recomendações de guias locais se precisarem: trilhas, cachoeiras e a Chapada com quem conhece cada canto."
+  horse_title: "Passeio a cavalo"
+  horse_text: "Cavalgadas por campos abertos, trilhas suaves e o silêncio da Chapada no ritmo do cavalo. Pergunte conosco sobre opções e horários."
+  fair_title: "Feiras locais"
+  fair_text: "Produtos frescos direto do produtor. Feira aos sábados, terças e quintas; aos domingos, a Feira Popular da Agricultura Familiar enche a cidade de cores e sabores."
+
+markets:
+  intro: "Sugestões para abastecer sua estadia, em Alto Paraíso ou a poucos passos do domo, no Moinho."
+  alto_title: "Em Alto Paraíso"
+  fernandes: "Fernandes, o mercado mais completo da cidade ($$$)."
+  smart: "Smart, bom custo-benefício ($$)."
+  hortifruti: "Hortifruti, frutas, verduras e legumes frescos ($$)."
+  moinho_title: "No Moinho (5 min a pé)"
+  louro: "Louro & Zita, pães artesanais, doces e chips de banana."
+  cici: "Cici, pão de queijo artesanal delicioso."
+  irani: "Irani, armazém familiar com itens básicos."
+
+kits:
+  intro: "Surpreenda quem você ama com kits personalizados:"
+  birthday: "Kit Aniversário, a partir de R$ 280. Decoração festiva, mini-bolo, espumante ou suco."
+  custom: "Kits personalizados, reserve com pelo menos uma semana de antecedência."
+
+social:
+  thanks: "Obrigada por nos escolher!"
+  follow: "Poste, marque e nos siga no Instagram"
+  feedback: "Seu feedback é precioso, ajuda-nos a continuar criando experiências autênticas."
+  return: "Volte sempre que seu coração chamar."

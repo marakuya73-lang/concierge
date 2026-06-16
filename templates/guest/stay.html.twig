@@ -1,0 +1,885 @@
+{% extends 'base.html.twig' %}
+{% import 'guest/stay/_macros.html.twig' as g %}
+{% import 'guest/_icons.html.twig' as icon %}
+{% import 'guest/_facilities.html.twig' as facilities %}
+{% import 'guest/_rajaaram.html.twig' as rajaaram %}
+
+{% block title %}{{ 'app.welcome'|trans }}, {{ stay.guestName|split(' ')|first }} | Domo Xangô{% endblock %}
+
+{% block body %}
+{% set requestedIds = requestedExtraIds %}
+{% set pendingCount = extras.myRequests|filter(r => r.status == 'requested')|length %}
+{% set homeExtras = extras.myRequests|filter(r => r.status != 'cancelled') %}
+{% set firstName = stay.guestName|split(' ')|first %}
+{% set dateLocale = app.request.locale %}
+{% set wa = stay.contactPhone|replace({' ': '', '(': '', ')': '', '-': ''}) %}
+{% set locale = app.request.locale %}
+{% set hero = guideSpots|filter(s => s.type == 'hero')|first %}
+{% set region = guideSpots|filter(s => s.type == 'region')|first %}
+{% set spots = guideSpots|filter(s => s.type == 'spot') %}
+{% set hero_lead = hero ? hero.body(locale)|split('\n\n')|first : 'welcome.intro'|trans({}, 'guide') %}
+
+<div data-controller="stay"
+     data-stay-code-value="{{ code }}"
+     data-stay-guest-name-value="{{ firstName }}"
+     data-stay-confirm-title-value="{{ 'app.extra_confirm_title'|trans }}"
+     data-stay-confirm-lead-value="{{ 'app.extra_confirm_lead'|trans({'%name%': firstName}) }}"
+     data-stay-confirm-pix-label-value="{{ 'app.extra_confirm_pix_label'|trans }}"
+     data-stay-confirm-pix-hint-value="{{ 'app.extra_confirm_pix_hint'|trans }}"
+     data-stay-confirm-whatsapp-value="{{ 'app.extra_confirm_whatsapp'|trans }}"
+     data-stay-confirm-back-value="{{ 'app.extra_confirm_back'|trans }}"
+     data-stay-already-requested-value="{{ 'app.already_requested'|trans }}"
+     data-stay-copy-pix-value="{{ 'app.copy_pix'|trans }}"
+     data-stay-pix-payment-value="{{ 'app.pix_payment'|trans }}"
+     data-stay-no-extras-value="{{ 'app.no_extras'|trans }}"
+     data-stay-food-services-empty-value="{{ 'app.food_services_empty'|trans }}"
+     data-stay-tab-extras-value="{{ 'app.tab_extras'|trans }}"
+     data-stay-status-requested-value="{{ 'app.extra_status_requested'|trans }}"
+     data-stay-status-paid-value="{{ 'app.extra_status_paid'|trans }}"
+     data-stay-status-confirmed-value="{{ 'app.extra_status_confirmed'|trans }}">
+    <header class="stay-header">
+        <div class="stay-header-inner">
+            <div class="stay-header-brand">
+                <img src="/images/logo.png" alt="Domo Xangô" class="site-logo site-logo-sm">
+                <div>
+                    <p class="font-serif stay-header-title">Domo Xangô</p>
+                    <p class="stay-header-sub" data-stay-target="headerHome">{{ 'app.welcome'|trans }}, {{ firstName }}</p>
+                    <p class="stay-header-sub" data-stay-target="headerSection" hidden></p>
+                </div>
+            </div>
+            <div class="stay-header-actions">
+                <div class="lang-toggle lang-toggle--hero" style="position:static">
+                    <a href="?{{ app.request.query.all|merge({'_locale': 'pt'})|url_encode }}" class="{{ app.request.locale == 'pt' ? 'active' : '' }}">PT</a>
+                    <a href="?{{ app.request.query.all|merge({'_locale': 'en'})|url_encode }}" class="{{ app.request.locale == 'en' ? 'active' : '' }}">EN</a>
+                </div>
+                <button type="button" class="stay-logout" data-action="click->stay#logout" title="{{ 'app.back'|trans }}">↩</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container stay-main">
+        <div data-stay-target="home" class="stay-home">
+            <div class="stay-card">
+                <p class="stay-card-label">{{ 'app.your_stay'|trans }}</p>
+                <h2 class="stay-card-name font-serif">{{ stay.guestName }}</h2>
+                <div class="stay-card-dates">
+                    <div class="stay-card-date-col">
+                        <p class="stay-card-date-label">{{ 'app.checkin_label'|trans }}</p>
+                        <p class="stay-card-date">{{ g.stay_date(stay.checkIn, dateLocale) }}</p>
+                        <p class="stay-card-time stay-card-time--accent">{{ stay.checkInTime }} – {{ stay.checkInTimeEnd }}</p>
+                    </div>
+                    <div class="stay-card-date-col">
+                        <p class="stay-card-date-label">{{ 'app.checkout_label'|trans }}</p>
+                        <p class="stay-card-date">{{ g.stay_date(stay.checkOut, dateLocale) }}</p>
+                        <p class="stay-card-time stay-card-time--accent">{{ stay.checkOutTime }}</p>
+                    </div>
+                </div>
+                <div class="stay-card-footer">
+                    {{ icon.users('stay-card-guests-icon') }}
+                    <span>{{ stay.guests }} {{ stay.guests == 1 ? 'app.guest_singular'|trans : 'app.guests'|trans|lower }}</span>
+                </div>
+
+                <div class="stay-card-extras" data-stay-target="homeExtras"{% if homeExtras|length == 0 %} hidden{% endif %}>
+                    <p class="stay-card-extras-label">{{ 'app.home_extras'|trans }}</p>
+                    <div class="stay-card-extras-list" data-stay-target="homeExtrasList">
+                        {% for req in homeExtras %}
+                            <button type="button" class="stay-card-extra" data-action="click->stay#navigate" data-section="extras" data-label="{{ 'app.tab_extras'|trans }}">
+                                <span class="stay-card-extra-main">
+                                    <span class="stay-card-extra-icon" aria-hidden="true">{{ icon.sparkles('')|raw }}</span>
+                                    <span class="stay-card-extra-copy">
+                                        <span class="stay-card-extra-name font-serif">{{ req.name }}</span>
+                                        <span class="stay-card-extra-meta">
+                                            {{ req.quantity }}×{% if req.priceAtBooking %} · R$ {{ (req.priceAtBooking * req.quantity)|number_format(2, ',', '.') }}{% endif %}
+                                        </span>
+                                    </span>
+                                </span>
+                                <span class="stay-card-extra-aside">
+                                    <span class="status-pill status-pill--on-dark status-{{ req.status }}">{{ ('app.extra_status_' ~ req.status)|trans }}</span>
+                                    <span class="stay-card-extra-chevron" aria-hidden="true">›</span>
+                                </span>
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {% if stay.rajaaram is defined %}
+                {{ rajaaram.rajaaram_experience(firstName, stay.rajaaram) }}
+            {% else %}
+                <aside class="stay-welcome-strip">
+                    <p class="stay-welcome-strip-kicker">{{ 'app.tab_welcome'|trans }}</p>
+                    <p class="stay-welcome-strip-text font-serif">{{ hero_lead }}</p>
+                </aside>
+            {% endif %}
+
+            {% if stay.specialNotes %}
+                <div class="stay-host-note">
+                    <p class="access-label">{{ 'app.host_note'|trans }}</p>
+                    <p class="stay-host-note-text">{{ stay.specialNotes }}</p>
+                </div>
+            {% endif %}
+
+            <section class="stay-home-section">
+                <p class="stay-home-label">{{ 'app.your_concierge'|trans }}</p>
+                <div class="guide-grid">
+                    {{ g.guide_tile('wifi', 'app.tab_wifi'|trans, icon.wifi('')) }}
+                    {{ g.guide_tile('checkin', 'app.tab_checkin'|trans, icon.key('')) }}
+                    {{ g.guide_tile('location', 'app.tab_location'|trans, icon.map_pin('')) }}
+                    {{ g.guide_tile('extras', 'app.tab_extras'|trans, icon.sparkles(''), pendingCount > 0 ? pendingCount : null) }}
+                    {{ g.guide_tile('rules', 'app.house_rules'|trans, icon.book_open('')) }}
+                </div>
+            </section>
+
+            <section class="stay-home-section">
+                <p class="stay-home-label">{{ 'app.stay_shortcuts'|trans }}</p>
+                <div class="guide-grid">
+                    {{ g.guide_tile('welcome', 'app.welcome_discoveries'|trans, icon.compass('')) }}
+                    {{ g.guide_tile('faq', 'app.tab_faq'|trans, icon.help_circle('')) }}
+                    {{ g.guide_tile('facilities', 'app.tab_facilities'|trans, icon.bed('')) }}
+                    {{ g.guide_tile('food', 'app.tab_food'|trans, icon.utensils('')) }}
+                    {{ g.guide_tile('activities', 'app.tab_activities'|trans, icon.mountain('')) }}
+                    {{ g.guide_tile('markets', 'app.tab_markets'|trans, icon.shopping_bag('')) }}
+                    {{ g.guide_tile('contact', 'app.tab_contact'|trans, icon.phone('')) }}
+                    {{ g.guide_tile('social', 'app.tab_social'|trans, icon.camera('')) }}
+                </div>
+            </section>
+        </div>
+
+        {# Regional curiosities (welcome spots) #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="welcome">
+            {% set region_body = region ? region.body(locale) : 'welcome.region_text'|trans({}, 'guide') %}
+            {% set region_title = region ? region.title(locale) : 'welcome.region_title'|trans({}, 'guide') %}
+            {% set curiosity_icons = ['🌐', '💎', '✨', '🌀', '🌿', '💧'] %}
+            {% set curiosity_keys = ['parallel', 'quartz', 'sky', 'portal', 'park', 'waters'] %}
+
+            <div class="discoveries-page" data-controller="discoveries">
+                {{ g.panel_back() }}
+
+                <section class="discoveries-intro">
+                    <p class="discoveries-kicker">{{ 'app.welcome_discoveries'|trans|upper }}</p>
+                    <h2 class="discoveries-title font-serif">{{ region_title }}</h2>
+                    <p class="discoveries-intro-text">{{ region_body }}</p>
+                </section>
+
+                <nav class="discoveries-nav" aria-label="{{ 'app.welcome_discoveries'|trans }}">
+                    {% if spots|length > 0 %}
+                        {% for spot in spots %}
+                            <button
+                                type="button"
+                                class="discoveries-nav-pill{% if loop.first %} is-active{% endif %}"
+                                data-discoveries-target="pill"
+                                data-index="{{ loop.index0 }}"
+                                data-action="discoveries#jump"
+                            >
+                                <span class="discoveries-nav-pill-num">{{ loop.index }}</span>
+                                {{ spot.title(locale)|split(' ')|first }}
+                            </button>
+                        {% endfor %}
+                    {% else %}
+                        {% for key in curiosity_keys %}
+                            <button
+                                type="button"
+                                class="discoveries-nav-pill{% if loop.first %} is-active{% endif %}"
+                                data-discoveries-target="pill"
+                                data-index="{{ loop.index0 }}"
+                                data-action="discoveries#jump"
+                            >
+                                <span class="discoveries-nav-pill-num">{{ loop.index }}</span>
+                                {{ ('curiosity.' ~ key ~ '_title')|trans({}, 'guide')|split(' ')|first }}
+                            </button>
+                        {% endfor %}
+                    {% endif %}
+                </nav>
+
+                <div class="discoveries-deck">
+                    {% if spots|length > 0 %}
+                        {% for spot in spots %}
+                            <article
+                                class="discoveries-card{% if loop.first %} is-open{% endif %}"
+                                data-discoveries-target="card"
+                                data-index="{{ loop.index0 }}"
+                            >
+                                <button type="button" class="discoveries-card-toggle" data-action="discoveries#toggle" aria-expanded="{{ loop.first ? 'true' : 'false' }}">
+                                    <span class="discoveries-card-num">{{ '%02d'|format(loop.index) }}</span>
+                                    <span class="discoveries-card-icon" aria-hidden="true">{{ curiosity_icons[loop.index0 % curiosity_icons|length] }}</span>
+                                    <span class="discoveries-card-head">
+                                        <span class="discoveries-card-title font-serif">{{ spot.title(locale) }}</span>
+                                        <span class="discoveries-card-hint">{{ 'app.tap_to_explore'|trans }}</span>
+                                    </span>
+                                    <span class="discoveries-card-chevron" aria-hidden="true"></span>
+                                </button>
+                                <div class="discoveries-card-body">
+                                    {% if spot.publicPath %}
+                                        <div class="discoveries-card-media">
+                                            <img src="{{ spot.publicPath }}" alt="{{ spot.title(locale) }}" loading="lazy">
+                                        </div>
+                                    {% endif %}
+                                    <p class="discoveries-card-text">{{ spot.body(locale) }}</p>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    {% else %}
+                        {% for key in curiosity_keys %}
+                            <article
+                                class="discoveries-card{% if loop.first %} is-open{% endif %}"
+                                data-discoveries-target="card"
+                                data-index="{{ loop.index0 }}"
+                            >
+                                <button type="button" class="discoveries-card-toggle" data-action="discoveries#toggle" aria-expanded="{{ loop.first ? 'true' : 'false' }}">
+                                    <span class="discoveries-card-num">{{ '%02d'|format(loop.index) }}</span>
+                                    <span class="discoveries-card-icon" aria-hidden="true">{{ curiosity_icons[loop.index0 % curiosity_icons|length] }}</span>
+                                    <span class="discoveries-card-head">
+                                        <span class="discoveries-card-title font-serif">{{ ('curiosity.' ~ key ~ '_title')|trans({}, 'guide') }}</span>
+                                        <span class="discoveries-card-hint">{{ 'app.tap_to_explore'|trans }}</span>
+                                    </span>
+                                    <span class="discoveries-card-chevron" aria-hidden="true"></span>
+                                </button>
+                                <div class="discoveries-card-body">
+                                    <p class="discoveries-card-text">{{ ('curiosity.' ~ key ~ '_text')|trans({}, 'guide') }}</p>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Check-in/out #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="checkin">
+            {% set checkoutParagraphs = stay.checkOutInstructions|split('\n\n')|filter(p => p|trim != '') %}
+            {% set checkoutNote = checkoutParagraphs|length > 1 ? checkoutParagraphs|slice(1)|join('\n\n') : checkoutParagraphs[0] %}
+
+            <div class="checkin-page">
+                {{ g.panel_back() }}
+
+                <header class="checkin-header">
+                    <p class="checkin-kicker">{{ 'app.access_label'|trans }}</p>
+                    <h2 class="checkin-title font-serif">{{ 'app.tab_checkin'|trans }}</h2>
+                </header>
+
+                <div class="checkin-times">
+                    <div class="checkin-time-card">
+                        <p class="checkin-time-label">{{ 'app.checkin_entry'|trans }}</p>
+                        <p class="checkin-time-value checkin-time-value--accent font-serif">{{ stay.checkInTime }} – {{ stay.checkInTimeEnd }}</p>
+                        <p class="checkin-time-hint">{{ 'app.checkin_window_hint'|trans }}</p>
+                    </div>
+                    <div class="checkin-time-card">
+                        <p class="checkin-time-label">{{ 'app.checkout_exit'|trans }}</p>
+                        <p class="checkin-time-value font-serif">{{ stay.checkOutTime }}</p>
+                    </div>
+                </div>
+
+                <section class="checkin-card">
+                    <p class="checkin-card-label">{{ 'app.checkin_reception_title'|trans }}</p>
+                    <p class="checkin-card-text">{{ g.checkin_access_text(stay.accessInstructions)|nl2br }}</p>
+                </section>
+
+                {% if checkoutNote %}
+                    <section class="checkin-card checkin-card--muted">
+                        <p class="checkin-card-label">{{ 'app.checkout_note_title'|trans }}</p>
+                        <p class="checkin-card-text">{{ checkoutNote|nl2br }}</p>
+                    </section>
+                {% endif %}
+
+                <aside class="checkin-note">
+                    {{ icon.clock('checkin-note-icon') }}
+                    <p>{{ 'app.checkin_arrival_request'|trans({'%from%': stay.checkInTime, '%to%': stay.checkInTimeEnd}) }}</p>
+                </aside>
+            </div>
+        </div>
+
+        {# Location #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="location">
+            {% set lat = stay.latitude + 0 %}
+            {% set lng = stay.longitude + 0 %}
+            {% set mapDelta = 0.035 %}
+
+            <div class="location-page">
+                {{ g.panel_back() }}
+
+                <header class="location-header">
+                    <p class="location-kicker">{{ 'app.directions'|trans|upper }}</p>
+                    <h2 class="location-title font-serif">{{ 'app.location_heading'|trans }}</h2>
+                </header>
+
+                <div class="location-map-wrap">
+                    <iframe
+                        class="location-map"
+                        loading="lazy"
+                        title="{{ 'app.location_heading'|trans }}"
+                        src="https://www.openstreetmap.org/export/embed.html?bbox={{ (lng - mapDelta)|number_format(4, '.', '') }}%2C{{ (lat - mapDelta)|number_format(4, '.', '') }}%2C{{ (lng + mapDelta)|number_format(4, '.', '') }}%2C{{ (lat + mapDelta)|number_format(4, '.', '') }}&amp;layer=mapnik&amp;marker={{ lat|number_format(4, '.', '') }}%2C{{ lng|number_format(4, '.', '') }}"
+                    ></iframe>
+                    <a href="{{ stay.mapUrl }}" target="_blank" rel="noopener" class="location-map-float">
+                        {{ 'app.open_in_maps'|trans }}
+                        {{ icon.navigation('') }}
+                    </a>
+                </div>
+
+                <div class="location-card">
+                    <div class="location-address-block">
+                        <p class="location-card-label">{{ 'app.location_address'|trans|upper }}</p>
+                        <p class="location-address">{{ stay.address }}</p>
+                    </div>
+                    <div class="location-row-divider" aria-hidden="true"></div>
+                    <button type="button" class="location-copy-row" data-copy="{{ stay.address }}" data-action="click->stay#copyIcon" aria-label="{{ 'app.copy_address'|trans }}">
+                        <span>{{ 'app.copy_address'|trans }}</span>
+                        {{ icon.copy('') }}
+                    </button>
+                </div>
+
+                <a href="{{ stay.mapUrl }}" target="_blank" rel="noopener" class="btn btn-primary btn-block location-maps-btn">
+                    {{ icon.external_link('') }}
+                    {{ 'app.open_google_maps'|trans }}
+                </a>
+
+                {% if stay.arrivalInstructions|trim != '' %}
+                    {% set arrivalIntro = g.arrival_intro(stay.arrivalInstructions) %}
+                    <section class="location-card location-card--route">
+                        <p class="location-card-label">{{ 'app.arrival_steps'|trans|upper }}</p>
+                        {% if arrivalIntro %}
+                            <p class="location-route-intro">{{ arrivalIntro|nl2br }}</p>
+                        {% endif %}
+                        <ol class="checkin-steps location-steps">
+                            {{ g.arrival_steps(stay.arrivalInstructions) }}
+                        </ol>
+                        {{ g.arrival_gate_note(stay.arrivalInstructions) }}
+                        {{ g.arrival_follow_ups(stay.arrivalInstructions) }}
+                    </section>
+                {% endif %}
+
+                <aside class="location-note">
+                    <span class="location-note-icon" aria-hidden="true">💡</span>
+                    <p>{{ 'app.location_maps_tip'|trans }}</p>
+                </aside>
+            </div>
+        </div>
+
+        {# Wi-Fi #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="wifi">
+            <div class="wifi-page">
+                {{ g.panel_back() }}
+
+                <header class="wifi-header">
+                    <p class="wifi-kicker">{{ 'app.wifi_connection'|trans }}</p>
+                    <h2 class="wifi-title font-serif">Wi-Fi</h2>
+                </header>
+
+                <div class="wifi-card">
+                    <div class="wifi-row">
+                        <div class="wifi-row-main">
+                            <p class="wifi-row-label">{{ 'app.wifi_network'|trans }}</p>
+                            <p class="wifi-row-value font-serif">{{ stay.wifiName }}</p>
+                        </div>
+                        <button type="button" class="wifi-icon-btn" data-copy="{{ stay.wifiName }}" data-copied-label="✓" data-action="click->stay#copyIcon" aria-label="{{ 'app.copy'|trans }}">
+                            {{ icon.copy('') }}
+                        </button>
+                    </div>
+                    <div class="wifi-row-divider" aria-hidden="true"></div>
+                    <div class="wifi-row">
+                        <div class="wifi-row-main">
+                            <p class="wifi-row-label">{{ 'app.wifi_password'|trans }}</p>
+                            <p class="wifi-row-value wifi-row-value--masked font-serif" data-stay-target="wifiPasswordMask">{% for i in 1..stay.wifiPassword|length %}•{% endfor %}</p>
+                            <p class="wifi-row-value font-serif" data-stay-target="wifiPassword" hidden>{{ stay.wifiPassword }}</p>
+                        </div>
+                        <div class="wifi-row-actions">
+                            <button type="button" class="wifi-icon-btn" data-stay-target="wifiPasswordToggle" data-action="click->stay#toggleWifiPassword" aria-label="{{ 'app.show_password'|trans }}">
+                                <span data-stay-target="wifiPasswordEyeShow">{{ icon.eye('') }}</span>
+                                <span data-stay-target="wifiPasswordEyeHide" hidden>{{ icon.eye_off('') }}</span>
+                            </button>
+                            <button type="button" class="wifi-icon-btn" data-copy="{{ stay.wifiPassword }}" data-copied-label="✓" data-action="click->stay#copyIcon" aria-label="{{ 'app.copy'|trans }}">
+                                {{ icon.copy('') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {% if stay.wifiSecondaryName %}
+                    <p class="wifi-secondary-label">{{ 'app.secondary_wifi'|trans }}</p>
+                    <div class="wifi-card">
+                        <div class="wifi-row">
+                            <div class="wifi-row-main">
+                                <p class="wifi-row-label">{{ 'app.wifi_network'|trans }}</p>
+                                <p class="wifi-row-value font-serif">{{ stay.wifiSecondaryName }}</p>
+                            </div>
+                            <button type="button" class="wifi-icon-btn" data-copy="{{ stay.wifiSecondaryName }}" data-copied-label="✓" data-action="click->stay#copyIcon" aria-label="{{ 'app.copy'|trans }}">
+                                {{ icon.copy('') }}
+                            </button>
+                        </div>
+                        {% if stay.wifiSecondaryPassword %}
+                            <div class="wifi-row-divider" aria-hidden="true"></div>
+                            <div class="wifi-row">
+                                <div class="wifi-row-main">
+                                    <p class="wifi-row-label">{{ 'app.wifi_password'|trans }}</p>
+                                    <p class="wifi-row-value wifi-row-value--masked font-serif" data-stay-target="wifiSecondaryPasswordMask">{% for i in 1..stay.wifiSecondaryPassword|length %}•{% endfor %}</p>
+                                    <p class="wifi-row-value font-serif" data-stay-target="wifiSecondaryPassword" hidden>{{ stay.wifiSecondaryPassword }}</p>
+                                </div>
+                                <div class="wifi-row-actions">
+                                    <button type="button" class="wifi-icon-btn" data-action="click->stay#toggleSecondaryWifiPassword" aria-label="{{ 'app.show_password'|trans }}">
+                                        <span data-stay-target="wifiSecondaryPasswordEyeShow">{{ icon.eye('') }}</span>
+                                        <span data-stay-target="wifiSecondaryPasswordEyeHide" hidden>{{ icon.eye_off('') }}</span>
+                                    </button>
+                                    <button type="button" class="wifi-icon-btn" data-copy="{{ stay.wifiSecondaryPassword }}" data-copied-label="✓" data-action="click->stay#copyIcon" aria-label="{{ 'app.copy'|trans }}">
+                                        {{ icon.copy('') }}
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <aside class="wifi-note">
+                    {{ icon.wifi('wifi-note-icon') }}
+                    <p>{{ 'app.wifi_info_note'|trans }}</p>
+                </aside>
+            </div>
+        </div>
+
+        {# Rules #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="rules">
+            {% set locale = app.request.locale %}
+
+            <div class="rules-page">
+                {{ g.panel_back() }}
+
+                <header class="rules-header">
+                    <p class="rules-kicker">{{ 'app.tab_rules'|trans|upper }}</p>
+                    <h2 class="rules-title font-serif">{{ 'app.house_rules_title'|trans }}</h2>
+                </header>
+
+                {% if houseRules|length > 0 %}
+                    <p class="rules-intro">{{ property.rulesIntro(locale) }}</p>
+
+                    <div class="rules-list">
+                        {% for rule in houseRules %}
+                            <article class="rules-item">
+                                <span class="rules-num">{{ '%02d'|format(loop.index) }}</span>
+                                <div class="rules-content">
+                                    <h3 class="rules-item-title font-serif">{{ rule.title(locale) }}</h3>
+                                    <p class="rules-item-text">{{ rule.body(locale)|nl2br }}</p>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="rules-intro">{{ 'rules.intro'|trans({}, 'guide') }}</p>
+
+                    <div class="rules-list">
+                        {% for i in 1..5 %}
+                            <article class="rules-item">
+                                <span class="rules-num">{{ '%02d'|format(i) }}</span>
+                                <div class="rules-content">
+                                    <h3 class="rules-item-title font-serif">{{ ('rules.rule' ~ i ~ '_title')|trans({}, 'guide') }}</h3>
+                                    <p class="rules-item-text">{{ ('rules.rule' ~ i ~ '_text')|trans({}, 'guide')|nl2br }}</p>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <aside class="rules-note">
+                    <p class="rules-note-title font-serif">{{ 'app.rules_contact_title'|trans }}</p>
+                    <p>{{ 'app.rules_contact_hint'|trans }}</p>
+                    <a href="https://wa.me/{{ wa }}" target="_blank" rel="noopener" class="btn btn-accent btn-block rules-contact-btn">{{ 'app.whatsapp'|trans }} ↗</a>
+                </aside>
+            </div>
+        </div>
+
+        {# FAQ #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="faq">
+            {% set locale = app.request.locale %}
+
+            <div class="faq-page">
+                {{ g.panel_back() }}
+
+                <header class="faq-header">
+                    <p class="faq-kicker">{{ 'app.tab_faq'|trans|upper }}</p>
+                    <h2 class="faq-title font-serif">{{ 'app.faq_heading'|trans }}</h2>
+                </header>
+
+                <div class="faq-list">
+                    {% if faqItems|length > 0 %}
+                        {% for item in faqItems %}
+                            <article class="faq-item">
+                                <h3 class="faq-question font-serif">{{ item.question(locale) }}</h3>
+                                <p class="faq-answer">{{ item.answer(locale) }}</p>
+                            </article>
+                        {% endfor %}
+                    {% else %}
+                        {% for key in ['voltage','lights','dogs','ac','deck','phone','wifi','car','water'] %}
+                            {{ g.faq_item(key) }}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <aside class="faq-note">
+                    <p>{{ 'app.faq_contact_hint'|trans }}</p>
+                    <a href="https://wa.me/{{ wa }}" target="_blank" rel="noopener" class="btn btn-accent btn-block faq-contact-btn">{{ 'app.whatsapp'|trans }} ↗</a>
+                </aside>
+            </div>
+        </div>
+
+        {# Facilities #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="facilities">
+            <div class="facilities-page">
+                {{ g.panel_back() }}
+
+                <header class="facilities-header">
+                    <p class="facilities-kicker">{{ 'app.tab_facilities'|trans }}</p>
+                    <h2 class="facilities-title font-serif">{{ 'app.facilities_heading'|trans }}</h2>
+                </header>
+
+                {{ facilities.facilities_list(true) }}
+            </div>
+        </div>
+
+        {# Food #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="food">
+            <div class="food-page">
+                {{ g.panel_back() }}
+
+                <header class="food-header">
+                    <p class="food-kicker">{{ 'app.tab_food'|trans|upper }}</p>
+                    <h2 class="food-title font-serif">{{ 'app.food_heading'|trans }}</h2>
+                    <p class="food-intro">{{ property.kitchenIntro(locale) }}</p>
+                </header>
+
+                {% if kitchenPhotos|length > 0 %}
+                    <section class="food-showcase" aria-label="{{ 'app.food_gallery'|trans }}">
+                        {% set heroPhoto = kitchenPhotos|first %}
+                        <figure class="food-showcase-hero">
+                            <img src="{{ heroPhoto.publicPath }}" alt="{{ heroPhoto.caption(locale) ?: 'app.food_heading'|trans }}" loading="eager">
+                            {% if heroPhoto.caption(locale) %}
+                                <figcaption class="food-showcase-caption">{{ heroPhoto.caption(locale) }}</figcaption>
+                            {% endif %}
+                        </figure>
+                        {% if kitchenPhotos|length > 1 %}
+                            <div class="food-showcase-strip">
+                                {% for photo in kitchenPhotos|slice(1) %}
+                                    <figure class="food-showcase-thumb">
+                                        <img src="{{ photo.publicPath }}" alt="{{ photo.caption(locale) ?: 'app.food_heading'|trans }}" loading="lazy">
+                                    </figure>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </section>
+                {% endif %}
+
+                <section class="food-services">
+                    <p class="food-section-label">{{ 'app.food_services'|trans }}</p>
+
+                    <div class="food-services-booked" data-stay-target="foodExtrasBooked"{% if foodExtras.requested|length == 0 %} hidden{% endif %}>
+                        {% for req in foodExtras.requested %}
+                            <article class="food-service-booked">
+                                <div>
+                                    <p class="food-service-name font-serif">{{ req.name }}</p>
+                                    <p class="food-service-meta">{{ req.quantity }}×{% if req.priceAtBooking %} · R$ {{ (req.priceAtBooking * req.quantity)|number_format(2, ',', '.') }}{% endif %}</p>
+                                </div>
+                                <span class="status-pill status-{{ req.status }}">{{ ('app.extra_status_' ~ req.status)|trans }}</span>
+                            </article>
+                        {% endfor %}
+                    </div>
+
+                    <div class="food-services-list" data-stay-target="foodExtrasAvailable">
+                        {% for extra in foodExtras.available %}
+                            <article class="food-service-card{% if extra.leadTimeHours and not extra.bookable %} food-service-card--blocked{% endif %}{% if 'Chef' in extra.name or 'chef' in extra.name %} food-service-card--featured{% endif %}"{% if extra.isBreakfast %} data-is-breakfast="1"{% endif %}>
+                                <div class="food-service-top">
+                                    <div class="food-service-copy">
+                                        <p class="food-service-eyebrow">{% if 'Chef' in extra.name or 'chef' in extra.name %}{{ 'app.food_service_chef'|trans }}{% else %}{{ 'app.food_service_breakfast'|trans }}{% endif %}</p>
+                                        <h3 class="food-service-name font-serif">{{ extra.name }}</h3>
+                                        <p class="food-service-desc">{{ extra.description }}</p>
+                                        {% if extra.leadTimeHours %}
+                                            {% if extra.bookable %}
+                                                <p class="food-service-hint">{{ 'app.extra_lead_hint'|trans({'%hours%': extra.leadTimeHours}) }}</p>
+                                            {% else %}
+                                                <p class="food-service-blocked">{{ 'app.extra_lead_blocked'|trans({'%hours%': extra.leadTimeHours}) }}</p>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    <p class="food-service-price font-serif">R$ {{ extra.price|number_format(2, ',', '.') }}</p>
+                                </div>
+                                {% if extra.bookable %}
+                                    <div class="food-service-form">
+                                        <label class="food-service-field">
+                                            <span class="food-service-field-label">{{ 'app.extras_qty'|trans }}</span>
+                                            <input type="number" id="food-qty-{{ extra.id }}" value="1" min="1" max="10" class="food-service-qty">
+                                        </label>
+                                        <label class="food-service-field food-service-field--grow">
+                                            <span class="food-service-field-label">{{ 'app.notes_optional'|trans }}</span>
+                                            <input type="text" id="food-notes-{{ extra.id }}" placeholder="{{ 'app.notes_optional'|trans }}" class="food-service-notes">
+                                        </label>
+                                    </div>
+                                    <button type="button" class="btn btn-accent btn-block food-service-btn" data-extra-id="{{ extra.id }}" data-qty-prefix="food-" data-action="click->stay#requestExtra">{{ 'app.food_book'|trans }}</button>
+                                {% endif %}
+                            </article>
+                        {% else %}
+                            {% if foodExtras.requested|length == 0 %}
+                                <p class="food-services-empty">{{ 'app.food_services_empty'|trans }}</p>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </section>
+
+                {% if kitchenUtensilGroups|length > 0 %}
+                    <section class="food-equipment">
+                        <p class="food-section-label">{{ 'app.food_equipment'|trans }}</p>
+                        <div class="food-equipment-panel">
+                            {% for category, items in kitchenUtensilGroups %}
+                                <div class="food-equipment-group">
+                                    <h3 class="food-equipment-category font-serif">{{ category }}</h3>
+                                    <ul class="food-equipment-list">
+                                        {% for item in items %}
+                                            <li class="food-equipment-item">{{ item.name(locale) }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Activities #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="activities">
+            {% set locale = app.request.locale %}
+
+            <div class="activities-page">
+                {{ g.panel_back() }}
+
+                <header class="activities-header">
+                    <p class="activities-kicker">{{ 'app.tab_activities'|trans|upper }}</p>
+                    <h2 class="activities-title font-serif">{{ 'app.activities_heading'|trans }}</h2>
+                </header>
+
+                {% if activityItems|length > 0 %}
+                    <p class="activities-intro">{{ property.activitiesIntro(locale) }}</p>
+
+                    <div class="activities-list">
+                        {% for item in activityItems %}
+                            <article class="activities-item{% if loop.first %} activities-item--featured{% endif %}">
+                                <span class="activities-icon" aria-hidden="true">{{ item.icon }}</span>
+                                <div class="activities-content">
+                                    <h3 class="activities-item-title font-serif">{{ item.title(locale) }}</h3>
+                                    <p class="activities-item-text">{{ item.body(locale)|nl2br }}</p>
+                                    {% if item.linkUrl or item.linkUrl2 %}
+                                        <div class="activities-links">
+                                            {% if item.linkUrl %}
+                                                {{ g.activity_link(item.linkUrl, 1, item.linkUrl2 ? true : false) }}
+                                            {% endif %}
+                                            {% if item.linkUrl2 %}
+                                                {{ g.activity_link(item.linkUrl2, 2, true) }}
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="activities-list">
+                        {% for item in activityFallback %}
+                            <article class="activities-item{% if loop.first %} activities-item--featured{% endif %}">
+                                <span class="activities-icon" aria-hidden="true">{{ item.icon }}</span>
+                                <div class="activities-content">
+                                    <h3 class="activities-item-title font-serif">{{ item.titleKey|trans({}, 'guide') }}</h3>
+                                    <p class="activities-item-text">{{ item.bodyKey|trans({}, 'guide')|nl2br }}</p>
+                                    {% if item.linkUrl or item.linkUrl2 %}
+                                        <div class="activities-links">
+                                            {% if item.linkUrl %}
+                                                {{ g.activity_link(item.linkUrl, 1, item.linkUrl2 ? true : false) }}
+                                            {% endif %}
+                                            {% if item.linkUrl2 %}
+                                                {{ g.activity_link(item.linkUrl2, 2, true) }}
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <aside class="activities-note">
+                    <p>{{ 'app.activities_contact_hint'|trans }}</p>
+                    <a href="https://wa.me/{{ wa }}" target="_blank" rel="noopener" class="btn btn-accent btn-block activities-contact-btn">{{ 'app.whatsapp'|trans }} ↗</a>
+                </aside>
+            </div>
+        </div>
+
+        {# Markets #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="markets">
+            <div class="markets-page">
+                {{ g.panel_back() }}
+
+                <header class="markets-header">
+                    <p class="markets-kicker">{{ 'app.tab_markets'|trans|upper }}</p>
+                    <h2 class="markets-title font-serif">{{ 'app.markets_heading'|trans }}</h2>
+                    <p class="markets-intro">{{ 'markets.intro'|trans({}, 'guide') }}</p>
+                </header>
+
+                <section class="markets-section">
+                    <p class="markets-section-label">{{ 'markets.alto_title'|trans({}, 'guide') }}</p>
+                    <div class="markets-list">
+                        {% for item in marketGroups.alto %}
+                            <article class="markets-card">
+                                <div class="markets-card-body">
+                                    <h3 class="markets-card-title font-serif">{{ item.name }}</h3>
+                                    <p class="markets-card-text">{{ ('markets.' ~ item.key)|trans({}, 'guide') }}</p>
+                                    {{ g.market_link(item.mapUrl, 'app.open_in_maps'|trans) }}
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="markets-section">
+                    <p class="markets-section-label">{{ 'markets.moinho_title'|trans({}, 'guide') }}</p>
+                    <div class="markets-list">
+                        {% for item in marketGroups.moinho %}
+                            <article class="markets-card">
+                                <div class="markets-card-body">
+                                    <h3 class="markets-card-title font-serif">{{ item.name }}</h3>
+                                    <p class="markets-card-text">{{ ('markets.' ~ item.key)|trans({}, 'guide') }}</p>
+                                    {{ g.market_link(item.mapUrl, 'app.open_in_maps'|trans) }}
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        {# Extras #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="extras">
+            <div class="extras-page">
+                {{ g.panel_back() }}
+
+                <div data-stay-target="extrasContent">
+                <header class="extras-header">
+                    <p class="extras-kicker">{{ 'app.tab_extras'|trans|upper }}</p>
+                    <h2 class="extras-title font-serif">{{ 'app.tab_extras'|trans }}</h2>
+                </header>
+
+                <section class="extras-section" data-stay-target="extrasRequests"{% if extras.myRequests|length == 0 %} hidden{% endif %}>
+                    <p class="extras-section-label">{{ 'app.your_requests'|trans }}</p>
+                    <div data-stay-target="extrasRequestsList">
+                        {% for req in extras.myRequests %}
+                            <article class="extras-request-card">
+                                <div class="extras-request-top">
+                                    <div>
+                                        <p class="extras-item-name font-serif">{{ req.name }}</p>
+                                        <p class="extras-request-qty">{{ req.quantity }}x</p>
+                                    </div>
+                                    <span class="status-pill status-{{ req.status }}">{{ ('app.extra_status_' ~ req.status)|trans }}</span>
+                                </div>
+                                {% if req.status == 'requested' and stay.pixKey %}
+                                    <p class="extras-pix-note">{{ 'app.pix_payment'|trans }}: <strong>{{ stay.pixKey }}</strong></p>
+                                {% endif %}
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                {% set availableExtras = extras.available|filter(e => e.id not in requestedIds and e.category not in ['alimentação', 'alimentacao']) %}
+                <section class="extras-section">
+                    <p class="extras-section-label">{{ 'app.available_extras'|trans }}</p>
+                    <div data-stay-target="extrasAvailableList">
+                    {% for extra in availableExtras %}
+                        <article class="extras-item-card{% if extra.leadTimeHours and not extra.bookable %} extras-item-card--blocked{% endif %}">
+                            <div class="extras-item-top">
+                                <div class="extras-item-copy">
+                                    <p class="extras-item-category">{{ extra.category|upper }}</p>
+                                    <h3 class="extras-item-name font-serif">{{ extra.name }}</h3>
+                                    <p class="extras-item-desc">{{ extra.description }}</p>
+                                    {% if extra.leadTimeHours %}
+                                        {% if extra.bookable %}
+                                            <p class="extras-lead-hint">{{ 'app.extra_lead_hint'|trans({'%hours%': extra.leadTimeHours}) }}</p>
+                                        {% else %}
+                                            <p class="extras-lead-blocked">{{ 'app.extra_lead_blocked'|trans({'%hours%': extra.leadTimeHours}) }}</p>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <p class="extras-item-price font-serif">R$ {{ extra.price|number_format(2, ',', '.') }}</p>
+                            </div>
+
+                            {% if extra.bookable %}
+                                <div class="extras-item-form">
+                                    <label class="extras-field">
+                                        <span class="extras-field-label">{{ 'app.extras_qty'|trans }}</span>
+                                        <input type="number" id="qty-{{ extra.id }}" value="1" min="1" max="10" class="extras-qty-input">
+                                    </label>
+                                    <label class="extras-field extras-field--grow">
+                                        <span class="extras-field-label">{{ 'app.notes_optional'|trans }}</span>
+                                        <input type="text" id="notes-{{ extra.id }}" placeholder="{{ 'app.notes_optional'|trans }}" class="extras-notes-input">
+                                    </label>
+                                </div>
+                                <button type="button" class="btn btn-accent btn-block extras-request-btn" data-extra-id="{{ extra.id }}" data-action="click->stay#requestExtra">{{ 'app.request'|trans }}</button>
+                            {% endif %}
+                        </article>
+                    {% else %}
+                        <p class="extras-empty" data-stay-target="extrasEmpty">{{ 'app.no_extras'|trans }}</p>
+                    {% endfor %}
+                    </div>
+                </section>
+                </div>
+            </div>
+        </div>
+
+        {# Contact #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="contact">
+            {{ g.back_btn() }}
+            <div class="wifi-box" style="text-align:center">
+                <p class="guide-meta" style="color:rgba(245,240,232,.7)">{{ 'app.tab_contact'|trans }}</p>
+                <p class="font-serif" style="font-size:1.5rem;margin:.5rem 0 0">{{ stay.contactPhone }}</p>
+                <p style="margin:1rem 0 0;opacity:.8">{{ stay.contactEmail }}</p>
+                {% if stay.pixKey %}
+                    <p style="margin:1rem 0 0;font-size:.85rem;opacity:.7">Pix · {{ stay.pixKey }}</p>
+                {% endif %}
+                <a href="https://wa.me/{{ wa }}" target="_blank" rel="noopener" class="btn btn-accent" style="margin-top:1.25rem">{{ 'app.whatsapp'|trans }} ↗</a>
+            </div>
+        </div>
+
+        {# Social #}
+        <div class="section-panel stay-panel" data-stay-target="panel" data-section="social">
+            {{ g.back_btn() }}
+            <div class="guide-card guide-card--hero" style="background:var(--primary);color:var(--primary-foreground);border:none">
+                <h3 class="font-serif" style="margin:0 0 .75rem;font-size:1.35rem">{{ 'social.thanks'|trans({}, 'guide') }}</h3>
+                <p class="guide-card-text" style="color:rgba(245,240,232,.75)">{{ 'social.feedback'|trans({}, 'guide') }}</p>
+                <p class="guide-card-text" style="color:rgba(245,240,232,.75)">{{ 'social.return'|trans({}, 'guide') }}</p>
+            </div>
+            <div class="card" style="margin-top:1rem;text-align:center">
+                <p class="guide-meta">{{ 'social.follow'|trans({}, 'guide') }}</p>
+                <p class="font-serif" style="font-size:1.5rem;margin:.5rem 0 0">{{ stay.instagramHandle }}</p>
+                <a href="https://instagram.com/{{ stay.instagramHandle|replace({'@': ''}) }}" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="margin-top:1rem">Instagram ↗</a>
+            </div>
+        </div>
+    </main>
+
+    <div class="extras-confirm-overlay" data-stay-target="extraConfirm" hidden>
+        <div class="extras-confirm">
+            <div class="extras-confirm-icon" aria-hidden="true">✓</div>
+            <h3 class="extras-confirm-title font-serif" data-stay-target="confirmTitle"></h3>
+            <p class="extras-confirm-lead" data-stay-target="confirmLead"></p>
+
+            <div class="extras-confirm-summary">
+                <p class="extras-confirm-item font-serif" data-stay-target="confirmItem"></p>
+                <p class="extras-confirm-total font-serif" data-stay-target="confirmTotal"></p>
+            </div>
+
+            <div class="extras-confirm-pix" data-stay-target="confirmPixBlock" hidden>
+                <p class="extras-confirm-pix-label" data-stay-target="confirmPixLabel"></p>
+                <p class="extras-confirm-pix-hint" data-stay-target="confirmPixHint"></p>
+                <div class="extras-confirm-pix-row">
+                    <code class="extras-confirm-pix-key" data-stay-target="confirmPixKey"></code>
+                    <button type="button" class="extras-confirm-copy" data-stay-target="confirmPixCopy" data-action="click->stay#copyConfirmPix"></button>
+                </div>
+            </div>
+
+            <a href="#" target="_blank" rel="noopener" class="btn btn-accent btn-block extras-confirm-wa" data-stay-target="confirmWhatsapp">
+                {{ 'app.extra_confirm_whatsapp'|trans }} ↗
+            </a>
+            <button type="button" class="btn btn-outline btn-block extras-confirm-back" data-action="click->stay#dismissExtraConfirm" data-stay-target="confirmBack"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}

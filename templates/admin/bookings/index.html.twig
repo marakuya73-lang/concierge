@@ -1,0 +1,104 @@
+{% extends 'admin/base.html.twig' %}
+{% import 'admin/_csrf.html.twig' as csrf %}
+{% block title %}Reservas{% endblock %}
+
+{% macro booking_rows(bookings, highlightPending) %}
+    {% for booking in bookings %}
+        <tr{% if highlightPending and booking.needsGuestInfo %} class="row-pending"{% endif %}>
+            <td>
+                <strong>{{ booking.guestName }}</strong>
+                {% if booking.needsGuestInfo %}<br><span class="admin-pending-badge">Preencher dados do hóspede</span>{% endif %}
+            </td>
+            <td>{{ booking.checkIn|date('d/m/Y') }}</td>
+            <td>{{ booking.checkOut|date('d/m/Y') }}</td>
+            <td><code>{{ booking.accessCode }}</code></td>
+            <td>{{ booking.source }}</td>
+            <td><span class="status-pill status-{{ booking.status == 'confirmed' ? 'confirmed' : (booking.status == 'completed' ? 'paid' : 'cancelled') }}">{{ booking.status == 'confirmed' ? 'confirmada' : (booking.status == 'completed' ? 'concluída' : 'cancelada') }}</span></td>
+            <td><a href="{{ path('admin_booking_show', {id: booking.id, edit: booking.needsGuestInfo ? 1 : 0}) }}">{% if booking.needsGuestInfo %}Completar{% else %}Ver / editar{% endif %}</a></td>
+        </tr>
+    {% else %}
+        <tr><td colspan="7" style="text-align:center;color:var(--muted-foreground);padding:1.5rem">Nenhuma reserva nesta seção.</td></tr>
+    {% endfor %}
+{% endmacro %}
+
+{% block admin %}
+{% import _self as bookings %}
+<div class="admin-content">
+    <div class="admin-header">
+        <div>
+            <h2 class="admin-page-title">Reservas</h2>
+            <p class="admin-page-desc">Todas as estadias num só lugar, Airbnb, Site, Rajaaram, Tucanto. Entradas do calendário Airbnb (origem Site) já vêm com código de acesso.</p>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <form method="post" action="{{ path('admin_sync_ical') }}">
+                {{ csrf.csrf() }}
+                <input type="hidden" name="_redirect" value="admin_bookings">
+                <button type="submit" class="btn btn-outline btn-sm">↻ Sincronizar Airbnb</button>
+            </form>
+            <a href="{{ path('admin_booking_new') }}" class="btn btn-primary btn-sm">+ Nova reserva</a>
+        </div>
+    </div>
+
+    {% include 'admin/_ical_sync_status.html.twig' %}
+
+    {% if pendingSiteBookings|length > 0 %}
+        <div class="admin-notice">
+            {{ pendingSiteBookings|length }} reserva(s) Site importada(s) do calendário Airbnb aguardam dados do hóspede. O código de acesso já está pronto para enviar.
+        </div>
+    {% endif %}
+
+    {% if pendingSiteBookings|length > 0 %}
+        <section class="admin-section">
+            <div class="admin-section-header">
+                <h3 class="admin-section-title">Site: completar dados</h3>
+                <p class="admin-section-desc">Estadias importadas do calendário Airbnb fora da plataforma.</p>
+            </div>
+            <div class="admin-table-wrap">
+                <table>
+                    <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
+                    <tbody>{{ bookings.booking_rows(pendingSiteBookings, true) }}</tbody>
+                </table>
+            </div>
+        </section>
+    {% endif %}
+
+    <section class="admin-section">
+        <div class="admin-section-header">
+            <h3 class="admin-section-title">Estadia actual</h3>
+            <p class="admin-section-desc">Hóspedes no domo hoje ({{ today|date('d/m/Y') }}).</p>
+        </div>
+        <div class="admin-table-wrap">
+            <table>
+                <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
+                <tbody>{{ bookings.booking_rows(currentBookings, false) }}</tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="admin-section">
+        <div class="admin-section-header">
+            <h3 class="admin-section-title">Próximas reservas</h3>
+            <p class="admin-section-desc">Chegadas futuras confirmadas.</p>
+        </div>
+        <div class="admin-table-wrap">
+            <table>
+                <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
+                <tbody>{{ bookings.booking_rows(upcomingBookings, false) }}</tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="admin-section">
+        <div class="admin-section-header">
+            <h3 class="admin-section-title">Reservas anteriores{% if pastBookings|length > 0 %} ({{ pastBookings|length }}){% endif %}</h3>
+            <p class="admin-section-desc">Estadias já encerradas.</p>
+        </div>
+        <div class="admin-table-wrap">
+            <table>
+                <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
+                <tbody>{{ bookings.booking_rows(pastBookings, false) }}</tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

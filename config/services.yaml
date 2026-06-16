@@ -1,0 +1,15 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+
+    App\Security\AdminAuthenticator:
+        arguments:
+            $adminPassword: '%env(ADMIN_PASSWORD)%'
+
+    App\Service\PropertyPhotoUploader:
+        arguments:
+            $uploadDirectory: '%kernel.project_dir%/public/uploads/property'

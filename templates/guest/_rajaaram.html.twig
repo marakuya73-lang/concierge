@@ -1,0 +1,88 @@
+{% macro rajaaram_experience(firstName, rajaaram) %}
+    <section class="rajaaram-experience" aria-labelledby="rajaaram-welcome-title">
+        <div class="rajaaram-welcome">
+            <p class="rajaaram-kicker">{{ 'app.rajaaram_journey_title'|trans }}</p>
+            <h2 id="rajaaram-welcome-title" class="rajaaram-welcome-title font-serif">
+                {{ 'app.rajaaram_welcome_title'|trans({'%name%': firstName}) }}
+            </h2>
+            <p class="rajaaram-welcome-lead">{{ 'app.rajaaram_welcome_lead'|trans }}</p>
+        </div>
+
+        <div class="rajaaram-session">
+            <p class="rajaaram-session-label">{{ 'app.rajaaram_session_label'|trans }}</p>
+            <div class="rajaaram-session-grid">
+                {% if rajaaram.therapy %}
+                    <div class="rajaaram-session-item">
+                        <span class="rajaaram-session-key">{{ 'app.rajaaram_therapy'|trans }}</span>
+                        <span class="rajaaram-session-value font-serif">{{ rajaaram.therapy }}</span>
+                    </div>
+                {% endif %}
+                {% if rajaaram.therapyTime %}
+                    <div class="rajaaram-session-item">
+                        <span class="rajaaram-session-key">{{ 'app.rajaaram_therapy_time'|trans }}</span>
+                        <span class="rajaaram-session-value">{{ rajaaram.therapyTime }}</span>
+                    </div>
+                {% endif %}
+                {% if rajaaram.breakfastIncluded is same as(true) %}
+                    <div class="rajaaram-session-item rajaaram-session-item--wide">
+                        <span class="rajaaram-session-key">{{ 'app.rajaaram_breakfast_label'|trans }}</span>
+                        <span class="rajaaram-session-value">{{ 'app.rajaaram_breakfast_included'|trans }}</span>
+                    </div>
+                {% elseif rajaaram.breakfastIncluded is same as(false) %}
+                    <div class="rajaaram-session-item rajaaram-session-item--wide">
+                        <span class="rajaaram-session-key">{{ 'app.rajaaram_breakfast_label'|trans }}</span>
+                        <span class="rajaaram-session-value">{{ 'app.rajaaram_breakfast_not_included'|trans }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="rajaaram-recommendations">
+            <header class="rajaaram-recommendations-header">
+                <div class="rajaaram-recommendations-heading">
+                    <p class="rajaaram-recommendations-kicker">{{ 'app.rajaaram_recommendations_kicker'|trans }}</p>
+                    <h3 class="rajaaram-recommendations-title font-serif">{{ 'app.rajaaram_recommendations_title'|trans }}</h3>
+                </div>
+                <span class="rajaaram-24h-badge">{{ 'app.rajaaram_24h_badge'|trans }}</span>
+            </header>
+            <p class="rajaaram-recommendations-intro">{{ 'app.rajaaram_recommendations_intro'|trans }}</p>
+
+            <ol class="rajaaram-rec-list">
+                <li class="rajaaram-rec-card">
+                    <span class="rajaaram-rec-num" aria-hidden="true">01</span>
+                    <div class="rajaaram-rec-copy">
+                        <h4 class="rajaaram-rec-title">{{ 'app.rajaaram_rec_abstinence_title'|trans }}</h4>
+                        <p class="rajaaram-rec-text">{{ 'app.rajaaram_rec_abstinence_text'|trans }}</p>
+                    </div>
+                </li>
+                <li class="rajaaram-rec-card">
+                    <span class="rajaaram-rec-num" aria-hidden="true">02</span>
+                    <div class="rajaaram-rec-copy">
+                        <h4 class="rajaaram-rec-title">{{ 'app.rajaaram_rec_diet_title'|trans }}</h4>
+                        <p class="rajaaram-rec-text">{{ 'app.rajaaram_rec_diet_text'|trans }}</p>
+                    </div>
+                </li>
+                <li class="rajaaram-rec-card">
+                    <span class="rajaaram-rec-num" aria-hidden="true">03</span>
+                    <div class="rajaaram-rec-copy">
+                        <h4 class="rajaaram-rec-title">{{ 'app.rajaaram_rec_mental_title'|trans }}</h4>
+                        <p class="rajaaram-rec-text">{{ 'app.rajaaram_rec_mental_text'|trans }}</p>
+                    </div>
+                </li>
+                <li class="rajaaram-rec-card">
+                    <span class="rajaaram-rec-num" aria-hidden="true">04</span>
+                    <div class="rajaaram-rec-copy">
+                        <h4 class="rajaaram-rec-title">{{ 'app.rajaaram_rec_health_title'|trans }}</h4>
+                        <p class="rajaaram-rec-text">{{ 'app.rajaaram_rec_health_text'|trans }}</p>
+                    </div>
+                </li>
+            </ol>
+
+            <aside class="rajaaram-rec-notice">
+                <p>{{ 'app.rajaaram_rec_skincare'|trans }}</p>
+            </aside>
+
+            <p class="rajaaram-rec-closing">{{ 'app.rajaaram_rec_closing'|trans }}</p>
+        </div>
+    </section>
+{% endmacro %}

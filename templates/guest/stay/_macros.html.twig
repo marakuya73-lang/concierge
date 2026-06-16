@@ -1,0 +1,133 @@
+{% macro stay_date(isoDate, locale) %}
+    {% if locale == 'pt' %}
+        {{ isoDate|date('D, j \\d\\e F \\d\\e Y')|replace({
+            'Mon': 'seg.', 'Tue': 'ter.', 'Wed': 'qua.', 'Thu': 'qui.', 'Fri': 'sex.', 'Sat': 'sáb.', 'Sun': 'dom.',
+            'January': 'janeiro', 'February': 'fevereiro', 'March': 'março', 'April': 'abril',
+            'May': 'maio', 'June': 'junho', 'July': 'julho', 'August': 'agosto',
+            'September': 'setembro', 'October': 'outubro', 'November': 'novembro', 'December': 'dezembro'
+        }) }}
+    {% else %}
+        {{ isoDate|date('D, M j, Y') }}
+    {% endif %}
+{% endmacro %}
+
+{% macro back_btn() %}
+    <button type="button" class="btn btn-outline btn-sm stay-back" data-action="click->stay#goHome">← {{ 'app.back'|trans }}</button>
+{% endmacro %}
+
+{% macro panel_back() %}
+    <button type="button" class="panel-back" data-action="click->stay#goHome">← {{ 'app.back'|trans }}</button>
+{% endmacro %}
+
+{% macro checkin_access_text(instructions) %}
+    {% set paragraphs = instructions|split('\n\n')|filter(p => p|trim != '') %}
+    {% if paragraphs|length > 1 %}
+        {{ paragraphs|slice(1)|join('\n\n') }}
+    {% else %}
+        {{ instructions }}
+    {% endif %}
+{% endmacro %}
+
+{% macro arrival_intro(text) %}
+    {% if '\n\n1. ' in text %}
+        {{ text|split('\n\n1. ')|first|trim }}
+    {% elseif '\n1. ' in text %}
+        {{ text|split('\n1. ')|first|trim }}
+    {% endif %}
+{% endmacro %}
+
+{% macro arrival_steps(text) %}
+    {% set stepsText = text %}
+    {% if '\n\n1. ' in text %}
+        {% set stepsText = '1. ' ~ text|split('\n\n1. ', 2)[1] %}
+    {% elseif '\n1. ' in text %}
+        {% set stepsText = '1. ' ~ text|split('\n1. ', 2)[1] %}
+    {% endif %}
+    {% for line in stepsText|split('\n') %}
+        {% set trimmed = line|trim %}
+        {% if trimmed matches '/^\\d+\\./' %}
+            {% set parts = trimmed|split('. ', 2) %}
+            <li class="checkin-step">
+                <span class="checkin-step-num">{{ parts[0] }}</span>
+                <span class="checkin-step-text">{{ parts[1] ?? trimmed }}</span>
+            </li>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% macro arrival_gate_note(text) %}
+    {% for line in text|split('\n') %}
+        {% set trimmed = line|trim %}
+        {% if trimmed matches '/^(Chegando|Arrival)[:：]/i' %}
+            <p class="location-arrival-note">{{ trimmed }}</p>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% macro arrival_follow_ups(text) %}
+    {% if 'Chegando:' in text %}
+        {% set tail = text|split('Chegando:', 2)[1] %}
+    {% elseif 'Arrival:' in text %}
+        {% set tail = text|split('Arrival:', 2)[1] %}
+    {% else %}
+        {% set tail = '' %}
+    {% endif %}
+    {% for part in tail|split('\n\n')|slice(1) %}
+        {% if part|trim != '' %}
+            <p class="location-follow-up">{{ part|trim|nl2br }}</p>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% macro guide_card(title, text) %}
+    <div class="guide-card">
+        {% if title %}<h4 class="guide-card-title font-serif">{{ title }}</h4>{% endif %}
+        <p class="guide-card-text">{{ text }}</p>
+    </div>
+{% endmacro %}
+
+{% macro action_link(url, label, type) %}
+    <a href="{{ url }}" target="_blank" rel="noopener" class="site-link site-link--{{ type }}">
+        <span class="site-link__label">{{ label }}</span>
+        <span class="site-link__arrow" aria-hidden="true">→</span>
+    </a>
+{% endmacro %}
+
+{% macro market_link(url, label) %}
+    {{ _self.action_link(url, label, 'maps') }}
+{% endmacro %}
+
+{% macro activity_link(url, slot, hasSecond) %}
+    {% if 'wa.me' in url %}
+        {% set label = 'app.whatsapp'|trans %}
+        {% set type = 'whatsapp' %}
+    {% elseif 'rajaaram' in url %}
+        {% set label = 'app.learn_more'|trans %}
+        {% set type = 'web' %}
+    {% elseif slot == 2 %}
+        {% set label = 'app.fair_popular'|trans %}
+        {% set type = 'fair' %}
+    {% elseif hasSecond %}
+        {% set label = 'app.fair_producer'|trans %}
+        {% set type = 'fair' %}
+    {% else %}
+        {% set label = 'app.open_in_maps'|trans %}
+        {% set type = 'maps' %}
+    {% endif %}
+    {{ _self.action_link(url, label, type) }}
+{% endmacro %}
+
+{% macro faq_item(key) %}
+    <div class="guide-card">
+        <h4 class="guide-card-title">{{ ('faq.' ~ key ~ '_q')|trans({}, 'guide') }}</h4>
+        <p class="guide-card-text">{{ ('faq.' ~ key ~ '_a')|trans({}, 'guide') }}</p>
+    </div>
+{% endmacro %}
+
+{% macro guide_tile(section, label, icon_html, badge) %}
+    <button type="button" class="guide-tile" data-section="{{ section }}" data-label="{{ label }}" data-action="click->stay#navigate">
+        {% if badge %}<em class="guide-tile-badge">{{ badge }}</em>{% endif %}
+        <span class="guide-tile-icon">{{ icon_html|raw }}</span>
+        <span class="guide-tile-label">{{ label }}</span>
+    </button>
+{% endmacro %}

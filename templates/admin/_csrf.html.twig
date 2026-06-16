@@ -1,0 +1,4 @@
+{# Shared CSRF token for admin POST actions #}
+{% macro csrf() %}
+    <input type="hidden" name="_token" value="{{ csrf_token('admin_action') }}">
+{% endmacro %}

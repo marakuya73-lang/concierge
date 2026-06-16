@@ -1,0 +1,11 @@
+<section class="admin-rajaaram-section" data-booking-form-target="rajaaramSection"{% if form.source.vars.data != constant('App\\Entity\\Booking::SOURCE_RAJAARAM') %} hidden{% endif %}>
+    <div class="admin-section-header" style="margin-top:1.5rem">
+        <h3 class="admin-section-title">Jornada Rajaaram</h3>
+        <p class="admin-section-desc">Terapia e café da manhã incluídos na estadia.</p>
+    </div>
+    <div class="form-row-2">
+        {{ form_row(form.rajaaramTherapy) }}
+        {{ form_row(form.rajaaramTherapyTime) }}
+    </div>
+    {{ form_row(form.rajaaramBreakfastIncluded) }}
+</section>

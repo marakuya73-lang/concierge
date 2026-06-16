@@ -1,0 +1,149 @@
+{% extends 'admin/base.html.twig' %}
+{% import 'admin/_csrf.html.twig' as csrf %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block admin %}
+<div class="admin-content">
+    <div class="admin-header">
+        <div>
+            <p class="admin-kicker">{{ 'now'|date('l, d \\d\\e F')|replace({
+                'Monday': 'segunda-feira', 'Tuesday': 'terça-feira', 'Wednesday': 'quarta-feira',
+                'Thursday': 'quinta-feira', 'Friday': 'sexta-feira', 'Saturday': 'sábado', 'Sunday': 'domingo',
+                'January': 'janeiro', 'February': 'fevereiro', 'March': 'março', 'April': 'abril',
+                'May': 'maio', 'June': 'junho', 'July': 'julho', 'August': 'agosto',
+                'September': 'setembro', 'October': 'outubro', 'November': 'novembro', 'December': 'dezembro'
+            }) }}</p>
+            <h2 class="admin-page-title">Dashboard</h2>
+            <p class="admin-page-desc">Visão geral das reservas e hóspedes.</p>
+        </div>
+        <div class="admin-header-actions">
+            <form method="post" action="{{ path('admin_sync_ical') }}">
+                {{ csrf.csrf() }}
+                <input type="hidden" name="_calendar_year" value="{{ stats.calendar.year }}">
+                <input type="hidden" name="_calendar_month" value="{{ stats.calendar.month }}">
+                <button type="submit" class="btn btn-outline btn-sm">↻ Sincronizar iCal Airbnb</button>
+            </form>
+            <a href="{{ path('admin_booking_new') }}" class="btn btn-primary btn-sm">+ Nova reserva</a>
+        </div>
+    </div>
+
+    {% include 'admin/_ical_sync_status.html.twig' with { lastIcalSyncAt: stats.lastIcalSyncAt } %}
+
+    {% if stats.pendingSite > 0 %}
+        <div class="admin-notice">
+            {{ stats.pendingSite }} reserva(s) Site importada(s) do calendário Airbnb aguardam dados do hóspede.
+            <a href="{{ path('admin_bookings') }}" style="margin-left:.5rem;font-weight:600">Completar agora →</a>
+        </div>
+    {% elseif stats.totalBookings == 0 %}
+        <div class="admin-notice admin-notice--muted">
+            Nenhuma reserva encontrada. Sincronize o Airbnb ou crie uma reserva manualmente para começar.
+        </div>
+    {% endif %}
+
+    <div class="admin-stats">
+        <div class="admin-stat"><div class="admin-stat-value">{{ stats.totalBookings }}</div><div class="admin-stat-label">Total reservas</div></div>
+        <div class="admin-stat admin-stat--accent"><div class="admin-stat-value">{{ stats.currentGuests }}</div><div class="admin-stat-label">Hóspedes agora</div></div>
+        <div class="admin-stat"><div class="admin-stat-value">{{ stats.upcomingBookings }}</div><div class="admin-stat-label">Próximas</div></div>
+        <div class="admin-stat"><div class="admin-stat-value">{{ stats.pendingSite }}</div><div class="admin-stat-label">Site p/ completar</div></div>
+    </div>
+
+    {% if stats.currentBooking %}
+        <div class="admin-highlight">
+            <p class="admin-kicker admin-kicker--light">Hóspede actual</p>
+            <h3 class="admin-highlight-title">{{ stats.currentBooking.guestName }}</h3>
+            <p class="admin-highlight-meta">{{ stats.currentBooking.checkIn|date('d/m/Y') }} → {{ stats.currentBooking.checkOut|date('d/m/Y') }}</p>
+            <p class="admin-highlight-code">Código: <code>{{ stats.currentBooking.accessCode }}</code></p>
+            <a href="{{ path('admin_booking_show', {id: stats.currentBooking.id}) }}" class="btn btn-outline btn-sm admin-highlight-btn">Ver reserva</a>
+        </div>
+    {% endif %}
+
+    <div class="admin-dashboard-grid">
+        <section class="admin-section admin-section--calendar">
+            <div class="admin-section-header admin-calendar-header">
+                <div>
+                    <h3 class="admin-section-title">Calendário</h3>
+                </div>
+                <div class="admin-calendar-nav">
+                    <a href="{{ path('admin_dashboard', stats.calendar.prev) }}" class="admin-calendar-nav-btn" title="Mês anterior">←</a>
+                    <span class="admin-calendar-nav-label">{{ stats.calendar.monthLabel|capitalize }}</span>
+                    {% if not stats.calendar.isCurrentMonth %}
+                        <a href="{{ path('admin_dashboard') }}" class="admin-calendar-nav-today">Hoje</a>
+                    {% endif %}
+                    <a href="{{ path('admin_dashboard', stats.calendar.next) }}" class="admin-calendar-nav-btn" title="Próximo mês">→</a>
+                </div>
+            </div>
+            <div class="admin-calendar">
+                <div class="admin-calendar-head">
+                    {% for label in ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] %}
+                        <span>{{ label }}</span>
+                    {% endfor %}
+                </div>
+                <div class="admin-calendar-grid">
+                    {% for i in 1..stats.calendar.startDow %}<span class="admin-calendar-empty"></span>{% endfor %}
+                    {% for day in 1..stats.calendar.daysInMonth %}
+                        {% set isToday = stats.calendar.isCurrentMonth and day == stats.calendar.today %}
+                        {% set dayBookings = stats.calendar.bookingsByDay[day] ?? [] %}
+                        {% set isOccupied = dayBookings|length > 0 %}
+                        {% set hasConflict = dayBookings|length > 1 %}
+                        <div class="admin-calendar-day{% if isToday %} is-today{% endif %}{% if isOccupied %} is-occupied{% endif %}{% if hasConflict %} is-conflict{% endif %}">
+                            <span class="admin-calendar-day-num">{{ day }}</span>
+                            {% if dayBookings|length > 0 %}
+                                <div class="admin-calendar-day-bookings">
+                                    {% for entry in dayBookings|slice(0, 2) %}
+                                        <a href="{{ path('admin_booking_show', {id: entry.id}) }}" class="admin-calendar-booking" title="{{ entry.guestName }} · {{ entry.checkIn|date('d/m') }}→{{ entry.checkOut|date('d/m') }} · {{ entry.source }}">{{ entry.guestName|split(' ')|first }}</a>
+                                    {% endfor %}
+                                    {% if dayBookings|length > 2 %}
+                                        <span class="admin-calendar-booking-more">+{{ dayBookings|length - 2 }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="admin-calendar-legend">
+                <span><i class="legend-swatch legend-swatch--occupied"></i> Reserva</span>
+                <span><i class="legend-swatch legend-swatch--conflict"></i> Sobreposição</span>
+                <span><i class="legend-swatch legend-swatch--today"></i> Hoje</span>
+            </div>
+        </section>
+
+        <div class="admin-dashboard-side">
+            <section class="admin-section" style="margin-bottom:1rem">
+                <div class="admin-section-header">
+                    <h3 class="admin-section-title">Próximas chegadas</h3>
+                </div>
+                {% for booking in stats.upcoming %}
+                    <a href="{{ path('admin_booking_show', {id: booking.id}) }}" class="admin-list-item">
+                        <strong>{{ booking.guestName }}</strong>
+                        <span>{{ booking.checkIn|date('d/m/Y') }} → {{ booking.checkOut|date('d/m/Y') }}</span>
+                    </a>
+                {% else %}
+                    <p class="admin-empty">Nenhuma chegada programada.</p>
+                {% endfor %}
+                <a href="{{ path('admin_bookings') }}" class="admin-link-row">Ver todas as reservas →</a>
+            </section>
+
+            {% if stats.pendingSiteBookings|length > 0 %}
+                <section class="admin-section" style="margin-bottom:0">
+                    <div class="admin-section-header">
+                        <h3 class="admin-section-title">Site: completar dados</h3>
+                    </div>
+                    {% for booking in stats.pendingSiteBookings %}
+                        <a href="{{ path('admin_booking_show', {id: booking.id, edit: 1}) }}" class="admin-list-item">
+                            <strong>{{ booking.guestName }} · <code>{{ booking.accessCode }}</code></strong>
+                            <span>{{ booking.checkIn|date('d/m/Y') }} → {{ booking.checkOut|date('d/m/Y') }}</span>
+                        </a>
+                    {% endfor %}
+                </section>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="admin-stats admin-stats--compact">
+        <div class="admin-stat admin-stat--compact"><div class="admin-stat-value">{{ stats.occupancyRate }}%</div><div class="admin-stat-label">Ocupação (ano)</div></div>
+        <div class="admin-stat admin-stat--compact"><div class="admin-stat-value">{{ stats.activeExtras }}</div><div class="admin-stat-label">Extras activos</div></div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% macro facility_card(image, index, title, text, reverse, link_section, link_label, icon) %}
+    <article class="facility-card{% if reverse %} facility-card--reverse{% endif %}{% if not image %} facility-card--no-media{% endif %}">
+        {% if image %}
+            <figure class="facility-card-media">
+                <img src="{{ image }}" alt="{{ title }}" loading="lazy">
+            </figure>
+        {% elseif icon %}
+            <div class="facility-card-media facility-card-media--icon" aria-hidden="true">{{ icon|raw }}</div>
+        {% endif %}
+        <div class="facility-card-body">
+            <span class="facility-card-num" aria-hidden="true">{{ '%02d'|format(index) }}</span>
+            <h3 class="facility-card-title font-serif">{{ title }}</h3>
+            <p class="facility-card-text">{{ text }}</p>
+            {% if link_section and link_label %}
+                <button type="button" class="facility-card-link" data-action="click->stay#navigate" data-section="{{ link_section }}" data-label="{{ link_label }}">
+                    {{ link_label }} <span aria-hidden="true">→</span>
+                </button>
+            {% endif %}
+        </div>
+    </article>
+{% endmacro %}
+
+{% macro facilities_list(link_kitchen) %}
+    {% import _self as f %}
+    {% set food_label = 'app.tab_food'|trans %}
+    {% set bed_icon %}<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>{% endset %}
+
+    <figure class="facilities-showcase">
+        <img src="/images/facilities/hero.png" alt="{{ 'app.facilities_heading'|trans }}" loading="eager">
+        <figcaption class="facilities-showcase-caption font-serif">{{ 'app.facilities_intro'|trans }}</figcaption>
+    </figure>
+
+    <div class="facilities-stack">
+        {{ f.facility_card('/images/facilities/dome.png', 1, 'app.facility_dome_title'|trans, 'app.facility_dome_text'|trans, false, null, null, null) }}
+        {{ f.facility_card('/images/facilities/pyramid.png', 2, 'app.facility_pyramid_title'|trans, 'app.facility_pyramid_text'|trans, true, null, null, null) }}
+        {{ f.facility_card(null, 3, 'app.facility_extra_bed_title'|trans, 'app.facility_extra_bed_text'|trans, false, null, null, bed_icon) }}
+        {{ f.facility_card('/images/facilities/deck.png', 4, 'app.facility_deck_title'|trans, 'app.facility_deck_text'|trans, true, null, null, null) }}
+        {{ f.facility_card('/images/facilities/bathroom.png', 5, 'app.facility_bathroom_title'|trans, 'app.facility_bathroom_text'|trans, false, null, null, null) }}
+        {% if link_kitchen %}
+            {{ f.facility_card('/images/facilities/kitchen.png', 6, 'app.facility_kitchen_title'|trans, 'app.facility_kitchen_text'|trans, true, 'food', food_label, null) }}
+        {% else %}
+            {{ f.facility_card('/images/facilities/kitchen.png', 6, 'app.facility_kitchen_title'|trans, 'app.facility_kitchen_text'|trans, true, null, null, null) }}
+        {% endif %}
+    </div>
+{% endmacro %}
