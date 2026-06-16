@@ -22,7 +22,6 @@ final class Version20260616155415 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql('ALTER TABLE blocked_period ADD last_synced_at DATETIME DEFAULT NULL');
         $this->addSql('ALTER TABLE booking ADD ical_summary VARCHAR(255) DEFAULT NULL, ADD last_synced_at DATETIME DEFAULT NULL');
-        $this->addSql('ALTER TABLE extra CHANGE min_guests min_guests INT NOT NULL');
         $this->addSql('ALTER TABLE property ADD airbnb_ical_last_sync_at DATETIME DEFAULT NULL');
     }
 
@@ -31,7 +30,6 @@ final class Version20260616155415 extends AbstractMigration
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql('ALTER TABLE blocked_period DROP last_synced_at');
         $this->addSql('ALTER TABLE booking DROP ical_summary, DROP last_synced_at');
-        $this->addSql('ALTER TABLE extra CHANGE min_guests min_guests INT DEFAULT 1 NOT NULL');
         $this->addSql('ALTER TABLE property DROP airbnb_ical_last_sync_at');
     }
 }
