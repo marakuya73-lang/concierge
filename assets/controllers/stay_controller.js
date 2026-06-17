@@ -13,7 +13,7 @@ export default class extends Controller {
         'foodExtrasBooked', 'foodExtrasAvailable',
         'locationTransfer',
         'selfCheckInModal', 'selfCheckInTitle', 'selfCheckInLead', 'selfCheckInConfirm', 'selfCheckInCancel',
-        'selfCheckInBtn', 'selfCheckInStatus', 'selfCheckInWrap',
+        'selfCheckInBtn', 'selfCheckInStatus',
         'checkinReception', 'checkinReceptionTitle', 'checkinReceptionBody',
     ];
     static values = {
@@ -135,16 +135,14 @@ export default class extends Controller {
                 || (this.hasSelfCheckinDoneValue ? this.selfCheckinDoneValue : 'Self check-in confirmed');
 
             if (this.hasSelfCheckInBtnTarget) {
-                const wrap = this.hasSelfCheckInWrapTarget
-                    ? this.selfCheckInWrapTarget
-                    : this.selfCheckInBtnTarget.parentElement;
+                const card = this.selfCheckInBtnTarget.parentElement;
                 this.selfCheckInBtnTarget.remove();
 
-                if (wrap) {
+                if (card) {
                     const status = document.createElement('p');
                     status.className = 'checkin-self-status';
                     status.textContent = message;
-                    wrap.appendChild(status);
+                    card.appendChild(status);
                 }
             } else if (this.hasSelfCheckInStatusTarget) {
                 this.selfCheckInStatusTarget.textContent = message;

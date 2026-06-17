@@ -1331,50 +1331,24 @@ button, input, select, textarea { font: inherit; }
     margin: .45rem 0 0; font-size: .72rem; line-height: 1.45;
     color: var(--muted-foreground);
 }
-.checkin-self-wrap {
-    margin: -.15rem 0 1rem;
-}
 .checkin-self-btn {
-    display: block;
-    width: 100%;
-    margin: 0;
-    padding: .8rem 1rem;
-    border: 1px solid rgba(26, 58, 46, 0.14);
-    border-radius: calc(var(--radius) + 4px);
-    background: var(--card);
-    color: var(--muted-foreground);
-    font: inherit;
-    font-size: .68rem;
-    font-weight: 500;
-    letter-spacing: .08em;
-    line-height: 1.45;
-    text-align: center;
-    text-transform: uppercase;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(26, 58, 46, 0.04);
-    -webkit-appearance: none;
-    appearance: none;
-    transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
-}
-.checkin-self-btn:hover {
-    background: rgba(235, 227, 214, 0.55);
-    border-color: rgba(26, 58, 46, 0.22);
-    color: var(--foreground);
-}
-.checkin-self-btn:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
+    margin-top: .75rem;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: .72rem;
+    line-height: 1.4;
+    text-align: left;
+    white-space: normal;
 }
 .checkin-self-status {
-    margin: 0;
-    padding: .75rem 1rem;
-    border-radius: calc(var(--radius) + 4px);
+    margin: .75rem 0 0;
+    padding: .5rem .65rem;
+    border-radius: calc(var(--radius) + 2px);
     background: rgba(200, 134, 42, 0.12);
     color: var(--accent);
     font-size: .72rem;
     line-height: 1.45;
     font-weight: 500;
-    text-align: center;
 }
 .checkin-card {
     background: var(--card); border: 1px solid var(--border);
