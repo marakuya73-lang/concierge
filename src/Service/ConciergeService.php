@@ -19,6 +19,7 @@ class ConciergeService
         private PropertyRepository $propertyRepository,
         private ExtraRepository $extraRepository,
         private BookingExtraRepository $bookingExtraRepository,
+        private ExtraRequestNotificationService $extraRequestNotificationService,
     ) {
     }
 
@@ -33,6 +34,8 @@ class ConciergeService
             'checkIn' => $booking->getCheckIn()->format('Y-m-d'),
             'checkOut' => $booking->getCheckOut()->format('Y-m-d'),
             'guests' => $booking->getGuests(),
+            'accessCode' => $booking->getAccessCode(),
+            'domeEntranceCode' => $property->getDomeEntranceCode(),
             'wifiName' => $property->getWifiName(),
             'wifiPassword' => $property->getWifiPassword(),
             'accessInstructions' => $property->getCheckInInstructions($locale),
@@ -167,6 +170,8 @@ class ConciergeService
 
         $this->bookingExtraRepository->getEntityManager()->persist($bookingExtra);
         $this->bookingExtraRepository->getEntityManager()->flush();
+
+        $this->extraRequestNotificationService->notifyAdmin($bookingExtra);
 
         $property = $this->propertyRepository->getOrCreate();
         $result = $this->serializeBookingExtra($bookingExtra, $locale);

@@ -2,6 +2,9 @@ import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller {
     static targets = ['input', 'error', 'submit'];
+    static values = {
+        offlineNoCache: String,
+    };
 
     connect() {
         this.inputs = this.inputTargets;
@@ -47,6 +50,18 @@ export default class extends Controller {
         this.submitTarget.disabled = true;
         this.errorTarget.hidden = true;
 
+        if (!navigator.onLine) {
+            const cachedCode = localStorage.getItem('accessCode');
+            const stayDetails = localStorage.getItem('stayDetails');
+            if (cachedCode === code && stayDetails) {
+                window.location.href = '/stay/' + code;
+                return;
+            }
+            this.showError(this.hasOfflineNoCacheValue ? this.offlineNoCacheValue : 'Offline — open your stay once online first.');
+            this.submitTarget.disabled = false;
+            return;
+        }
+
         try {
             const response = await fetch('/verify-code', {
                 method: 'POST',
@@ -60,7 +75,17 @@ export default class extends Controller {
             localStorage.setItem('accessCode', code);
             window.location.href = '/stay/' + code;
         } catch (err) {
-            this.showError(err.message);
+            if (!navigator.onLine) {
+                const cachedCode = localStorage.getItem('accessCode');
+                const stayDetails = localStorage.getItem('stayDetails');
+                if (cachedCode === code && stayDetails) {
+                    window.location.href = '/stay/' + code;
+                    return;
+                }
+                this.showError(this.hasOfflineNoCacheValue ? this.offlineNoCacheValue : err.message);
+            } else {
+                this.showError(err.message);
+            }
             this.submitTarget.disabled = false;
         }
     }

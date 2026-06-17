@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#1a3a2e">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    {% block manifest %}<link rel="manifest" href="/manifest.json">{% endblock %}
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <title>{% block title %}Domo Xangô{% endblock %}</title>
     <link rel="icon" href="/images/favicon.png">
@@ -16,6 +17,10 @@
 </head>
 <body {% block body_attrs %}data-controller="pwa"{% endblock %}>
     <div id="offline-banner" class="offline-banner">{{ 'app.offline'|trans }}</div>
+    <div id="pwa-update-banner" class="pwa-update-banner" hidden>
+        <span>{{ 'app.pwa_update'|trans }}</span>
+        <button type="button" id="pwa-update-btn" class="pwa-update-btn">{{ 'app.pwa_update_btn'|trans }}</button>
+    </div>
     {% block body %}{% endblock %}
 </body>
 </html>

@@ -103,6 +103,9 @@ class Property
     #[ORM\Column(length: 10)]
     private string $checkOutTime = '11:00';
 
+    #[ORM\Column(length: 20)]
+    private string $domeEntranceCode = '3666';
+
     #[ORM\Column(length: 255)]
     private string $petsPolicy = 'Nossos cães fazem parte da experiência, avise se preferir distância';
 
@@ -305,6 +308,8 @@ class Property
     public function setCheckInTimeEnd(string $v): static { $this->checkInTimeEnd = $v; return $this; }
     public function getCheckOutTime(): string { return $this->checkOutTime; }
     public function setCheckOutTime(string $v): static { $this->checkOutTime = $v; return $this; }
+    public function getDomeEntranceCode(): string { return $this->domeEntranceCode; }
+    public function setDomeEntranceCode(string $v): static { $this->domeEntranceCode = trim($v); return $this; }
     public function getPetsPolicy(): string { return $this->petsPolicy; }
     public function setPetsPolicy(string $v): static { $this->petsPolicy = $v; return $this; }
     public function getSmokingPolicy(): string { return $this->smokingPolicy; }

@@ -456,6 +456,78 @@ button, input, select, textarea { font: inherit; }
     color: #c8862a;
     font-weight: 600;
 }
+.stay-dome-code {
+    margin-top: 1.25rem;
+}
+.stay-dome-code--checkin {
+    margin-top: 0;
+    margin-bottom: 1.25rem;
+}
+.stay-dome-code-panel {
+    border-radius: calc(var(--radius) + 6px);
+    padding: 1.15rem 1.1rem 1rem;
+    text-align: center;
+}
+.stay-dome-code--card .stay-dome-code-panel {
+    background: linear-gradient(180deg, rgba(200, 134, 42, 0.22) 0%, rgba(200, 134, 42, 0.1) 100%);
+    border: 2px solid rgba(200, 134, 42, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(245, 240, 232, 0.08) inset,
+        0 12px 28px rgba(0, 0, 0, 0.18);
+}
+.stay-dome-code--checkin .stay-dome-code-panel {
+    background: linear-gradient(180deg, rgba(200, 134, 42, 0.14) 0%, rgba(200, 134, 42, 0.06) 100%);
+    border: 2px solid rgba(200, 134, 42, 0.45);
+    box-shadow: 0 10px 24px rgba(26, 58, 46, 0.08);
+}
+.stay-dome-code-header {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    margin-bottom: .85rem;
+}
+.stay-dome-code-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: #e0aa55;
+}
+.stay-dome-code--checkin .stay-dome-code-icon {
+    color: var(--accent);
+}
+.stay-dome-code-label {
+    margin: 0;
+    font-size: .68rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #e0aa55;
+}
+.stay-dome-code--checkin .stay-dome-code-label {
+    color: var(--accent);
+}
+.stay-dome-code-value {
+    margin: 0;
+    font-size: clamp(2.75rem, 12vw, 3.75rem);
+    line-height: 1;
+    letter-spacing: .28em;
+    font-weight: 700;
+    color: #f0c06a;
+    text-shadow: 0 2px 16px rgba(200, 134, 42, 0.35);
+}
+.stay-dome-code--checkin .stay-dome-code-value {
+    color: var(--accent);
+    text-shadow: none;
+}
+.stay-dome-code-hint {
+    margin: .65rem 0 0;
+    font-size: .82rem;
+    line-height: 1.4;
+    color: rgba(245, 240, 232, 0.78);
+}
+.stay-dome-code--checkin .stay-dome-code-hint {
+    color: var(--muted-foreground);
+}
 .stay-card-footer {
     display: flex;
     align-items: center;
@@ -2284,6 +2356,62 @@ button, input, select, textarea { font: inherit; }
     border-color: var(--border);
     color: var(--muted-foreground);
 }
+
+.admin-notify-prompt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    flex-wrap: wrap;
+    padding: .75rem 1rem;
+    background: rgba(26, 58, 46, 0.06);
+    border-bottom: 1px solid var(--border);
+    font-size: .8125rem;
+    color: var(--foreground);
+}
+.admin-notify-prompt[hidden] { display: none; }
+.admin-notify-prompt p { margin: 0; flex: 1; min-width: 12rem; }
+
+.admin-alert-banner {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-wrap: wrap;
+    padding: .75rem 1rem;
+    background: hsl(45 93% 47%);
+    color: hsl(45 80% 15%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: .8125rem;
+    animation: admin-alert-pulse 0.4s ease;
+}
+.admin-alert-banner[hidden] { display: none; }
+.admin-alert-banner-inner {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    flex: 1;
+    min-width: 10rem;
+}
+.admin-alert-banner-link {
+    font-weight: 600;
+    color: inherit;
+    text-decoration: underline;
+    white-space: nowrap;
+}
+.admin-alert-banner-dismiss {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    color: inherit;
+    padding: .15rem .35rem;
+}
+@keyframes admin-alert-pulse {
+    0% { transform: translateY(-4px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
 .admin-sync-status {
     margin: -0.75rem 0 1.5rem;
     font-size: .8125rem;
@@ -3129,3 +3257,15 @@ tbody tr.row-pending { background: rgba(200, 134, 42, 0.06); }
     text-align: center; padding: .5rem; font-size: .8rem;
 }
 .offline-banner.visible { display: block; }
+
+.pwa-update-banner {
+    display: flex; align-items: center; justify-content: center; gap: .75rem;
+    background: var(--primary); color: var(--primary-foreground);
+    text-align: center; padding: .5rem .75rem; font-size: .8rem;
+}
+.pwa-update-banner[hidden] { display: none; }
+.pwa-update-btn {
+    background: var(--accent); color: var(--accent-foreground);
+    border: none; border-radius: 999px; padding: .35rem .85rem;
+    font-size: .75rem; font-weight: 600; cursor: pointer;
+}

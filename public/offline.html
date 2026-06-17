@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1a3a2e">
+    <title>Domo Xangô — Offline</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: Georgia, 'Times New Roman', serif;
+            background: #f5f0e8;
+            color: #1a3a2e;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.5rem;
+        }
+        main {
+            max-width: 22rem;
+            text-align: center;
+        }
+        img { width: 4.5rem; height: auto; margin-bottom: 1.5rem; }
+        h1 { font-size: 1.75rem; font-weight: 500; margin-bottom: .75rem; }
+        p { font-family: system-ui, sans-serif; font-size: .95rem; line-height: 1.5; opacity: .85; margin-bottom: 1.5rem; }
+        a, button {
+            display: inline-block;
+            font-family: system-ui, sans-serif;
+            font-size: .9rem;
+            font-weight: 600;
+            background: #c9a84c;
+            color: #1a3a2e;
+            border: none;
+            border-radius: 999px;
+            padding: .75rem 1.5rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <img src="/images/logo.png" alt="Domo Xangô">
+        <h1 id="title">Você está offline</h1>
+        <p id="message">Não foi possível carregar esta página. Se você já acessou sua estadia antes, tente abrir o concierge novamente quando tiver conexão.</p>
+        <button type="button" id="retry">Tentar novamente</button>
+    </main>
+    <script>
+        const isEn = (navigator.language || '').startsWith('en');
+        if (isEn) {
+            document.documentElement.lang = 'en';
+            document.title = 'Domo Xangô — Offline';
+            document.getElementById('title').textContent = 'You are offline';
+            document.getElementById('message').textContent =
+                'This page could not be loaded. If you opened your stay before, try again when you have a connection.';
+            document.getElementById('retry').textContent = 'Try again';
+        }
+
+        const code = localStorage.getItem('accessCode');
+        const retry = document.getElementById('retry');
+        retry.addEventListener('click', () => {
+            if (code) {
+                window.location.href = '/stay/' + code;
+            } else {
+                window.location.href = '/';
+            }
+        });
+    </script>
+</body>
+</html>

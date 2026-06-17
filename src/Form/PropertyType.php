@@ -39,6 +39,11 @@ class PropertyType extends AbstractType
             ->add('checkInTime', TextType::class, ['label' => 'Horário check-in (início)'])
             ->add('checkInTimeEnd', TextType::class, ['label' => 'Horário check-in (fim)'])
             ->add('checkOutTime', TextType::class, ['label' => 'Horário check-out'])
+            ->add('domeEntranceCode', TextType::class, [
+                'label' => 'Código da porta do domo',
+                'attr' => ['inputmode' => 'numeric', 'autocomplete' => 'off'],
+                'help' => 'Código de entrada física do domo. Aparece no concierge do hóspede.',
+            ])
             ->add('petsPolicy', TextType::class, ['label' => 'Política pets'])
             ->add('smokingPolicy', TextType::class, ['label' => 'Política fumo'])
             ->add('silencePolicy', TextType::class, ['label' => 'Política silêncio'])

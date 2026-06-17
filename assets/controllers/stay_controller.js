@@ -30,11 +30,13 @@ export default class extends Controller {
         statusRequested: String,
         statusPaid: String,
         statusConfirmed: String,
+        offlineExtraQueued: String,
     };
 
     connect() {
         this.show('home');
         this.cacheStayPage();
+        window.addEventListener('online', () => this.cacheStayPage());
     }
 
     navigate(event) {
@@ -81,6 +83,14 @@ export default class extends Controller {
             || null;
 
         btn.disabled = true;
+
+        if (!navigator.onLine) {
+            this.enqueueExtraRequest({ code: this.codeValue, extraId, quantity, notes });
+            alert(this.hasOfflineExtraQueuedValue ? this.offlineExtraQueuedValue : 'Request saved — will send when back online.');
+            btn.disabled = false;
+            return;
+        }
+
         try {
             const response = await fetch('/api/concierge/extras/request', {
                 method: 'POST',
@@ -369,11 +379,57 @@ export default class extends Controller {
     }
 
     cacheStayPage() {
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-                type: 'CACHE_STAY',
-                url: window.location.pathname,
+        if (!('serviceWorker' in navigator)) return;
+
+        navigator.serviceWorker.ready.then((registration) => {
+            const sw = registration.active;
+            if (!sw) return;
+
+            const urls = new Set([window.location.pathname]);
+
+            document.querySelectorAll('img[src]').forEach((img) => {
+                try {
+                    const url = new URL(img.src, window.location.origin);
+                    if (url.origin === window.location.origin) {
+                        urls.add(url.pathname);
+                    }
+                } catch {
+                    // ignore invalid URLs
+                }
             });
+
+            document.querySelectorAll('img[srcset]').forEach((img) => {
+                img.srcset.split(',').forEach((part) => {
+                    const src = part.trim().split(/\s+/)[0];
+                    try {
+                        const url = new URL(src, window.location.origin);
+                        if (url.origin === window.location.origin) {
+                            urls.add(url.pathname);
+                        }
+                    } catch {
+                        // ignore invalid URLs
+                    }
+                });
+            });
+
+            sw.postMessage({ type: 'CACHE_URLS', urls: [...urls] });
+        }).catch((e) => {
+            console.warn('Stay cache failed', e);
+        });
+    }
+
+    enqueueExtraRequest(payload) {
+        const key = 'domoPendingExtraRequests';
+        let queue = [];
+
+        try {
+            const raw = localStorage.getItem(key);
+            queue = raw ? JSON.parse(raw) : [];
+        } catch {
+            queue = [];
         }
+
+        queue.push({ ...payload, queuedAt: Date.now() });
+        localStorage.setItem(key, JSON.stringify(queue));
     }
 }

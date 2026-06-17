@@ -1,3 +1,8 @@
+parameters:
+    env(VAPID_PUBLIC_KEY): ''
+    env(VAPID_PRIVATE_KEY): ''
+    env(VAPID_SUBJECT): ''
+
 services:
     _defaults:
         autowire: true
@@ -13,3 +18,9 @@ services:
     App\Service\PropertyPhotoUploader:
         arguments:
             $uploadDirectory: '%kernel.project_dir%/public/uploads/property'
+
+    App\Service\WebPushService:
+        arguments:
+            $vapidPublicKey: '%env(VAPID_PUBLIC_KEY)%'
+            $vapidPrivateKey: '%env(VAPID_PRIVATE_KEY)%'
+            $vapidSubject: '%env(VAPID_SUBJECT)%'

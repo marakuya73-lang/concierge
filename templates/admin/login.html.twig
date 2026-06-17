@@ -2,6 +2,8 @@
 
 {% block title %}Login | Domo Xangô{% endblock %}
 
+{% block manifest %}<link rel="manifest" href="/admin-manifest.json">{% endblock %}
+
 {% block body_attrs %}data-turbo="false"{% endblock %}
 
 {% block body %}
@@ -9,7 +11,10 @@
     <div class="login-card">
         <img src="/images/logo.png" alt="Domo Xangô" class="site-logo login-logo">
         <h1 class="font-serif" style="text-align:center;margin:0 0 .5rem">Domo Xangô</h1>
-        <p style="text-align:center;color:var(--muted-foreground);font-size:.875rem;margin:0 0 2rem">Painel do anfitrião</p>
+        <p style="text-align:center;color:var(--muted-foreground);font-size:.875rem;margin:0 0 1rem">Painel do anfitrião</p>
+        <p style="text-align:center;color:var(--muted-foreground);font-size:.8rem;margin:0 0 1.5rem;line-height:1.4">
+            Adicione à ecrã inicial para alertas de extras com som e vibração.
+        </p>
         {% if error %}
             <div class="alert alert-error">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
         {% endif %}
@@ -20,6 +25,7 @@
                 <input type="password" id="password" name="password" required autofocus>
             </div>
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            <input type="hidden" name="_remember_me" value="on">
             <button type="submit" class="btn btn-primary btn-block" style="margin-top:1rem">Entrar</button>
         </form>
     </div>

@@ -1,5 +1,6 @@
 {% extends 'base.html.twig' %}
 {% import 'guest/stay/_macros.html.twig' as g %}
+{% import 'guest/stay/_access_codes.html.twig' as access %}
 {% import 'guest/_icons.html.twig' as icon %}
 {% import 'guest/_facilities.html.twig' as facilities %}
 {% import 'guest/_rajaaram.html.twig' as rajaaram %}
@@ -36,7 +37,8 @@
      data-stay-tab-extras-value="{{ 'app.tab_extras'|trans }}"
      data-stay-status-requested-value="{{ 'app.extra_status_requested'|trans }}"
      data-stay-status-paid-value="{{ 'app.extra_status_paid'|trans }}"
-     data-stay-status-confirmed-value="{{ 'app.extra_status_confirmed'|trans }}">
+     data-stay-status-confirmed-value="{{ 'app.extra_status_confirmed'|trans }}"
+     data-stay-offline-extra-queued-value="{{ 'app.offline_extra_queued'|trans }}">
     <header class="stay-header">
         <div class="stay-header-inner">
             <div class="stay-header-brand">
@@ -74,6 +76,7 @@
                         <p class="stay-card-time stay-card-time--accent">{{ stay.checkOutTime }}</p>
                     </div>
                 </div>
+                {{ access.access_codes(stay.domeEntranceCode, 'card') }}
                 <div class="stay-card-footer">
                     {{ icon.users('stay-card-guests-icon') }}
                     <span>{{ stay.guests }} {{ stay.guests == 1 ? 'app.guest_singular'|trans : 'app.guests'|trans|lower }}</span>
@@ -268,6 +271,8 @@
                         <p class="checkin-time-value font-serif">{{ stay.checkOutTime }}</p>
                     </div>
                 </div>
+
+                {{ access.access_codes(stay.domeEntranceCode, 'checkin') }}
 
                 <section class="checkin-card">
                     <p class="checkin-card-label">{{ 'app.checkin_reception_title'|trans }}</p>

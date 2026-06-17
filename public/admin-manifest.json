@@ -1,16 +1,16 @@
 {
-  "id": "/",
-  "name": "Domo Xangô — Digital Concierge",
-  "short_name": "Domo Xangô",
-  "description": "Concierge digital para hóspedes do Domo Xangô",
-  "start_url": "/",
-  "scope": "/",
+  "id": "/admin",
+  "name": "Domo Xangô Admin",
+  "short_name": "Domo Admin",
+  "description": "Painel do anfitrião — notificações de extras e reservas",
+  "start_url": "/admin",
+  "scope": "/admin",
   "display": "standalone",
   "background_color": "#f5f0e8",
   "theme_color": "#1a3a2e",
   "orientation": "portrait-primary",
   "lang": "pt-BR",
-  "categories": ["travel", "lifestyle"],
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -27,12 +27,6 @@
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }

@@ -37,4 +37,19 @@ class BookingExtraRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    /** @return BookingExtra[] */
+    public function findGuestRequestsSince(\DateTimeImmutable $since): array
+    {
+        return $this->createQueryBuilder('be')
+            ->andWhere('be.createdAt > :since')
+            ->andWhere('be.requestedBy = :guest')
+            ->andWhere('be.status = :status')
+            ->setParameter('since', $since)
+            ->setParameter('guest', BookingExtra::REQUESTED_BY_GUEST)
+            ->setParameter('status', BookingExtra::STATUS_REQUESTED)
+            ->orderBy('be.createdAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

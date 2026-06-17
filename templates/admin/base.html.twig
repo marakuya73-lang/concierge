@@ -2,15 +2,20 @@
 <html lang="pt" data-turbo="false">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1a3a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="turbo-visit-control" content="reload">
+    <link rel="manifest" href="/admin-manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <title>{% block title %}Admin{% endblock %} | Domo Xangô</title>
     <link rel="icon" href="/images/favicon.png">
     {% block stylesheets %}{% endblock %}
     {% block javascripts %}{% block importmap %}{{ importmap('app') }}{% endblock %}{% endblock %}
 </head>
 <body data-turbo="false">
-<div class="admin-layout" data-controller="admin-nav">
+<div class="admin-layout" data-controller="admin-nav admin-notifications">
     <div class="admin-nav-backdrop" data-action="click->admin-nav#close"></div>
     <aside class="admin-sidebar" id="admin-sidebar">
         <div class="admin-sidebar-brand">
@@ -45,6 +50,11 @@
                 <span>Domo Xangô</span>
             </div>
         </header>
+        <div class="admin-notify-prompt" data-admin-notifications-target="prompt" hidden>
+            <p data-admin-notifications-target="promptText">Receba alertas de extras no telemóvel (som, vibração e notificações).</p>
+            <button type="button" class="btn btn-primary btn-sm" data-admin-notifications-target="enableBtn" data-action="click->admin-notifications#enableNotifications">Ativar notificações</button>
+        </div>
+        <div class="admin-alert-banner" data-admin-notifications-target="banner" hidden></div>
         <main class="admin-main">
             {% for label, messages in app.flashes %}
                 {% for message in messages %}

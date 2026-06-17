@@ -1,0 +1,15 @@
+{% macro access_codes(domeCode, variant) %}
+    {% import 'guest/_icons.html.twig' as icon %}
+    {% if domeCode|trim != '' %}
+        <section class="stay-dome-code stay-dome-code--{{ variant }}" aria-label="{{ 'app.dome_entrance_code'|trans }}">
+            <div class="stay-dome-code-panel">
+                <div class="stay-dome-code-header">
+                    {{ icon.key('stay-dome-code-icon') }}
+                    <p class="stay-dome-code-label">{{ 'app.dome_entrance_code'|trans }}</p>
+                </div>
+                <p class="stay-dome-code-value font-serif">{{ domeCode }}</p>
+                <p class="stay-dome-code-hint">{{ 'app.dome_entrance_code_hint'|trans }}</p>
+            </div>
+        </section>
+    {% endif %}
+{% endmacro %}
