@@ -46,9 +46,13 @@
             .admin-stat { padding: .85rem .75rem; min-width: 0; }
             .admin-stat-value { font-size: 1.5rem; }
             .admin-stat-label { font-size: .6rem; line-height: 1.25; letter-spacing: .04em; }
-            .admin-section { padding: 1rem; overflow: hidden; }
+            .admin-section { padding: 1rem; overflow: hidden; min-width: 0; }
+            .admin-section--calendar {
+                padding-left: max(.75rem, env(safe-area-inset-left));
+                padding-right: max(.75rem, env(safe-area-inset-right));
+            }
             .admin-dashboard-grid { grid-template-columns: 1fr; }
-            .admin-calendar { width: 100%; min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .admin-calendar { width: 100%; min-width: 0; max-width: 100%; overflow: hidden; }
             .admin-calendar-header { flex-direction: column; align-items: stretch; gap: .75rem; }
             .admin-calendar-nav {
                 display: flex; align-items: center; gap: .35rem; flex-wrap: wrap;
@@ -58,11 +62,17 @@
             .admin-calendar-nav-btn { flex-shrink: 0; }
             .admin-calendar-nav-today { flex-shrink: 0; white-space: nowrap; }
             .admin-calendar-head,
-            .admin-calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .2rem; min-width: 0; }
+            .admin-calendar-grid {
+                grid-template-columns: repeat(7, minmax(0, 1fr));
+                width: 100%;
+                gap: .2rem;
+                min-width: 0;
+            }
             .admin-calendar-head span { font-size: 0; }
             .admin-calendar-head span::first-letter { font-size: .65rem; }
             .admin-calendar-day,
-            .admin-calendar-empty { min-height: 3rem; }
+            .admin-calendar-empty { min-height: 2.75rem; min-width: 0; max-width: 100%; }
+            .admin-calendar-empty { min-height: 0; }
             .admin-table-wrap { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
             .admin-notify-bar { flex-direction: column; align-items: stretch; gap: .5rem; }
             .admin-list-item { flex-direction: column; align-items: flex-start; }

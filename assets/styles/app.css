@@ -2747,12 +2747,15 @@ body.admin-app {
 .admin-calendar {
     width: 100%;
     min-width: 0;
+    max-width: 100%;
 }
 .admin-calendar-head,
 .admin-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: .35rem;
+    width: 100%;
+    min-width: 0;
 }
 .admin-calendar-head span {
     text-align: center;
@@ -2763,6 +2766,8 @@ body.admin-app {
 .admin-calendar-day,
 .admin-calendar-empty {
     min-height: 4.5rem;
+    min-width: 0;
+    max-width: 100%;
     border-radius: var(--radius);
     font-size: .78rem;
 }
@@ -2776,9 +2781,9 @@ body.admin-app {
     color: var(--foreground);
 }
 .admin-calendar-empty {
-    aspect-ratio: 1;
-    display: grid;
-    place-items: center;
+    display: block;
+    min-height: 0;
+    padding: 0;
 }
 .admin-calendar-day-num {
     font-weight: 600;
@@ -3459,8 +3464,22 @@ th {
 tbody tr.row-pending { background: rgba(200, 134, 42, 0.06); }
 
 @media (max-width: 768px) {
+    body.admin-app {
+        overflow-x: hidden;
+        max-width: 100%;
+    }
     .admin-topbar { display: flex; }
-    .admin-layout { display: block; }
+    .admin-layout {
+        display: block;
+        overflow-x: hidden;
+        max-width: 100%;
+    }
+    .admin-shell {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: hidden;
+    }
     .admin-nav-backdrop {
         position: fixed;
         inset: 0;
@@ -3487,6 +3506,24 @@ tbody tr.row-pending { background: rgba(200, 134, 42, 0.06); }
         padding-left: max(1rem, env(safe-area-inset-left));
         padding-right: max(1rem, env(safe-area-inset-right));
         padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        overflow-x: hidden;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .admin-content {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .admin-section {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .admin-section--calendar {
+        padding-left: max(.75rem, env(safe-area-inset-left));
+        padding-right: max(.75rem, env(safe-area-inset-right));
     }
     .admin-header {
         flex-direction: column;
@@ -3512,10 +3549,6 @@ tbody tr.row-pending { background: rgba(200, 134, 42, 0.06); }
     }
     .admin-stat { padding: 1rem; }
     .admin-stat-value { font-size: 1.65rem; }
-    .admin-section {
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
     .admin-section-header {
         margin-bottom: 1rem;
         padding-bottom: .85rem;
@@ -3538,12 +3571,13 @@ tbody tr.row-pending { background: rgba(200, 134, 42, 0.06); }
     .admin-calendar {
         width: 100%;
         min-width: 0;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+        overflow: hidden;
     }
     .admin-calendar-head,
     .admin-calendar-grid {
         grid-template-columns: repeat(7, minmax(0, 1fr));
+        width: 100%;
         min-width: 0;
         gap: .2rem;
     }
@@ -3556,7 +3590,9 @@ tbody tr.row-pending { background: rgba(200, 134, 42, 0.06); }
     }
     .admin-calendar-day,
     .admin-calendar-empty {
-        min-height: 3.25rem;
+        min-height: 2.75rem;
+        min-width: 0;
+        max-width: 100%;
         font-size: .68rem;
     }
     .admin-calendar-day {
