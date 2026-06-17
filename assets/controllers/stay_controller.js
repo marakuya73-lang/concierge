@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { reportClientError, shouldReportHttpStatus } from '../utils/report_client_error.js';
 
 export default class extends Controller {
     static targets = [
@@ -118,7 +119,15 @@ export default class extends Controller {
             });
             const data = await response.json();
             if (!response.ok) {
-                throw new Error(data.error);
+                if (shouldReportHttpStatus(response.status)) {
+                    reportClientError(data.error || 'Self check-in failed', 'stay.selfCheckIn', {
+                        code: this.codeValue,
+                        httpStatus: response.status,
+                    });
+                }
+                const error = new Error(data.error);
+                error.skipReport = true;
+                throw error;
             }
 
             this.closeSelfCheckInModal();
@@ -142,6 +151,11 @@ export default class extends Controller {
 
             this.applySelfCheckInReceptionCopy();
         } catch (err) {
+            if (!err.skipReport) {
+                reportClientError(err.message || 'Self check-in failed', 'stay.selfCheckIn', {
+                    code: this.codeValue,
+                });
+            }
             alert(err.message);
             btn.disabled = false;
         }
@@ -196,9 +210,26 @@ export default class extends Controller {
                 body: JSON.stringify({ code: this.codeValue, extraId, quantity, notes }),
             });
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error);
+            if (!response.ok) {
+                if (shouldReportHttpStatus(response.status)) {
+                    reportClientError(data.error || 'Extra request failed', 'stay.requestExtra', {
+                        code: this.codeValue,
+                        httpStatus: response.status,
+                        context: { extraId },
+                    });
+                }
+                const error = new Error(data.error);
+                error.skipReport = true;
+                throw error;
+            }
             this.showExtraConfirmation(data, extraId);
         } catch (err) {
+            if (!err.skipReport) {
+                reportClientError(err.message || 'Extra request failed', 'stay.requestExtra', {
+                    code: this.codeValue,
+                    context: { extraId },
+                });
+            }
             alert(err.message);
             btn.disabled = false;
         }

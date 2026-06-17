@@ -2,17 +2,21 @@
 
 namespace App\Controller;
 
+use App\Service\ClientErrorService;
 use App\Service\ConciergeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/concierge')]
 class ConciergeApiController extends AbstractController
 {
-    public function __construct(private ConciergeService $conciergeService)
-    {
+    public function __construct(
+        private ConciergeService $conciergeService,
+        private ClientErrorService $clientErrorService,
+    ) {
     }
 
     #[Route('/extras', name: 'api_concierge_extras', methods: ['GET'])]
@@ -26,6 +30,8 @@ class ConciergeApiController extends AbstractController
         try {
             return $this->json($this->conciergeService->getExtrasForGuest($code, $request->getLocale()));
         } catch (\Throwable $e) {
+            $this->reportIfUnexpected($e, 'api_concierge_extras', $code, 401);
+
             return $this->json(['error' => $e->getMessage()], 401);
         }
     }
@@ -49,8 +55,10 @@ class ConciergeApiController extends AbstractController
             return $this->json($result, 201);
         } catch (\Throwable $e) {
             $status = str_contains($e->getMessage(), 'já solicitou') ? 403 : ($e->getCode() ?: 400);
+            $status = $status >= 100 ? $status : 400;
+            $this->reportIfUnexpected($e, 'api_concierge_request_extra', $code, $status);
 
-            return $this->json(['error' => $e->getMessage()], $status >= 100 ? $status : 400);
+            return $this->json(['error' => $e->getMessage()], $status);
         }
     }
 
@@ -75,8 +83,10 @@ class ConciergeApiController extends AbstractController
                 str_contains($e->getMessage(), 'não encontrada') || str_contains($e->getMessage(), 'not found') => 404,
                 default => $e->getCode() ?: 400,
             };
+            $status = $status >= 100 ? $status : 400;
+            $this->reportIfUnexpected($e, 'api_concierge_cancel_extra', $code, $status);
 
-            return $this->json(['error' => $e->getMessage()], $status >= 100 ? $status : 400);
+            return $this->json(['error' => $e->getMessage()], $status);
         }
     }
 
@@ -99,8 +109,19 @@ class ConciergeApiController extends AbstractController
                 || str_contains($e->getMessage(), '9h') || str_contains($e->getMessage(), '9:00')
                 ? 403
                 : ($e->getCode() ?: 400);
+            $status = $status >= 100 ? $status : 400;
+            $this->reportIfUnexpected($e, 'api_concierge_self_checkin', $code, $status);
 
-            return $this->json(['error' => $e->getMessage()], $status >= 100 ? $status : 400);
+            return $this->json(['error' => $e->getMessage()], $status);
         }
+    }
+
+    private function reportIfUnexpected(\Throwable $exception, string $route, ?string $code, int $status): void
+    {
+        if ($exception instanceof HttpExceptionInterface && $status < 500) {
+            return;
+        }
+
+        $this->clientErrorService->reportUnexpected($exception, $route, $code, $status);
     }
 }

@@ -179,4 +179,18 @@ class BookingRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /** @return Booking[] */
+    public function findNeedingUpcomingReminder(\DateTimeImmutable $checkInDate): array
+    {
+        return $this->createQueryBuilder('b')
+            ->andWhere('b.status = :status')
+            ->andWhere('b.upcomingReminderSentAt IS NULL')
+            ->andWhere('b.checkIn = :checkInDate')
+            ->setParameter('status', Booking::STATUS_CONFIRMED)
+            ->setParameter('checkInDate', $checkInDate)
+            ->orderBy('b.checkIn', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -2567,6 +2567,28 @@ body.admin-app {
     border-color: var(--border);
     color: var(--muted-foreground);
 }
+.admin-notice--error {
+    background: rgba(176, 42, 42, 0.08);
+    border-color: rgba(176, 42, 42, 0.24);
+    color: #7f1d1d;
+}
+.admin-error-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .35rem;
+}
+.admin-error-item span {
+    white-space: normal;
+}
+.admin-error-item-link {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+}
+.admin-section--errors {
+    border-color: rgba(176, 42, 42, 0.18);
+}
 
 .admin-notify-prompt {
     display: flex;
@@ -2617,6 +2639,13 @@ body.admin-app {
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     font-size: .8125rem;
     animation: admin-alert-pulse 0.4s ease;
+}
+.admin-alert-banner--error {
+    background: #7f1d1d;
+    color: #fff;
+}
+.admin-alert-banner--error .admin-alert-banner-link {
+    color: #fff;
 }
 .admin-alert-banner[hidden] { display: none; }
 .admin-alert-banner-inner {
@@ -2979,7 +3008,59 @@ tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover { background: rgba(26, 58, 46, 0.02); }
 .admin-booking-row { cursor: pointer; }
 .admin-booking-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.admin-booking-row td a { position: relative; z-index: 1; }
+.admin-booking-name-link {
+    color: inherit;
+    text-decoration: none;
+    font-weight: inherit;
+}
+.admin-booking-name-link:hover {
+    color: var(--primary);
+    text-decoration: underline;
+}
+.admin-booking-cards {
+    display: none;
+}
+.admin-booking-card {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    padding: .9rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 2px);
+    background: rgba(26, 58, 46, 0.02);
+    color: inherit;
+    text-decoration: none;
+    transition: background .15s ease, border-color .15s ease;
+}
+.admin-booking-card:hover,
+.admin-booking-card:active {
+    background: rgba(26, 58, 46, 0.05);
+    border-color: rgba(26, 58, 46, 0.18);
+}
+.admin-booking-card--pending {
+    background: rgba(200, 134, 42, 0.06);
+    border-color: rgba(200, 134, 42, 0.22);
+}
+.admin-booking-card-main {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+}
+.admin-booking-card-dates {
+    font-size: .82rem;
+    color: var(--muted-foreground);
+}
+.admin-booking-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem .75rem;
+    align-items: center;
+    font-size: .78rem;
+    color: var(--muted-foreground);
+}
+.admin-booking-card-meta code {
+    font-size: .78rem;
+}
 th {
     background: var(--muted); font-size: .68rem; text-transform: uppercase;
     letter-spacing: .08em; color: var(--muted-foreground); font-weight: 600;
@@ -3624,6 +3705,14 @@ tbody tr.row-pending { background: rgba(200, 134, 42, 0.06); }
     }
     .admin-list-item span {
         white-space: normal;
+    }
+    .admin-booking-cards {
+        display: flex;
+        flex-direction: column;
+        gap: .65rem;
+    }
+    .admin-table-wrap--desktop {
+        display: none;
     }
     .admin-notify-prompt,
     .admin-notify-bar,

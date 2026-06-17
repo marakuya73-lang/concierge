@@ -2,6 +2,7 @@ import { Controller } from '@hotwired/stimulus';
 
 const LAST_SEEN_KEY = 'domoAdminLastSeenExtra';
 const SEEN_SELF_CHECKIN_KEY = 'domoAdminSeenSelfCheckInIds';
+const SEEN_CLIENT_ERROR_KEY = 'domoAdminSeenClientErrorIds';
 const POLL_INTERVAL_MS = 10000;
 const SEEN_IDS_KEY = 'domoAdminSeenExtraIds';
 const POLL_OVERLAP_SECONDS = 15;
@@ -12,6 +13,7 @@ export default class extends Controller {
     connect() {
         this.seenIds = this.loadSeenIds();
         this.seenSelfCheckInIds = this.loadSeenSelfCheckInIds();
+        this.seenClientErrorIds = this.loadSeenClientErrorIds();
         this.lastSeen = this.loadLastSeen();
         this.pollTimer = null;
         this.audioContext = null;
@@ -225,12 +227,75 @@ export default class extends Controller {
                 this.handleNewSelfCheckIn(item);
             }
 
+            const newClientErrors = (data.clientErrors || []).filter(
+                (item) => !this.seenClientErrorIds.has(item.id),
+            );
+            for (const item of newClientErrors) {
+                this.handleNewClientError(item);
+            }
+
             if (data.serverTime) {
                 this.lastSeen = data.serverTime;
                 this.saveLastSeen();
             }
         } catch {
             // offline or session expired
+        }
+    }
+
+    handleNewClientError(item) {
+        this.seenClientErrorIds.add(item.id);
+        this.saveSeenClientErrorIds();
+
+        this.showClientErrorBanner(item);
+        this.vibrate();
+        this.playAlert();
+
+        if (Notification.permission === 'granted') {
+            this.showClientErrorNotification(item);
+        }
+    }
+
+    showClientErrorBanner(item) {
+        if (!this.hasBannerTarget) return;
+
+        const guest = item.guestName ? `${item.guestName} · ` : '';
+        const code = item.accessCode ? `código ${item.accessCode} · ` : '';
+
+        this.bannerTarget.hidden = false;
+        this.bannerTarget.classList.add('admin-alert-banner--error');
+        this.bannerTarget.innerHTML = `
+            <div class="admin-alert-banner-inner">
+                <strong>Erro no site do hóspede</strong>
+                <span>${guest}${code}${item.message}</span>
+            </div>
+            <a href="${item.bookingUrl}" class="admin-alert-banner-link">${item.guestName ? 'Ver reserva →' : 'Abrir dashboard →'}</a>
+            <button type="button" class="admin-alert-banner-dismiss" data-action="click->admin-notifications#dismissBanner" aria-label="Fechar">×</button>
+        `;
+    }
+
+    showClientErrorNotification(item) {
+        const title = 'Erro no site do hóspede';
+        const body = item.guestName ? `${item.guestName} · ${item.message}` : item.message;
+        const options = {
+            body,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/icon-192.png',
+            vibrate: [200, 100, 200, 100, 400],
+            tag: `client-error-${item.id}`,
+            renotify: true,
+            requireInteraction: true,
+            data: { url: item.bookingUrl },
+        };
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready
+                .then((reg) => reg.showNotification(title, options))
+                .catch(() => {
+                    try { new Notification(title, options); } catch { /* unsupported */ }
+                });
+        } else {
+            try { new Notification(title, options); } catch { /* unsupported */ }
         }
     }
 
@@ -250,6 +315,7 @@ export default class extends Controller {
     showSelfCheckInBanner(item) {
         if (!this.hasBannerTarget) return;
 
+        this.bannerTarget.classList.remove('admin-alert-banner--error');
         this.bannerTarget.hidden = false;
         this.bannerTarget.innerHTML = `
             <div class="admin-alert-banner-inner">
@@ -302,6 +368,7 @@ export default class extends Controller {
     showBanner(req) {
         if (!this.hasBannerTarget) return;
 
+        this.bannerTarget.classList.remove('admin-alert-banner--error');
         this.bannerTarget.hidden = false;
         this.bannerTarget.innerHTML = `
             <div class="admin-alert-banner-inner">
@@ -316,6 +383,7 @@ export default class extends Controller {
     dismissBanner() {
         if (this.hasBannerTarget) {
             this.bannerTarget.hidden = true;
+            this.bannerTarget.classList.remove('admin-alert-banner--error');
             this.bannerTarget.innerHTML = '';
         }
     }
@@ -427,5 +495,18 @@ export default class extends Controller {
 
     saveSeenSelfCheckInIds() {
         sessionStorage.setItem(SEEN_SELF_CHECKIN_KEY, JSON.stringify([...this.seenSelfCheckInIds]));
+    }
+
+    loadSeenClientErrorIds() {
+        try {
+            const raw = sessionStorage.getItem(SEEN_CLIENT_ERROR_KEY);
+            return new Set(raw ? JSON.parse(raw) : []);
+        } catch {
+            return new Set();
+        }
+    }
+
+    saveSeenClientErrorIds() {
+        sessionStorage.setItem(SEEN_CLIENT_ERROR_KEY, JSON.stringify([...this.seenClientErrorIds]));
     }
 }

@@ -10,6 +10,7 @@ use App\Repository\KitchenPhotoRepository;
 use App\Repository\KitchenUtensilRepository;
 use App\Repository\PropertyPhotoRepository;
 use App\Repository\PropertyRepository;
+use App\Service\ClientErrorService;
 use App\Service\ConciergeService;
 use App\Entity\KitchenUtensil;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -30,6 +31,7 @@ class GuestController extends AbstractController
         private KitchenPhotoRepository $kitchenPhotoRepository,
         private KitchenUtensilRepository $kitchenUtensilRepository,
         private ConciergeService $conciergeService,
+        private ClientErrorService $clientErrorService,
     ) {
     }
 
@@ -59,6 +61,8 @@ class GuestController extends AbstractController
 
             return $this->json($stay);
         } catch (\Throwable $e) {
+            $this->clientErrorService->reportUnexpected($e, 'guest_verify_code', $code, 401);
+
             return $this->json(['error' => $e->getMessage()], 401);
         }
     }
@@ -73,6 +77,8 @@ class GuestController extends AbstractController
             $extras = $this->conciergeService->getExtrasForGuest($code, $request->getLocale());
             $foodExtras = $this->conciergeService->getFoodExtrasForGuest($code, $request->getLocale());
         } catch (\Throwable $e) {
+            $this->clientErrorService->reportUnexpected($e, 'guest_stay', $code, 401);
+
             return $this->render('guest/denied.html.twig', ['error' => $e->getMessage()]);
         }
 

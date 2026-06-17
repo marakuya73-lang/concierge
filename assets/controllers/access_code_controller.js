@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { reportClientError, shouldReportHttpStatus } from '../utils/report_client_error.js';
 
 export default class extends Controller {
     static targets = ['input', 'error', 'submit'];
@@ -69,7 +70,17 @@ export default class extends Controller {
                 body: JSON.stringify({ code }),
             });
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Código inválido');
+            if (!response.ok) {
+                if (shouldReportHttpStatus(response.status)) {
+                    reportClientError(data.error || 'Verify code failed', 'guest.verifyCode', {
+                        code,
+                        httpStatus: response.status,
+                    });
+                }
+                const error = new Error(data.error || 'Código inválido');
+                error.skipReport = true;
+                throw error;
+            }
 
             localStorage.setItem('stayDetails', JSON.stringify(data));
             localStorage.setItem('accessCode', code);
@@ -84,6 +95,9 @@ export default class extends Controller {
                 }
                 this.showError(this.hasOfflineNoCacheValue ? this.offlineNoCacheValue : err.message);
             } else {
+                if (!err.skipReport) {
+                    reportClientError(err.message || 'Verify code failed', 'guest.verifyCode', { code });
+                }
                 this.showError(err.message);
             }
             this.submitTarget.disabled = false;

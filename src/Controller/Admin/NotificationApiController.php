@@ -3,8 +3,10 @@
 namespace App\Controller\Admin;
 
 use App\Entity\BookingExtra;
+use App\Entity\GuestClientError;
 use App\Repository\BookingExtraRepository;
 use App\Repository\BookingRepository;
+use App\Repository\GuestClientErrorRepository;
 use App\Service\WebPushService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,6 +22,7 @@ class NotificationApiController extends AbstractController
         private WebPushService $webPushService,
         private BookingExtraRepository $bookingExtraRepository,
         private BookingRepository $bookingRepository,
+        private GuestClientErrorRepository $guestClientErrorRepository,
     ) {
     }
 
@@ -92,6 +95,7 @@ class NotificationApiController extends AbstractController
 
         $requests = $this->bookingExtraRepository->findGuestRequestsSince($sinceDate);
         $selfCheckIns = $this->bookingRepository->findSelfCheckInRequestsSince($sinceDate);
+        $clientErrors = $this->guestClientErrorRepository->findSince($sinceDate);
 
         return $this->json([
             'serverTime' => time(),
@@ -127,6 +131,23 @@ class NotificationApiController extends AbstractController
                     ),
                 ];
             }, $selfCheckIns),
+            'clientErrors' => array_map(function (GuestClientError $error) {
+                $booking = $error->getBooking();
+
+                return [
+                    'id' => $error->getId(),
+                    'message' => $error->getMessage(),
+                    'route' => $error->getRoute(),
+                    'source' => $error->getSource(),
+                    'accessCode' => $error->getAccessCode(),
+                    'guestName' => $booking?->getGuestName(),
+                    'httpStatus' => $error->getHttpStatus(),
+                    'createdAt' => $error->getCreatedAt()->getTimestamp(),
+                    'bookingUrl' => $booking
+                        ? $this->generateUrl('admin_booking_show', ['id' => $booking->getId()], UrlGeneratorInterface::ABSOLUTE_PATH)
+                        : $this->generateUrl('admin_dashboard', [], UrlGeneratorInterface::ABSOLUTE_PATH),
+                ];
+            }, $clientErrors),
         ]);
     }
 }

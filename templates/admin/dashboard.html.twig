@@ -24,6 +24,12 @@
 
     {% include 'admin/_ical_sync_status.html.twig' with { lastIcalSyncAt: stats.lastIcalSyncAt } %}
 
+    {% if stats.clientErrorCount24h > 0 %}
+        <div class="admin-notice admin-notice--error">
+            {{ stats.clientErrorCount24h }} erro(s) reportado(s) por hóspedes nas últimas 24 horas.
+        </div>
+    {% endif %}
+
     {% if stats.pendingSite > 0 %}
         <div class="admin-notice">
             {{ stats.pendingSite }} reserva(s) Site importada(s) do calendário Airbnb aguardam dados do hóspede.
@@ -50,6 +56,26 @@
             <p class="admin-highlight-code">Código: <code>{{ stats.currentBooking.accessCode }}</code></p>
             <a href="{{ path('admin_booking_show', {id: stats.currentBooking.id}) }}" class="btn btn-outline btn-sm admin-highlight-btn">Ver reserva</a>
         </div>
+    {% endif %}
+
+    {% if stats.recentClientErrors|length > 0 %}
+        <section class="admin-section admin-section--errors">
+            <div class="admin-section-header">
+                <h3 class="admin-section-title">Erros recentes (hóspedes)</h3>
+                <p class="admin-section-desc">Problemas reportados nas últimas 24 horas.</p>
+            </div>
+            {% for error in stats.recentClientErrors %}
+                <div class="admin-list-item admin-list-item--static admin-error-item">
+                    <div>
+                        <strong>{{ error.message }}</strong>
+                        <span>{{ error.createdAt|date('d/m/Y H:i') }} · {{ error.source == 'client' ? 'Browser' : 'Servidor' }} · {{ error.route }}{% if error.accessCode %} · {{ error.accessCode }}{% endif %}</span>
+                    </div>
+                    {% if error.booking %}
+                        <a href="{{ path('admin_booking_show', {id: error.booking.id}) }}" class="admin-error-item-link">Ver reserva →</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </section>
     {% endif %}
 
     <div class="admin-dashboard-grid">

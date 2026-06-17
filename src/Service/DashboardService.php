@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\Booking;
 use App\Repository\BookingRepository;
 use App\Repository\ExtraRepository;
+use App\Repository\GuestClientErrorRepository;
 use App\Repository\PropertyRepository;
 
 class DashboardService
@@ -13,6 +14,7 @@ class DashboardService
         private BookingRepository $bookingRepository,
         private ExtraRepository $extraRepository,
         private PropertyRepository $propertyRepository,
+        private GuestClientErrorRepository $guestClientErrorRepository,
     ) {
     }
 
@@ -79,6 +81,8 @@ class DashboardService
             'upcoming' => array_slice($upcomingBookings, 0, 5),
             'pendingSiteBookings' => array_slice($pendingSite, 0, 5),
             'calendar' => $this->buildCalendar($year, $month, $today, $allBookings),
+            'recentClientErrors' => $this->guestClientErrorRepository->findRecent(24, 5),
+            'clientErrorCount24h' => $this->guestClientErrorRepository->countRecent(24),
         ];
     }
 

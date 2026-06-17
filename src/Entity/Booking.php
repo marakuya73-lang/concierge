@@ -137,6 +137,9 @@ class Booking
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $selfCheckInRequestedAt = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $upcomingReminderSentAt = null;
+
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
@@ -193,6 +196,8 @@ class Booking
     public function setSelfCheckInRequested(bool $v): static { $this->selfCheckInRequested = $v; return $this; }
     public function getSelfCheckInRequestedAt(): ?\DateTimeImmutable { return $this->selfCheckInRequestedAt; }
     public function setSelfCheckInRequestedAt(?\DateTimeImmutable $v): static { $this->selfCheckInRequestedAt = $v; return $this; }
+    public function getUpcomingReminderSentAt(): ?\DateTimeImmutable { return $this->upcomingReminderSentAt; }
+    public function setUpcomingReminderSentAt(?\DateTimeImmutable $v): static { $this->upcomingReminderSentAt = $v; return $this; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
 
     public function isRajaaram(): bool
