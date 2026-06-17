@@ -32,6 +32,7 @@
      data-stay-already-requested-value="{{ 'app.already_requested'|trans }}"
      data-stay-copy-pix-value="{{ 'app.copy_pix'|trans }}"
      data-stay-pix-payment-value="{{ 'app.pix_payment'|trans }}"
+     data-stay-transfer-label-value="{{ 'app.transfer'|trans|upper }}"
      data-stay-no-extras-value="{{ 'app.no_extras'|trans }}"
      data-stay-food-services-empty-value="{{ 'app.food_services_empty'|trans }}"
      data-stay-tab-extras-value="{{ 'app.tab_extras'|trans }}"
@@ -375,42 +376,48 @@
                         {% set transferExtra = extras.available|filter(e => e.category == 'transfer')|first %}
                         {% set transferRequest = extras.myRequests|filter(r => r.status != 'cancelled' and r.category == 'transfer')|first %}
                         {% if transferExtra or transferRequest %}
-                            <div class="location-transfer-card{% if transferExtra and transferExtra.leadTimeHours and not transferExtra.bookable and not transferRequest %} location-transfer-card--blocked{% endif %}" data-stay-target="locationTransfer">
-                                <p class="location-transfer-intro">{{ g.arrival_transfer_line(stay.arrivalInstructions)|raw }}</p>
-
-                                {% if transferRequest %}
-                                    <div class="location-transfer-status">
-                                        <div class="location-transfer-status-copy">
-                                            <p class="location-transfer-price font-serif">R$ {{ (transferRequest.priceAtBooking * transferRequest.quantity)|number_format(2, ',', '.') }}</p>
-                                            <p class="location-transfer-meta">{{ transferRequest.quantity }}× · {{ transferRequest.name }}</p>
+                            {% if transferRequest %}
+                                <article class="extras-request-card location-transfer-card" data-stay-target="locationTransfer">
+                                    <div class="extras-request-top">
+                                        <div>
+                                            <p class="extras-item-category">{{ 'app.transfer'|trans|upper }}</p>
+                                            <p class="extras-item-name font-serif">{{ transferRequest.name }}</p>
+                                            <p class="extras-request-qty">{{ transferRequest.quantity }}× · R$ {{ (transferRequest.priceAtBooking * transferRequest.quantity)|number_format(2, ',', '.') }}</p>
                                         </div>
                                         <span class="status-pill status-{{ transferRequest.status }}">{{ ('app.extra_status_' ~ transferRequest.status)|trans }}</span>
                                     </div>
                                     {% if transferRequest.status == 'requested' and stay.pixKey %}
-                                        <p class="location-transfer-pix">{{ 'app.pix_payment'|trans }}: <strong>{{ stay.pixKey }}</strong></p>
+                                        <p class="extras-pix-note">{{ 'app.pix_payment'|trans }}: <strong>{{ stay.pixKey }}</strong></p>
                                     {% endif %}
-                                {% elseif transferExtra %}
-                                    <div class="location-transfer-top">
-                                        <p class="location-transfer-price font-serif">R$ {{ transferExtra.price|number_format(2, ',', '.') }}</p>
-                                        {% if transferExtra.leadTimeHours %}
-                                            {% if transferExtra.bookable %}
-                                                <p class="location-transfer-hint">{{ 'app.extra_lead_hint'|trans({'%hours%': transferExtra.leadTimeHours}) }}</p>
-                                            {% else %}
-                                                <p class="location-transfer-blocked">{{ 'app.extra_lead_blocked'|trans({'%hours%': transferExtra.leadTimeHours}) }}</p>
+                                </article>
+                            {% elseif transferExtra %}
+                                <article class="extras-item-card location-transfer-card{% if transferExtra.leadTimeHours and not transferExtra.bookable %} extras-item-card--blocked{% endif %}" data-stay-target="locationTransfer">
+                                    <div class="extras-item-top">
+                                        <div class="extras-item-copy">
+                                            <p class="extras-item-category">{{ 'app.transfer'|trans|upper }}</p>
+                                            <h3 class="extras-item-name font-serif">{{ transferExtra.name }}</h3>
+                                            <p class="extras-item-desc">{{ transferExtra.description }}</p>
+                                            {% if transferExtra.leadTimeHours %}
+                                                {% if transferExtra.bookable %}
+                                                    <p class="extras-lead-hint">{{ 'app.extra_lead_hint'|trans({'%hours%': transferExtra.leadTimeHours}) }}</p>
+                                                {% else %}
+                                                    <p class="extras-lead-blocked">{{ 'app.extra_lead_blocked'|trans({'%hours%': transferExtra.leadTimeHours}) }}</p>
+                                                {% endif %}
                                             {% endif %}
-                                        {% endif %}
+                                        </div>
+                                        <p class="extras-item-price font-serif">R$ {{ transferExtra.price|number_format(2, ',', '.') }}</p>
                                     </div>
                                     {% if transferExtra.bookable %}
-                                        <div class="location-transfer-form">
+                                        <div class="extras-item-form location-transfer-form">
                                             <label class="extras-field extras-field--grow">
                                                 <span class="extras-field-label">{{ 'app.notes_optional'|trans }}</span>
                                                 <input type="text" id="transfer-notes-{{ transferExtra.id }}" placeholder="{{ 'app.location_transfer_notes_placeholder'|trans }}" class="extras-notes-input">
                                             </label>
                                         </div>
-                                        <button type="button" class="btn btn-accent btn-block location-transfer-btn" data-extra-id="{{ transferExtra.id }}" data-qty-prefix="transfer-" data-action="click->stay#requestExtra">{{ 'app.location_transfer_book'|trans }}</button>
+                                        <button type="button" class="btn btn-accent btn-block extras-request-btn" data-extra-id="{{ transferExtra.id }}" data-qty-prefix="transfer-" data-action="click->stay#requestExtra">{{ 'app.location_transfer_book'|trans }}</button>
                                     {% endif %}
-                                {% endif %}
-                            </div>
+                                </article>
+                            {% endif %}
                         {% endif %}
                     </section>
                 {% endif %}

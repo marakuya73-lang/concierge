@@ -27,6 +27,7 @@ export default class extends Controller {
         confirmBack: String,
         copyPix: String,
         pixPayment: String,
+        transferLabel: String,
         noExtras: String,
         foodServicesEmpty: String,
         tabExtras: String,
@@ -323,18 +324,19 @@ export default class extends Controller {
 
         const card = this.locationTransferTarget;
         const total = data.totalFormatted || '';
-        const meta = total ? `${data.quantity}× · ${total}` : `${data.quantity}× · ${data.name}`;
+        const meta = total ? `${data.quantity}× · ${total}` : `${data.quantity}×`;
 
+        card.className = 'extras-request-card location-transfer-card';
         card.innerHTML = `
-            <p class="location-transfer-intro">${card.querySelector('.location-transfer-intro')?.innerHTML || ''}</p>
-            <div class="location-transfer-status">
-                <div class="location-transfer-status-copy">
-                    <p class="location-transfer-price font-serif">${total || ''}</p>
-                    <p class="location-transfer-meta">${meta}</p>
+            <div class="extras-request-top">
+                <div>
+                    <p class="extras-item-category">${this.transferLabelValue}</p>
+                    <p class="extras-item-name font-serif">${data.name}</p>
+                    <p class="extras-request-qty">${meta}</p>
                 </div>
                 <span class="status-pill status-${data.status}">${this.statusLabel(data.status)}</span>
             </div>
-            ${data.pixKey ? `<p class="location-transfer-pix">${this.pixPaymentValue}: <strong>${data.pixKey}</strong></p>` : ''}
+            ${data.pixKey ? `<p class="extras-pix-note">${this.pixPaymentValue}: <strong>${data.pixKey}</strong></p>` : ''}
         `;
     }
 

@@ -1565,42 +1565,13 @@ button, input, select, textarea { font: inherit; }
 }
 .location-follow-up:last-child { margin-bottom: 0; }
 .location-transfer-card {
-    margin: .85rem 0 0; padding: .85rem 1rem; border-radius: calc(var(--radius) + 2px);
-    background: rgba(235, 227, 214, 0.45); color: var(--foreground);
+    margin-top: 1rem;
 }
-.location-transfer-card--blocked { opacity: .72; }
-.location-transfer-intro {
-    margin: 0; font-size: .84rem; line-height: 1.65;
-}
-.location-transfer-top { margin-top: .75rem; }
-.location-transfer-price {
-    margin: 0; font-size: 1.15rem; color: var(--accent); line-height: 1.2;
-}
-.location-transfer-hint,
-.location-transfer-blocked {
-    margin: .35rem 0 0; font-size: .78rem; line-height: 1.5;
-}
-.location-transfer-hint { color: var(--muted-foreground); }
-.location-transfer-blocked { color: #9a5b00; }
 .location-transfer-form {
-    display: block;
-    width: 100%;
-    margin-top: .75rem;
+    margin-top: 1rem;
 }
-.location-transfer-form .extras-field {
-    width: 100%;
-}
-.location-transfer-btn { margin-top: .75rem; }
-.location-transfer-status {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    gap: .75rem; margin-top: .75rem;
-}
-.location-transfer-status-copy { min-width: 0; }
-.location-transfer-meta {
-    margin: .2rem 0 0; font-size: .82rem; color: var(--muted-foreground);
-}
-.location-transfer-pix {
-    margin: .65rem 0 0; font-size: .82rem; line-height: 1.55; color: var(--muted-foreground);
+.extras-item-card .extras-notes-input {
+    background: var(--card);
 }
 
 .wifi-box {
