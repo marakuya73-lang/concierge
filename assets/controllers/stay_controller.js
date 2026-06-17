@@ -56,6 +56,7 @@ export default class extends Controller {
             this.cancelExtra({ currentTarget: btn });
         };
         this.element.addEventListener('click', this.boundCancelClick);
+        this.cancelModalEl = this.element.querySelector('[data-stay-target="cancelConfirm"]');
     }
 
     disconnect() {
@@ -144,19 +145,19 @@ export default class extends Controller {
         this.pendingCancelRequestId = requestId;
         this.pendingCancelBtn = btn;
 
-        if (this.hasCancelConfirmItemTarget) {
+        if (this.cancelModalEl && this.hasCancelConfirmItemTarget) {
             this.cancelConfirmItemTarget.textContent = name;
         }
-        if (this.hasCancelConfirmTitleTarget && this.hasCancelRequestTitleValue) {
+        if (this.cancelModalEl && this.hasCancelConfirmTitleTarget && this.hasCancelRequestTitleValue) {
             this.cancelConfirmTitleTarget.textContent = this.cancelRequestTitleValue;
         }
-        if (this.hasCancelConfirmLeadTarget && this.hasCancelRequestLeadValue) {
+        if (this.cancelModalEl && this.hasCancelConfirmLeadTarget && this.hasCancelRequestLeadValue) {
             this.cancelConfirmLeadTarget.textContent = this.cancelRequestLeadValue;
         }
-        if (this.hasCancelConfirmKeepTarget && this.hasCancelRequestKeepValue) {
+        if (this.cancelModalEl && this.hasCancelConfirmKeepTarget && this.hasCancelRequestKeepValue) {
             this.cancelConfirmKeepTarget.textContent = this.cancelRequestKeepValue;
         }
-        if (this.hasCancelConfirmSubmitTarget && this.hasCancelRequestConfirmBtnValue) {
+        if (this.cancelModalEl && this.hasCancelConfirmSubmitTarget && this.hasCancelRequestConfirmBtnValue) {
             this.cancelConfirmSubmitTarget.textContent = this.cancelRequestConfirmBtnValue;
         }
 
@@ -164,25 +165,12 @@ export default class extends Controller {
     }
 
     showCancelConfirm() {
-        if (!this.hasCancelConfirmTarget) {
-            const confirmed = window.confirm(
-                `${this.cancelRequestTitleValue}\n\n${this.cancelRequestLeadValue}`,
-            );
-            if (confirmed) {
-                this.confirmCancelExtra();
-            } else {
-                this.pendingCancelRequestId = null;
-                this.pendingCancelBtn = null;
-            }
+        if (!this.cancelModalEl) {
             return;
         }
 
-        if (this.cancelConfirmTarget.parentElement !== document.body) {
-            document.body.appendChild(this.cancelConfirmTarget);
-        }
-
-        this.cancelConfirmTarget.hidden = false;
-        this.cancelConfirmTarget.removeAttribute('hidden');
+        this.cancelModalEl.hidden = false;
+        this.cancelModalEl.removeAttribute('hidden');
         document.body.classList.add('stay-dialog-open');
         document.addEventListener('keydown', this.boundCancelEscape);
 
@@ -192,9 +180,9 @@ export default class extends Controller {
     }
 
     dismissCancelConfirm() {
-        if (this.hasCancelConfirmTarget) {
-            this.cancelConfirmTarget.hidden = true;
-            this.cancelConfirmTarget.setAttribute('hidden', '');
+        if (this.cancelModalEl) {
+            this.cancelModalEl.hidden = true;
+            this.cancelModalEl.setAttribute('hidden', '');
         }
 
         document.body.classList.remove('stay-dialog-open');
@@ -216,7 +204,7 @@ export default class extends Controller {
     }
 
     handleCancelEscape(event) {
-        if (event.key === 'Escape' && this.hasCancelConfirmTarget && !this.cancelConfirmTarget.hidden) {
+        if (event.key === 'Escape' && this.cancelModalEl && !this.cancelModalEl.hidden) {
             this.dismissCancelConfirm();
         }
     }

@@ -1621,15 +1621,73 @@ button, input, select, textarea { font: inherit; }
     backdrop-filter: blur(4px);
 }
 .extras-confirm-overlay[hidden],
-.stay-dialog-overlay[hidden] { display: none !important; }
+.stay-dialog-overlay[hidden],
+.stay-cancel-overlay[hidden] { display: none !important; }
 .extras-confirm-overlay > .extras-confirm,
-.stay-dialog-overlay > .stay-dialog {
+.stay-dialog-overlay > .stay-dialog,
+.stay-cancel-overlay > .stay-cancel-confirm {
     width: min(100%, 24rem);
     background: var(--background);
     border: 1px solid var(--border);
     border-radius: calc(var(--radius) + 8px);
     padding: 1.5rem 1.35rem 1.25rem;
     box-shadow: 0 24px 60px rgba(26, 58, 46, 0.22);
+}
+.stay-cancel-overlay {
+    animation: stayCancelFadeIn .22s ease;
+}
+.stay-cancel-confirm {
+    animation: stayCancelSlideUp .28s ease;
+}
+.stay-cancel-icon {
+    width: 3.25rem;
+    height: 3.25rem;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: hsl(0 72% 51% / .1);
+    color: var(--destructive);
+}
+.stay-cancel-icon .icon {
+    width: 1.35rem;
+    height: 1.35rem;
+}
+.stay-cancel-summary {
+    margin-bottom: 1.15rem;
+}
+.stay-cancel-actions {
+    display: grid;
+    gap: .65rem;
+}
+.stay-cancel-keep {
+    padding: .9rem 1.25rem;
+}
+.stay-cancel-submit {
+    background: var(--destructive);
+    color: #fff;
+    border: 1px solid var(--destructive);
+    padding: .95rem 1.25rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    font-size: .78rem;
+    font-weight: 600;
+}
+.stay-cancel-submit:hover {
+    background: hsl(0 72% 45%);
+    border-color: hsl(0 72% 45%);
+}
+.stay-cancel-submit:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+@keyframes stayCancelFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes stayCancelSlideUp {
+    from { opacity: 0; transform: translateY(12px) scale(.98); }
+    to { opacity: 1; transform: none; }
 }
 
 .extras-confirm {

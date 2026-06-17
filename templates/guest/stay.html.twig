@@ -902,15 +902,19 @@
         </div>
     </div>
 
-    <div class="stay-dialog-overlay" data-stay-target="cancelConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" data-action="click->stay#dismissCancelConfirmBackdrop">
-        <div class="stay-dialog stay-dialog--warning" data-action="click->stay#stopDialogClick">
-            <div class="stay-dialog-icon" aria-hidden="true">!</div>
-            <h3 id="cancelConfirmTitle" class="stay-dialog-title font-serif" data-stay-target="cancelConfirmTitle">{{ 'app.cancel_request_title'|trans }}</h3>
-            <p class="stay-dialog-lead" data-stay-target="cancelConfirmLead">{{ 'app.cancel_request_lead'|trans }}</p>
-            <p class="stay-dialog-item font-serif" data-stay-target="cancelConfirmItem"></p>
-            <div class="stay-dialog-actions">
-                <button type="button" class="btn btn-outline btn-block" data-action="click->stay#dismissCancelConfirm" data-stay-target="cancelConfirmKeep">{{ 'app.cancel_request_keep'|trans }}</button>
-                <button type="button" class="btn btn-block stay-dialog-confirm-danger" data-action="click->stay#confirmCancelExtra" data-stay-target="cancelConfirmSubmit">{{ 'app.cancel_request_confirm_btn'|trans }}</button>
+    <div class="extras-confirm-overlay stay-cancel-overlay" data-stay-target="cancelConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" data-action="click->stay#dismissCancelConfirmBackdrop">
+        <div class="extras-confirm stay-cancel-confirm" data-action="click->stay#stopDialogClick">
+            <div class="stay-cancel-icon" aria-hidden="true">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+            </div>
+            <h3 id="cancelConfirmTitle" class="extras-confirm-title font-serif" data-stay-target="cancelConfirmTitle">{{ 'app.cancel_request_title'|trans }}</h3>
+            <p class="extras-confirm-lead" data-stay-target="cancelConfirmLead">{{ 'app.cancel_request_lead'|trans }}</p>
+            <div class="extras-confirm-summary stay-cancel-summary">
+                <p class="extras-confirm-item font-serif" data-stay-target="cancelConfirmItem"></p>
+            </div>
+            <div class="stay-cancel-actions">
+                <button type="button" class="btn btn-outline btn-block stay-cancel-keep" data-action="click->stay#dismissCancelConfirm" data-stay-target="cancelConfirmKeep">{{ 'app.cancel_request_keep'|trans }}</button>
+                <button type="button" class="btn btn-block stay-cancel-submit" data-action="click->stay#confirmCancelExtra" data-stay-target="cancelConfirmSubmit">{{ 'app.cancel_request_confirm_btn'|trans }}</button>
             </div>
         </div>
     </div>
