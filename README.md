@@ -46,12 +46,14 @@ Symfony application for property concierge services.
    php bin/console doctrine:migrations:migrate --no-interaction
    ```
 
-6. Create writable cache/log directories and set permissions:
+6. Create writable cache/log directories, compile assets, and set permissions:
    ```bash
    mkdir -p var/cache var/log
+   /opt/alt/php84/usr/bin/php bin/console importmap:install
+   /opt/alt/php84/usr/bin/php bin/console asset-map:compile
+   /opt/alt/php84/usr/bin/php bin/console cache:clear --env=prod
+   /opt/alt/php84/usr/bin/php bin/console cache:warmup --env=prod
    chmod -R 775 var public/uploads
-   php bin/console cache:clear --env=prod
-   php bin/console cache:warmup --env=prod
    ```
 
 7. Point your web server document root to the `public/` directory.
