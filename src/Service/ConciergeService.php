@@ -77,6 +77,14 @@ class ConciergeService
     {
         $booking = $this->getValidBooking($code);
         $available = $this->extraRepository->findActiveForGuestCount($booking->getGuests());
+
+        if ($booking->hasRajaaramSession()) {
+            $available = array_values(array_filter(
+                $available,
+                static fn (Extra $extra): bool => !$extra->isRajaaramExtra(),
+            ));
+        }
+
         $requests = $this->bookingExtraRepository->findByBooking($booking);
 
         return [
@@ -145,6 +153,12 @@ class ConciergeService
 
         if (!$extra->isAvailableForGuestCount($booking->getGuests())) {
             throw new AccessDeniedHttpException('Este extra não está disponível para o número de hóspedes da sua reserva.');
+        }
+
+        if ($booking->hasRajaaramSession() && $extra->isRajaaramExtra()) {
+            throw new AccessDeniedHttpException('en' === $locale
+                ? 'Rajaaram therapies are already included in your Rajaaram stay.'
+                : 'As terapias Rajaaram já fazem parte da sua estadia Rajaaram.');
         }
 
         if (!$extra->canBeBookedBefore($this->getCheckInDateTime($booking))) {
@@ -238,6 +252,7 @@ class ConciergeService
             'isBreakfast' => $this->isBreakfastExtra($extra),
             'leadTimeHours' => $extra->getLeadTimeHours(),
             'bookable' => $extra->canBeBookedBefore($checkInAt),
+            'isRajaaram' => $extra->isRajaaramExtra(),
         ];
     }
 

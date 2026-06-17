@@ -588,7 +588,7 @@
                                 <div class="food-service-booked-aside">
                                     <span class="status-pill status-{{ req.status }}">{{ ('app.extra_status_' ~ req.status)|trans }}</span>
                                     {% if req.status in ['requested', 'paid'] %}
-                                        <button type="button" class="btn btn-outline btn-sm food-cancel-btn" data-request-id="{{ req.id }}" data-action="click->stay#cancelExtra">{{ 'app.cancel_request'|trans }}</button>
+                                        <button type="button" class="btn btn-outline btn-sm food-cancel-btn" data-request-id="{{ req.id }}">{{ 'app.cancel_request'|trans }}</button>
                                     {% endif %}
                                 </div>
                             </article>
@@ -793,7 +793,7 @@
                                     <p class="extras-pix-note">{{ 'app.pix_payment'|trans }}: <strong>{{ stay.pixKey }}</strong></p>
                                 {% endif %}
                                 {% if req.status in ['requested', 'paid'] %}
-                                    <button type="button" class="btn btn-outline btn-block extras-cancel-btn" data-request-id="{{ req.id }}" data-action="click->stay#cancelExtra">{{ 'app.cancel_request'|trans }}</button>
+                                    <button type="button" class="btn btn-outline btn-block extras-cancel-btn" data-request-id="{{ req.id }}">{{ 'app.cancel_request'|trans }}</button>
                                 {% endif %}
                             </article>
                         {% endfor %}
@@ -902,7 +902,7 @@
         </div>
     </div>
 
-    <div class="stay-dialog-overlay" data-stay-target="cancelConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" data-action="click->stay#dismissCancelConfirm">
+    <div class="stay-dialog-overlay" data-stay-target="cancelConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" data-action="click->stay#dismissCancelConfirmBackdrop">
         <div class="stay-dialog stay-dialog--warning" data-action="click->stay#stopDialogClick">
             <div class="stay-dialog-icon" aria-hidden="true">!</div>
             <h3 id="cancelConfirmTitle" class="stay-dialog-title font-serif" data-stay-target="cancelConfirmTitle">{{ 'app.cancel_request_title'|trans }}</h3>

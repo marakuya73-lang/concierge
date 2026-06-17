@@ -1,4 +1,4 @@
-const CACHE_NAME = 'domo-xango-v3';
+const CACHE_NAME = 'domo-xango-v4';
 const APP_SHELL = [
     '/',
     '/offline.html',
@@ -58,7 +58,7 @@ self.addEventListener('fetch', (event) => {
     if (url.origin !== self.location.origin) return;
 
     if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/build/')) {
-        event.respondWith(cacheFirst(request));
+        event.respondWith(staleWhileRevalidate(request, event));
         return;
     }
 

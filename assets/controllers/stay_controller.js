@@ -46,10 +46,21 @@ export default class extends Controller {
         this.cacheStayPage();
         window.addEventListener('online', () => this.cacheStayPage());
         this.boundCancelEscape = (event) => this.handleCancelEscape(event);
+        this.boundCancelClick = (event) => {
+            const btn = event.target.closest('.extras-cancel-btn, .food-cancel-btn');
+            if (!btn || !this.element.contains(btn)) {
+                return;
+            }
+
+            event.preventDefault();
+            this.cancelExtra({ currentTarget: btn });
+        };
+        this.element.addEventListener('click', this.boundCancelClick);
     }
 
     disconnect() {
         document.removeEventListener('keydown', this.boundCancelEscape);
+        this.element.removeEventListener('click', this.boundCancelClick);
         document.body.classList.remove('stay-dialog-open');
     }
 
@@ -154,10 +165,24 @@ export default class extends Controller {
 
     showCancelConfirm() {
         if (!this.hasCancelConfirmTarget) {
+            const confirmed = window.confirm(
+                `${this.cancelRequestTitleValue}\n\n${this.cancelRequestLeadValue}`,
+            );
+            if (confirmed) {
+                this.confirmCancelExtra();
+            } else {
+                this.pendingCancelRequestId = null;
+                this.pendingCancelBtn = null;
+            }
             return;
         }
 
+        if (this.cancelConfirmTarget.parentElement !== document.body) {
+            document.body.appendChild(this.cancelConfirmTarget);
+        }
+
         this.cancelConfirmTarget.hidden = false;
+        this.cancelConfirmTarget.removeAttribute('hidden');
         document.body.classList.add('stay-dialog-open');
         document.addEventListener('keydown', this.boundCancelEscape);
 
@@ -169,6 +194,7 @@ export default class extends Controller {
     dismissCancelConfirm() {
         if (this.hasCancelConfirmTarget) {
             this.cancelConfirmTarget.hidden = true;
+            this.cancelConfirmTarget.setAttribute('hidden', '');
         }
 
         document.body.classList.remove('stay-dialog-open');
@@ -179,6 +205,14 @@ export default class extends Controller {
         if (this.hasCancelConfirmSubmitTarget) {
             this.cancelConfirmSubmitTarget.disabled = false;
         }
+    }
+
+    dismissCancelConfirmBackdrop(event) {
+        if (event.target !== event.currentTarget) {
+            return;
+        }
+
+        this.dismissCancelConfirm();
     }
 
     handleCancelEscape(event) {
@@ -213,10 +247,16 @@ export default class extends Controller {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: this.codeValue, requestId }),
             });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.error);
+            let data = {};
+            try {
+                data = await response.json();
+            } catch {
+                // ignore invalid JSON bodies
             }
+            if (!response.ok) {
+                throw new Error(data.error || 'Não foi possível cancelar a solicitação.');
+            }
+            this.dismissCancelConfirm();
             window.location.reload();
         } catch (err) {
             alert(err.message);
@@ -324,7 +364,7 @@ export default class extends Controller {
         article.dataset.requestId = String(data.id);
         article.dataset.extraId = String(data.extraId ?? '');
         const cancelBtn = ['requested', 'paid'].includes(data.status)
-            ? `<button type="button" class="btn btn-outline btn-sm food-cancel-btn" data-request-id="${data.id}" data-action="click->stay#cancelExtra">${this.cancelRequestValue}</button>`
+            ? `<button type="button" class="btn btn-outline btn-sm food-cancel-btn" data-request-id="${data.id}">${this.cancelRequestValue}</button>`
             : '';
         article.innerHTML = `
             <div>
@@ -368,7 +408,7 @@ export default class extends Controller {
             ? `<p class="extras-pix-note">${this.pixPaymentValue}: <strong>${data.pixKey}</strong></p>`
             : '';
         const cancelBtn = ['requested', 'paid'].includes(data.status)
-            ? `<button type="button" class="btn btn-outline btn-block extras-cancel-btn" data-request-id="${data.id}" data-action="click->stay#cancelExtra">${this.cancelRequestValue}</button>`
+            ? `<button type="button" class="btn btn-outline btn-block extras-cancel-btn" data-request-id="${data.id}">${this.cancelRequestValue}</button>`
             : '';
         article.innerHTML = `
             <div class="extras-request-top">

@@ -107,4 +107,9 @@ class Extra
 
         return null === $this->maxGuests || $guests <= $this->maxGuests;
     }
+
+    public function isRajaaramExtra(): bool
+    {
+        return (bool) preg_match('/rajaaram/i', $this->namePt.' '.$this->nameEn);
+    }
 }
