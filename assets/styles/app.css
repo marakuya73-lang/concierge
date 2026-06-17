@@ -1331,6 +1331,18 @@ button, input, select, textarea { font: inherit; }
     margin: .45rem 0 0; font-size: .72rem; line-height: 1.45;
     color: var(--muted-foreground);
 }
+.checkin-self-btn {
+    display: block; width: 100%; margin-top: .75rem; padding: .55rem .65rem;
+    border: 1px dashed rgba(26, 58, 46, 0.22); border-radius: calc(var(--radius) + 2px);
+    background: rgba(235, 227, 214, 0.35); color: var(--foreground);
+    font-size: .72rem; line-height: 1.4; text-align: left; cursor: pointer;
+}
+.checkin-self-btn:hover { background: rgba(235, 227, 214, 0.55); }
+.checkin-self-status {
+    margin: .75rem 0 0; padding: .5rem .65rem; border-radius: calc(var(--radius) + 2px);
+    background: rgba(200, 134, 42, 0.12); color: var(--accent);
+    font-size: .72rem; line-height: 1.45; font-weight: 500;
+}
 .checkin-card {
     background: var(--card); border: 1px solid var(--border);
     border-radius: calc(var(--radius) + 4px); padding: 1.15rem 1.1rem;
@@ -1519,6 +1531,45 @@ button, input, select, textarea { font: inherit; }
     color: var(--foreground);
 }
 .location-follow-up:last-child { margin-bottom: 0; }
+.location-transfer-card {
+    margin: .85rem 0 0; padding: .85rem 1rem; border-radius: calc(var(--radius) + 2px);
+    background: rgba(235, 227, 214, 0.45); color: var(--foreground);
+}
+.location-transfer-card--blocked { opacity: .72; }
+.location-transfer-intro {
+    margin: 0; font-size: .84rem; line-height: 1.65;
+}
+.location-transfer-top { margin-top: .75rem; }
+.location-transfer-price {
+    margin: 0; font-size: 1.15rem; color: var(--accent); line-height: 1.2;
+}
+.location-transfer-hint,
+.location-transfer-blocked {
+    margin: .35rem 0 0; font-size: .78rem; line-height: 1.5;
+}
+.location-transfer-hint { color: var(--muted-foreground); }
+.location-transfer-blocked { color: #9a5b00; }
+.location-transfer-field { display: block; margin-top: .75rem; }
+.location-transfer-field-label {
+    display: block; margin-bottom: .35rem; font-size: .72rem; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted-foreground);
+}
+.location-transfer-notes {
+    width: 100%; padding: .65rem .75rem; border: 1px solid var(--border);
+    border-radius: var(--radius); background: var(--card); font-size: .84rem;
+}
+.location-transfer-btn { margin-top: .75rem; }
+.location-transfer-status {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: .75rem; margin-top: .75rem;
+}
+.location-transfer-status-copy { min-width: 0; }
+.location-transfer-meta {
+    margin: .2rem 0 0; font-size: .82rem; color: var(--muted-foreground);
+}
+.location-transfer-pix {
+    margin: .65rem 0 0; font-size: .82rem; line-height: 1.55; color: var(--muted-foreground);
+}
 
 .wifi-box {
     background: var(--primary); color: var(--primary-foreground);

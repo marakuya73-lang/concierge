@@ -73,11 +73,27 @@
         {% set tail = '' %}
     {% endif %}
     {% for part in tail|split('\n\n')|slice(1) %}
-        {% if part|trim != '' %}
-            <p class="location-follow-up">{{ part|trim|nl2br }}</p>
+        {% set trimmed = part|trim %}
+        {% if trimmed != '' and not (trimmed matches '/^🚐/u') %}
+            <p class="location-follow-up">{{ trimmed|nl2br }}</p>
         {% endif %}
     {% endfor %}
 {% endmacro %}
+
+{% macro arrival_transfer_line(text) %}
+    {% if 'Chegando:' in text %}
+        {% set tail = text|split('Chegando:', 2)[1] %}
+    {% elseif 'Arrival:' in text %}
+        {% set tail = text|split('Arrival:', 2)[1] %}
+    {% else %}
+        {% set tail = '' %}
+    {% endif %}
+    {% for part in tail|split('\n\n')|slice(1) %}
+        {% set trimmed = part|trim %}
+        {% if trimmed matches '/^🚐/u' %}
+            {{ trimmed|nl2br }}
+        {% endif %}
+    {% endfor %}
 
 {% macro guide_card(title, text) %}
     <div class="guide-card">

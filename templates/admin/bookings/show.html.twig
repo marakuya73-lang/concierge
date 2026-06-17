@@ -124,6 +124,17 @@
                         <span>Check-in</span>
                         <strong>{{ booking.checkIn|date('d/m/Y') }}</strong>
                     </div>
+                    {% if booking.selfCheckInRequested %}
+                        <div class="admin-detail-row">
+                            <span>Self check-in</span>
+                            <strong>
+                                <span class="status-pill status-confirmed">Solicitado</span>
+                                {% if booking.selfCheckInRequestedAt %}
+                                    · {{ booking.selfCheckInRequestedAt|date('d/m/Y H:i') }}
+                                {% endif %}
+                            </strong>
+                        </div>
+                    {% endif %}
                     <div class="admin-detail-row">
                         <span>Check-out</span>
                         <strong>{{ booking.checkOut|date('d/m/Y') }}</strong>

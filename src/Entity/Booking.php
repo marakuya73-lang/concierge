@@ -131,6 +131,12 @@ class Booking
     #[ORM\Column(options: ['default' => false])]
     private bool $manualDates = false;
 
+    #[ORM\Column(options: ['default' => false])]
+    private bool $selfCheckInRequested = false;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $selfCheckInRequestedAt = null;
+
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
@@ -183,6 +189,10 @@ class Booking
     public function setRajaaramBreakfastIncluded(?bool $v): static { $this->rajaaramBreakfastIncluded = $v; return $this; }
     public function isManualDates(): bool { return $this->manualDates; }
     public function setManualDates(bool $v): static { $this->manualDates = $v; return $this; }
+    public function isSelfCheckInRequested(): bool { return $this->selfCheckInRequested; }
+    public function setSelfCheckInRequested(bool $v): static { $this->selfCheckInRequested = $v; return $this; }
+    public function getSelfCheckInRequestedAt(): ?\DateTimeImmutable { return $this->selfCheckInRequestedAt; }
+    public function setSelfCheckInRequestedAt(?\DateTimeImmutable $v): static { $this->selfCheckInRequestedAt = $v; return $this; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
 
     public function isRajaaram(): bool

@@ -40,7 +40,12 @@
      data-stay-status-confirmed-value="{{ 'app.extra_status_confirmed'|trans }}"
      data-stay-status-cancelled-value="{{ 'app.extra_status_cancelled'|trans }}"
      data-stay-cancel-request-value="{{ 'app.cancel_request'|trans }}"
-     data-stay-offline-extra-queued-value="{{ 'app.offline_extra_queued'|trans }}">
+     data-stay-offline-extra-queued-value="{{ 'app.offline_extra_queued'|trans }}"
+     data-stay-self-checkin-title-value="{{ 'app.self_checkin_modal_title'|trans }}"
+     data-stay-self-checkin-lead-value="{{ 'app.self_checkin_modal_lead'|trans }}"
+     data-stay-self-checkin-confirm-value="{{ 'app.self_checkin_confirm'|trans }}"
+     data-stay-self-checkin-cancel-value="{{ 'app.self_checkin_cancel'|trans }}"
+     data-stay-self-checkin-done-value="{{ 'app.self_checkin_confirmed'|trans }}">
     <header class="stay-header">
         <div class="stay-header-inner">
             <div class="stay-header-brand">
@@ -267,6 +272,11 @@
                         <p class="checkin-time-label">{{ 'app.checkin_entry'|trans }}</p>
                         <p class="checkin-time-value checkin-time-value--accent font-serif">{{ stay.checkInTime }} – {{ stay.checkInTimeEnd }}</p>
                         <p class="checkin-time-hint">{{ 'app.checkin_window_hint'|trans }}</p>
+                        {% if stay.selfCheckInRequested %}
+                            <p class="checkin-self-status" data-stay-target="selfCheckInStatus">{{ 'app.self_checkin_confirmed'|trans }}</p>
+                        {% elseif stay.selfCheckInAvailable %}
+                            <button type="button" class="checkin-self-btn" data-stay-target="selfCheckInBtn" data-action="click->stay#openSelfCheckInModal">{{ 'app.self_checkin_prefer'|trans }}</button>
+                        {% endif %}
                     </div>
                     <div class="checkin-time-card">
                         <p class="checkin-time-label">{{ 'app.checkout_exit'|trans }}</p>
@@ -299,7 +309,7 @@
         <div class="section-panel stay-panel" data-stay-target="panel" data-section="location">
             {% set lat = stay.latitude + 0 %}
             {% set lng = stay.longitude + 0 %}
-            {% set mapDelta = 0.035 %}
+            {% set mapDelta = 0.012 %}
 
             <div class="location-page">
                 {{ g.panel_back() }}
@@ -351,6 +361,45 @@
                         </ol>
                         {{ g.arrival_gate_note(stay.arrivalInstructions) }}
                         {{ g.arrival_follow_ups(stay.arrivalInstructions) }}
+
+                        {% set transferExtra = extras.available|filter(e => e.category == 'transfer')|first %}
+                        {% set transferRequest = extras.myRequests|filter(r => r.status != 'cancelled' and r.category == 'transfer')|first %}
+                        {% if transferExtra or transferRequest %}
+                            <div class="location-transfer-card{% if transferExtra and transferExtra.leadTimeHours and not transferExtra.bookable and not transferRequest %} location-transfer-card--blocked{% endif %}" data-stay-target="locationTransfer">
+                                <p class="location-transfer-intro">{{ g.arrival_transfer_line(stay.arrivalInstructions)|raw }}</p>
+
+                                {% if transferRequest %}
+                                    <div class="location-transfer-status">
+                                        <div class="location-transfer-status-copy">
+                                            <p class="location-transfer-price font-serif">R$ {{ (transferRequest.priceAtBooking * transferRequest.quantity)|number_format(2, ',', '.') }}</p>
+                                            <p class="location-transfer-meta">{{ transferRequest.quantity }}× · {{ transferRequest.name }}</p>
+                                        </div>
+                                        <span class="status-pill status-{{ transferRequest.status }}">{{ ('app.extra_status_' ~ transferRequest.status)|trans }}</span>
+                                    </div>
+                                    {% if transferRequest.status == 'requested' and stay.pixKey %}
+                                        <p class="location-transfer-pix">{{ 'app.pix_payment'|trans }}: <strong>{{ stay.pixKey }}</strong></p>
+                                    {% endif %}
+                                {% elseif transferExtra %}
+                                    <div class="location-transfer-top">
+                                        <p class="location-transfer-price font-serif">R$ {{ transferExtra.price|number_format(2, ',', '.') }}</p>
+                                        {% if transferExtra.leadTimeHours %}
+                                            {% if transferExtra.bookable %}
+                                                <p class="location-transfer-hint">{{ 'app.extra_lead_hint'|trans({'%hours%': transferExtra.leadTimeHours}) }}</p>
+                                            {% else %}
+                                                <p class="location-transfer-blocked">{{ 'app.extra_lead_blocked'|trans({'%hours%': transferExtra.leadTimeHours}) }}</p>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    {% if transferExtra.bookable %}
+                                        <label class="location-transfer-field">
+                                            <span class="location-transfer-field-label">{{ 'app.notes_optional'|trans }}</span>
+                                            <input type="text" id="transfer-notes-{{ transferExtra.id }}" placeholder="{{ 'app.location_transfer_notes_placeholder'|trans }}" class="location-transfer-notes">
+                                        </label>
+                                        <button type="button" class="btn btn-accent btn-block location-transfer-btn" data-extra-id="{{ transferExtra.id }}" data-qty-prefix="transfer-" data-action="click->stay#requestExtra">{{ 'app.location_transfer_book'|trans }}</button>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     </section>
                 {% endif %}
 
@@ -895,6 +944,18 @@
                 {{ 'app.extra_confirm_whatsapp'|trans }} ↗
             </a>
             <button type="button" class="btn btn-outline btn-block extras-confirm-back" data-action="click->stay#dismissExtraConfirm" data-stay-target="confirmBack"></button>
+        </div>
+    </div>
+
+    <div class="extras-confirm-overlay stay-cancel-overlay" id="stay-self-checkin-modal" data-stay-target="selfCheckInModal" hidden role="dialog" aria-modal="true" aria-labelledby="selfCheckInModalTitle">
+        <div class="extras-confirm stay-cancel-confirm stay-dialog--warning" id="stay-self-checkin-modal-panel">
+            <div class="stay-dialog-icon" aria-hidden="true">⚠️</div>
+            <h3 id="selfCheckInModalTitle" class="extras-confirm-title font-serif" data-stay-target="selfCheckInTitle">{{ 'app.self_checkin_modal_title'|trans }}</h3>
+            <p class="extras-confirm-lead" data-stay-target="selfCheckInLead">{{ 'app.self_checkin_modal_lead'|trans }}</p>
+            <div class="stay-cancel-actions">
+                <button type="button" class="btn btn-outline btn-block stay-cancel-keep" data-action="click->stay#closeSelfCheckInModal" data-stay-target="selfCheckInCancel">{{ 'app.self_checkin_cancel'|trans }}</button>
+                <button type="button" class="btn btn-block stay-cancel-submit" data-action="click->stay#confirmSelfCheckIn" data-stay-target="selfCheckInConfirm">{{ 'app.self_checkin_confirm'|trans }}</button>
+            </div>
         </div>
     </div>
 

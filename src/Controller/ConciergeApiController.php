@@ -79,4 +79,28 @@ class ConciergeApiController extends AbstractController
             return $this->json(['error' => $e->getMessage()], $status >= 100 ? $status : 400);
         }
     }
+
+    #[Route('/self-checkin', name: 'api_concierge_self_checkin', methods: ['POST'])]
+    public function selfCheckIn(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true) ?? [];
+        $code = strtoupper(trim((string) ($data['code'] ?? '')));
+
+        if (!$code) {
+            return $this->json(['error' => 'code is required'], 400);
+        }
+
+        try {
+            $result = $this->conciergeService->requestSelfCheckIn($code, $request->getLocale());
+
+            return $this->json($result, 201);
+        } catch (\Throwable $e) {
+            $status = str_contains($e->getMessage(), 'já foi') || str_contains($e->getMessage(), 'already')
+                || str_contains($e->getMessage(), '9h') || str_contains($e->getMessage(), '9:00')
+                ? 403
+                : ($e->getCode() ?: 400);
+
+            return $this->json(['error' => $e->getMessage()], $status >= 100 ? $status : 400);
+        }
+    }
 }

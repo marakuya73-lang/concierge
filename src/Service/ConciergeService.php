@@ -20,8 +20,12 @@ class ConciergeService
         private ExtraRepository $extraRepository,
         private BookingExtraRepository $bookingExtraRepository,
         private ExtraRequestNotificationService $extraRequestNotificationService,
+        private SelfCheckInNotificationService $selfCheckInNotificationService,
     ) {
     }
+
+    private const CHECKIN_TIMEZONE = 'America/Sao_Paulo';
+    private const SELF_CHECKIN_DEADLINE_HOUR = 9;
 
     public function verifyAccessCode(string $code, string $locale = 'pt'): array
     {
@@ -44,7 +48,7 @@ class ConciergeService
             'address' => $property->getAddress($locale),
             'arrivalInstructions' => $property->getArrivalInstructions($locale),
             'specialNotes' => $booking->getNotes(),
-            'mapUrl' => $property->getMapUrl(),
+            'mapUrl' => $property->getGoogleMapsUrl(),
             'latitude' => $property->getLatitude(),
             'longitude' => $property->getLongitude(),
             'pixKey' => $property->getPixKey(),
@@ -60,6 +64,8 @@ class ConciergeService
             'smokingPolicy' => $property->getSmokingPolicy(),
             'silencePolicy' => $property->getSilencePolicy(),
             'visitsPolicy' => $property->getVisitsPolicy(),
+            'selfCheckInRequested' => $booking->isSelfCheckInRequested(),
+            'selfCheckInAvailable' => $this->canRequestSelfCheckIn($booking),
         ];
 
         if ($booking->hasRajaaramSession()) {
@@ -71,6 +77,52 @@ class ConciergeService
         }
 
         return $result;
+    }
+
+    public function requestSelfCheckIn(string $code, string $locale = 'pt'): array
+    {
+        $booking = $this->getValidBooking($code);
+
+        if ($booking->isSelfCheckInRequested()) {
+            throw new AccessDeniedHttpException('en' === $locale
+                ? 'Self check-in has already been requested for this stay.'
+                : 'Self check-in já foi solicitado para esta estadia.');
+        }
+
+        if (!$this->canRequestSelfCheckIn($booking)) {
+            throw new AccessDeniedHttpException('en' === $locale
+                ? 'Self check-in can only be requested until 9:00 AM on your check-in date.'
+                : 'Self check-in só pode ser solicitado até às 9h do dia do check-in.');
+        }
+
+        $booking->setSelfCheckInRequested(true);
+        $booking->setSelfCheckInRequestedAt(new \DateTimeImmutable('now', new \DateTimeZone(self::CHECKIN_TIMEZONE)));
+        $this->bookingRepository->getEntityManager()->flush();
+
+        $this->selfCheckInNotificationService->notifyAdmin($booking);
+
+        return [
+            'selfCheckInRequested' => true,
+            'message' => 'en' === $locale
+                ? 'Self check-in confirmed. Use the dome door code when you arrive.'
+                : 'Self check-in confirmado. Use o código da porta do domo ao chegar.',
+        ];
+    }
+
+    public function canRequestSelfCheckIn(Booking $booking, ?\DateTimeImmutable $now = null): bool
+    {
+        if ($booking->isSelfCheckInRequested()) {
+            return false;
+        }
+
+        $timezone = new \DateTimeZone(self::CHECKIN_TIMEZONE);
+        $now ??= new \DateTimeImmutable('now', $timezone);
+        $deadline = new \DateTimeImmutable(
+            $booking->getCheckIn()->format('Y-m-d').sprintf(' %02d:00:00', self::SELF_CHECKIN_DEADLINE_HOUR),
+            $timezone,
+        );
+
+        return $now < $deadline;
     }
 
     public function getExtrasForGuest(string $code, string $locale = 'pt'): array
@@ -279,6 +331,7 @@ class ConciergeService
             'notes' => $be->getNotes(),
             'priceAtBooking' => $be->getPriceAtBooking(),
             'requestedBy' => $be->getRequestedBy(),
+            'category' => $extra?->getCategory(),
             'isBreakfast' => $extra ? $this->isBreakfastExtra($extra) : false,
             'createdAt' => $be->getCreatedAt()->format(\DateTimeInterface::ATOM),
             'canCancel' => $be->canBeCancelledByGuest(),

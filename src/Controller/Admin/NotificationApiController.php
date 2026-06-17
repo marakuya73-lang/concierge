@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 
 use App\Entity\BookingExtra;
 use App\Repository\BookingExtraRepository;
+use App\Repository\BookingRepository;
 use App\Service\WebPushService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,7 @@ class NotificationApiController extends AbstractController
     public function __construct(
         private WebPushService $webPushService,
         private BookingExtraRepository $bookingExtraRepository,
+        private BookingRepository $bookingRepository,
     ) {
     }
 
@@ -89,6 +91,7 @@ class NotificationApiController extends AbstractController
             : new \DateTimeImmutable('-30 seconds');
 
         $requests = $this->bookingExtraRepository->findGuestRequestsSince($sinceDate);
+        $selfCheckIns = $this->bookingRepository->findSelfCheckInRequestsSince($sinceDate);
 
         return $this->json([
             'serverTime' => time(),
@@ -111,6 +114,19 @@ class NotificationApiController extends AbstractController
                     ),
                 ];
             }, $requests),
+            'selfCheckIns' => array_map(function ($booking) {
+                return [
+                    'bookingId' => $booking->getId(),
+                    'guestName' => $booking->getGuestName(),
+                    'checkIn' => $booking->getCheckIn()->format('d/m/Y'),
+                    'createdAt' => $booking->getSelfCheckInRequestedAt()?->getTimestamp() ?? time(),
+                    'bookingUrl' => $this->generateUrl(
+                        'admin_booking_show',
+                        ['id' => $booking->getId()],
+                        UrlGeneratorInterface::ABSOLUTE_PATH,
+                    ),
+                ];
+            }, $selfCheckIns),
         ]);
     }
 }

@@ -59,7 +59,7 @@ class Property
     private string $kitchenIntroEn = 'Your open-air kitchen is fully equipped so you can cook at ease, surrounded by the nature of Chapada dos Veadeiros.';
 
     #[ORM\Column(type: Types::TEXT)]
-    private string $arrivalInstructionsPt = "Ao sair de Alto Paraíso de Goiás, siga em direção ao povoado do Moinho. Recomendamos Google Maps (não Waze) e baixar o mapa offline antes de iniciar a rota.\n\n1. No caminho, você encontrará uma bifurcação — mantenha-se à esquerda, seguindo as placas indicativas para o Moinho.\n2. Ao chegar à placa \"Bem-vindos ao Moinho\", atravesse a ponte e continue em direção ao Solarion e às cachoeiras Anjos e Arcanjos.\n3. Logo após a ponte, pegue a primeira rua à esquerda.\n4. Em seguida, a primeira rua à direita.\n5. Siga até o final da rua e, no final, vire à esquerda na estrada de terra, continuando pelo caminho das cachoeiras.\n6. Após cerca de 200 metros, você verá uma subida à direita — postes laranjas dos dois lados da entrada e uma placa do Rajaaram. Suba essa rua até o final.\n\nChegando: você saberá que chegou ao encontrar a placa \"Ater Tumti\" e ao ser recebido(a) pelos nossos cachorros. São extremamente dóceis e amigáveis — fique tranquilo(a) se estiverem soltos.\n\n🚗 Estacionamento: fiquem à vontade para estacionar no local. Ao chegar, toque o sino e logo iremos recebê-los.\n\n🚙 Acesso: recomendamos veículos mais altos, pois o último trecho possui irregularidades típicas de estrada de terra. Se estiver com carro baixo ou não se sentir confortável, oferecemos translado gratuito entre o povoado do Moinho e o Rajaaram — avise com antecedência.\n\n🚐 Transfer opcional: também oferecemos serviço de transfer saindo de Alto Paraíso, mediante valor adicional, para que você relaxe desde o início da jornada.\n\nQualquer dúvida durante o trajeto, entre em contato conosco — teremos prazer em ajudar.";
+    private string $arrivalInstructionsPt = "Ao sair de Alto Paraíso de Goiás, siga em direção ao povoado do Moinho. Recomendamos Google Maps (não Waze) e baixar o mapa offline antes de iniciar a rota.\n\n1. No caminho, você encontrará uma bifurcação, mantenha-se à esquerda, seguindo as placas indicativas para o Moinho.\n2. Ao chegar à placa \"Bem-vindos ao Moinho\", atravesse a ponte e continue em direção ao Solarion e às cachoeiras Anjos e Arcanjos.\n3. Logo após a ponte, pegue a primeira rua à esquerda.\n4. Em seguida, a primeira rua à direita.\n5. Siga até o final da rua e, no final, vire à esquerda na estrada de terra, continuando pelo caminho das cachoeiras.\n6. Após cerca de 200 metros, você verá uma subida à direita, postes laranjas dos dois lados da entrada e uma placa do Rajaaram. Suba essa rua até o final.\n\nChegando: você saberá que chegou ao encontrar a placa \"Ater Tumti\" e ao ser recebido(a) pelos nossos cachorros. São extremamente dóceis e amigáveis, fique tranquilo(a) se estiverem soltos.\n\n🚗 Estacionamento: fiquem à vontade para estacionar no local. Ao chegar, toque o sino e logo iremos recebê-los.\n\n🚙 Acesso: recomendamos veículos mais altos, pois o último trecho possui irregularidades típicas de estrada de terra. Se estiver com carro baixo ou não se sentir confortável, oferecemos translado gratuito entre o povoado do Moinho e o Rajaaram, avise com antecedência.\n\n🚐 Transfer opcional: também oferecemos serviço de transfer saindo de Alto Paraíso, mediante valor adicional, para que você relaxe desde o início da jornada.\n\nQualquer dúvida durante o trajeto, entre em contato conosco, teremos prazer em ajudar.";
 
     #[ORM\Column(length: 255)]
     private string $nameEn = 'Domo Xangô | Sacred Jungle View';
@@ -80,7 +80,7 @@ class Property
     private string $locationDetailsEn = 'Moinho, Alto Paraíso de Goiás, 14 km from town center, in untouched Chapada dos Veadeiros nature. 10-minute walk to Anjos and Arcanjos waterfalls.';
 
     #[ORM\Column(type: Types::TEXT)]
-    private string $arrivalInstructionsEn = "When leaving Alto Paraíso de Goiás, head toward the village of Moinho. We recommend Google Maps (not Waze) and downloading offline maps before you start.\n\n1. On the way, you will reach a fork — stay left, following signs to Moinho.\n2. When you reach the \"Bem-vindos ao Moinho\" sign, cross the bridge and continue toward Solarion and the Anjos and Arcanjos waterfalls.\n3. Right after the bridge, take the first street on the left.\n4. Then the first street on the right.\n5. Follow to the end of the street and, at the end, turn left onto the dirt road continuing along the waterfall trail.\n6. After about 200 meters, you will see an uphill turn on the right — orange posts on both sides of the entrance and a Rajaaram sign. Drive up that road to the end.\n\nArrival: you will know you have arrived when you see the \"Ater Tumti\" sign and are greeted by our dogs. They are extremely gentle and friendly — don't worry if they are roaming freely.\n\n🚗 Parking: feel free to park on site. When you arrive, ring the bell and we will come to welcome you.\n\n🚙 Road access: we recommend higher vehicles, as the last stretch has typical dirt-road bumps. If you have a low car or don't feel comfortable, we offer a free shuttle between Moinho village and Rajaaram — just let us know in advance.\n\n🚐 Optional transfer: we also offer a transfer from Alto Paraíso for an additional fee, so you can relax from the very start of your journey.\n\nIf you have any questions along the way, contact us — we will be happy to help.";
+    private string $arrivalInstructionsEn = "When leaving Alto Paraíso de Goiás, head toward the village of Moinho. We recommend Google Maps (not Waze) and downloading offline maps before you start.\n\n1. On the way, you will reach a fork, stay left, following signs to Moinho.\n2. When you reach the \"Bem-vindos ao Moinho\" sign, cross the bridge and continue toward Solarion and the Anjos and Arcanjos waterfalls.\n3. Right after the bridge, take the first street on the left.\n4. Then the first street on the right.\n5. Follow to the end of the street and, at the end, turn left onto the dirt road continuing along the waterfall trail.\n6. After about 200 meters, you will see an uphill turn on the right, orange posts on both sides of the entrance and a Rajaaram sign. Drive up that road to the end.\n\nArrival: you will know you have arrived when you see the \"Ater Tumti\" sign and are greeted by our dogs. They are extremely gentle and friendly, don't worry if they are roaming freely.\n\n🚗 Parking: feel free to park on site. When you arrive, ring the bell and we will come to welcome you.\n\n🚙 Road access: we recommend higher vehicles, as the last stretch has typical dirt-road bumps. If you have a low car or don't feel comfortable, we offer a free shuttle between Moinho village and Rajaaram, just let us know in advance.\n\n🚐 Optional transfer: we also offer a transfer from Alto Paraíso for an additional fee, so you can relax from the very start of your journey.\n\nIf you have any questions along the way, contact us, we will be happy to help.";
 
     #[ORM\Column(length: 100)]
     private string $wifiName = 'MARA DECK';
@@ -131,13 +131,13 @@ class Property
     private int $maxGuests = 5;
 
     #[ORM\Column(length: 500)]
-    private string $mapUrl = 'https://maps.app.goo.gl/ZbJV4Bdd977fVCyV7';
+    private string $mapUrl = 'https://www.google.com/maps/search/?api=1&query=-14.061994,-47.467243';
 
     #[ORM\Column(length: 50)]
-    private string $latitude = '-14.1306';
+    private string $latitude = '-14.061994';
 
     #[ORM\Column(length: 50)]
-    private string $longitude = '-47.5083';
+    private string $longitude = '-47.467243';
 
     #[ORM\Column(length: 255)]
     private string $pixKey = 'domo.xango@gmail.com';
@@ -328,6 +328,14 @@ class Property
     public function setMaxGuests(int $v): static { $this->maxGuests = $v; return $this; }
     public function getMapUrl(): string { return $this->mapUrl; }
     public function setMapUrl(string $v): static { $this->mapUrl = $v; return $this; }
+    public function getGoogleMapsUrl(): string
+    {
+        return sprintf(
+            'https://www.google.com/maps/search/?api=1&query=%s,%s',
+            $this->latitude,
+            $this->longitude,
+        );
+    }
     public function getLatitude(): string { return $this->latitude; }
     public function setLatitude(string $v): static { $this->latitude = $v; return $this; }
     public function getLongitude(): string { return $this->longitude; }

@@ -1,6 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 
 const LAST_SEEN_KEY = 'domoAdminLastSeenExtra';
+const SEEN_SELF_CHECKIN_KEY = 'domoAdminSeenSelfCheckInIds';
 const POLL_INTERVAL_MS = 10000;
 const SEEN_IDS_KEY = 'domoAdminSeenExtraIds';
 const POLL_OVERLAP_SECONDS = 15;
@@ -10,6 +11,7 @@ export default class extends Controller {
 
     connect() {
         this.seenIds = this.loadSeenIds();
+        this.seenSelfCheckInIds = this.loadSeenSelfCheckInIds();
         this.lastSeen = this.loadLastSeen();
         this.pollTimer = null;
         this.audioContext = null;
@@ -216,12 +218,71 @@ export default class extends Controller {
                 this.handleNewRequest(req);
             }
 
+            const newSelfCheckIns = (data.selfCheckIns || []).filter(
+                (item) => !this.seenSelfCheckInIds.has(item.bookingId),
+            );
+            for (const item of newSelfCheckIns) {
+                this.handleNewSelfCheckIn(item);
+            }
+
             if (data.serverTime) {
                 this.lastSeen = data.serverTime;
                 this.saveLastSeen();
             }
         } catch {
             // offline or session expired
+        }
+    }
+
+    handleNewSelfCheckIn(item) {
+        this.seenSelfCheckInIds.add(item.bookingId);
+        this.saveSeenSelfCheckInIds();
+
+        this.showSelfCheckInBanner(item);
+        this.vibrate();
+        this.playAlert();
+
+        if (Notification.permission === 'granted') {
+            this.showSelfCheckInNotification(item);
+        }
+    }
+
+    showSelfCheckInBanner(item) {
+        if (!this.hasBannerTarget) return;
+
+        this.bannerTarget.hidden = false;
+        this.bannerTarget.innerHTML = `
+            <div class="admin-alert-banner-inner">
+                <strong>Self check-in solicitado</strong>
+                <span>${item.guestName} · check-in ${item.checkIn}</span>
+            </div>
+            <a href="${item.bookingUrl}" class="admin-alert-banner-link">Ver reserva →</a>
+            <button type="button" class="admin-alert-banner-dismiss" data-action="click->admin-notifications#dismissBanner" aria-label="Fechar">×</button>
+        `;
+    }
+
+    showSelfCheckInNotification(item) {
+        const title = 'Self check-in solicitado';
+        const body = `${item.guestName} · check-in ${item.checkIn}`;
+        const options = {
+            body,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/icon-192.png',
+            vibrate: [200, 100, 200, 100, 400],
+            tag: `self-checkin-${item.bookingId}`,
+            renotify: true,
+            requireInteraction: true,
+            data: { url: item.bookingUrl },
+        };
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready
+                .then((reg) => reg.showNotification(title, options))
+                .catch(() => {
+                    try { new Notification(title, options); } catch { /* unsupported */ }
+                });
+        } else {
+            try { new Notification(title, options); } catch { /* unsupported */ }
         }
     }
 
@@ -353,5 +414,18 @@ export default class extends Controller {
 
     saveSeenIds() {
         sessionStorage.setItem(SEEN_IDS_KEY, JSON.stringify([...this.seenIds]));
+    }
+
+    loadSeenSelfCheckInIds() {
+        try {
+            const raw = sessionStorage.getItem(SEEN_SELF_CHECKIN_KEY);
+            return new Set(raw ? JSON.parse(raw) : []);
+        } catch {
+            return new Set();
+        }
+    }
+
+    saveSeenSelfCheckInIds() {
+        sessionStorage.setItem(SEEN_SELF_CHECKIN_KEY, JSON.stringify([...this.seenSelfCheckInIds]));
     }
 }

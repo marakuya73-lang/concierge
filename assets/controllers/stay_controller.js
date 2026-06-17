@@ -12,6 +12,9 @@ export default class extends Controller {
         'extrasRequests', 'extrasRequestsList', 'extrasAvailableList', 'extrasEmpty',
         'homeExtras', 'homeExtrasList',
         'foodExtrasBooked', 'foodExtrasAvailable',
+        'locationTransfer',
+        'selfCheckInModal', 'selfCheckInTitle', 'selfCheckInLead', 'selfCheckInConfirm', 'selfCheckInCancel',
+        'selfCheckInBtn', 'selfCheckInStatus',
     ];
     static values = {
         code: String,
@@ -33,6 +36,11 @@ export default class extends Controller {
         statusCancelled: String,
         cancelRequest: String,
         offlineExtraQueued: String,
+        selfCheckinTitle: String,
+        selfCheckinLead: String,
+        selfCheckinConfirm: String,
+        selfCheckinCancel: String,
+        selfCheckinDone: String,
     };
 
     connect() {
@@ -72,6 +80,65 @@ export default class extends Controller {
 
     goHome() {
         this.show('home');
+    }
+
+    openSelfCheckInModal() {
+        if (!this.hasSelfCheckInModalTarget) {
+            return;
+        }
+
+        this.selfCheckInModalTarget.hidden = false;
+        this.selfCheckInModalTarget.removeAttribute('hidden');
+        document.body.classList.add('stay-dialog-open');
+    }
+
+    closeSelfCheckInModal() {
+        if (!this.hasSelfCheckInModalTarget) {
+            return;
+        }
+
+        this.selfCheckInModalTarget.hidden = true;
+        this.selfCheckInModalTarget.setAttribute('hidden', '');
+        document.body.classList.remove('stay-dialog-open');
+    }
+
+    async confirmSelfCheckIn(event) {
+        const btn = event.currentTarget;
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/concierge/self-checkin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: this.codeValue }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error);
+            }
+
+            this.closeSelfCheckInModal();
+
+            const message = data.message
+                || (this.hasSelfCheckinDoneValue ? this.selfCheckinDoneValue : 'Self check-in confirmed');
+
+            if (this.hasSelfCheckInBtnTarget) {
+                const card = this.selfCheckInBtnTarget.parentElement;
+                this.selfCheckInBtnTarget.remove();
+
+                if (card) {
+                    const status = document.createElement('p');
+                    status.className = 'checkin-self-status';
+                    status.textContent = message;
+                    card.appendChild(status);
+                }
+            } else if (this.hasSelfCheckInStatusTarget) {
+                this.selfCheckInStatusTarget.textContent = message;
+            }
+        } catch (err) {
+            alert(err.message);
+            btn.disabled = false;
+        }
     }
 
     async requestExtra(event) {
@@ -162,6 +229,8 @@ export default class extends Controller {
             }
         });
 
+        this.updateLocationTransferCard(data);
+
         if (data.isBreakfast && this.hasFoodExtrasAvailableTarget) {
             this.foodExtrasAvailableTarget.querySelectorAll('.food-service-card[data-is-breakfast="1"]').forEach((card) => {
                 card.remove();
@@ -189,6 +258,28 @@ export default class extends Controller {
         if (this.hasExtrasContentTarget) {
             this.extrasContentTarget.hidden = false;
         }
+    }
+
+    updateLocationTransferCard(data) {
+        if (!this.hasLocationTransferTarget) {
+            return;
+        }
+
+        const card = this.locationTransferTarget;
+        const total = data.totalFormatted || '';
+        const meta = total ? `${data.quantity}× · ${total}` : `${data.quantity}× · ${data.name}`;
+
+        card.innerHTML = `
+            <p class="location-transfer-intro">${card.querySelector('.location-transfer-intro')?.innerHTML || ''}</p>
+            <div class="location-transfer-status">
+                <div class="location-transfer-status-copy">
+                    <p class="location-transfer-price font-serif">${total || ''}</p>
+                    <p class="location-transfer-meta">${meta}</p>
+                </div>
+                <span class="status-pill status-${data.status}">${this.statusLabel(data.status)}</span>
+            </div>
+            ${data.pixKey ? `<p class="location-transfer-pix">${this.pixPaymentValue}: <strong>${data.pixKey}</strong></p>` : ''}
+        `;
     }
 
     addToFoodBooked(data) {

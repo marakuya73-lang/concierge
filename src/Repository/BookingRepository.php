@@ -166,4 +166,17 @@ class BookingRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getOneOrNullResult();
     }
+
+    /** @return Booking[] */
+    public function findSelfCheckInRequestsSince(\DateTimeImmutable $since): array
+    {
+        return $this->createQueryBuilder('b')
+            ->andWhere('b.selfCheckInRequested = :requested')
+            ->andWhere('b.selfCheckInRequestedAt >= :since')
+            ->setParameter('requested', true)
+            ->setParameter('since', $since)
+            ->orderBy('b.selfCheckInRequestedAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }
