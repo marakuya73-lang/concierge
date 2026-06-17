@@ -5,11 +5,15 @@
 {% macro booking_rows(bookings, highlightPending) %}
     {% for booking in bookings %}
         {% set showUrl = path('admin_booking_show', {id: booking.id, edit: booking.needsGuestInfo ? 1 : 0}) %}
-        <tr class="admin-booking-row{% if highlightPending and booking.needsGuestInfo %} row-pending{% endif %}">
+        <tr class="admin-booking-row{% if highlightPending and booking.needsGuestInfo %} row-pending{% endif %}"
+            data-controller="admin-booking-row"
+            data-admin-booking-row-url-value="{{ showUrl }}"
+            data-action="click->admin-booking-row#open keydown->admin-booking-row#keydown"
+            tabindex="0"
+            role="link"
+            aria-label="{{ booking.guestName }} · {{ booking.checkIn|date('d/m/Y') }} → {{ booking.checkOut|date('d/m/Y') }}">
             <td>
-                <a href="{{ showUrl }}" class="admin-booking-name-link">
-                    <strong>{{ booking.guestName }}</strong>
-                </a>
+                <strong>{{ booking.guestName }}</strong>
                 {% if booking.needsGuestInfo %}<br><span class="admin-pending-badge">Preencher dados do hóspede</span>{% endif %}
             </td>
             <td>{{ booking.checkIn|date('d/m/Y') }}</td>
@@ -22,37 +26,6 @@
     {% else %}
         <tr><td colspan="7" style="text-align:center;color:var(--muted-foreground);padding:1.5rem">Nenhuma reserva nesta seção.</td></tr>
     {% endfor %}
-{% endmacro %}
-
-{% macro booking_cards(bookings, highlightPending) %}
-    {% for booking in bookings %}
-        {% set showUrl = path('admin_booking_show', {id: booking.id, edit: booking.needsGuestInfo ? 1 : 0}) %}
-        <a href="{{ showUrl }}" class="admin-booking-card{% if highlightPending and booking.needsGuestInfo %} admin-booking-card--pending{% endif %}">
-            <span class="admin-booking-card-main">
-                <strong>{{ booking.guestName }}</strong>
-                <span class="admin-booking-card-dates">{{ booking.checkIn|date('d/m/Y') }} → {{ booking.checkOut|date('d/m/Y') }}</span>
-            </span>
-            <span class="admin-booking-card-meta">
-                <code>{{ booking.accessCode }}</code>
-                <span>{{ booking.source }}</span>
-            </span>
-            {% if booking.needsGuestInfo %}
-                <span class="admin-pending-badge">Preencher dados do hóspede</span>
-            {% endif %}
-        </a>
-    {% else %}
-        <p class="admin-empty">Nenhuma reserva nesta seção.</p>
-    {% endfor %}
-{% endmacro %}
-
-{% macro booking_section(bookings, highlightPending) %}
-    <div class="admin-booking-cards">{{ _self.booking_cards(bookings, highlightPending) }}</div>
-    <div class="admin-table-wrap admin-table-wrap--desktop">
-        <table>
-            <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
-            <tbody>{{ _self.booking_rows(bookings, highlightPending) }}</tbody>
-        </table>
-    </div>
 {% endmacro %}
 
 {% block admin %}
@@ -87,7 +60,12 @@
                 <h3 class="admin-section-title">Site: completar dados</h3>
                 <p class="admin-section-desc">Estadias importadas do calendário Airbnb fora da plataforma.</p>
             </div>
-            {{ bookings.booking_section(pendingSiteBookings, true) }}
+            <div class="admin-table-wrap">
+                <table>
+                    <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
+                    <tbody>{{ bookings.booking_rows(pendingSiteBookings, true) }}</tbody>
+                </table>
+            </div>
         </section>
     {% endif %}
 
@@ -96,7 +74,12 @@
             <h3 class="admin-section-title">Estadia actual</h3>
             <p class="admin-section-desc">Hóspedes no domo hoje ({{ today|date('d/m/Y') }}).</p>
         </div>
-        {{ bookings.booking_section(currentBookings, false) }}
+        <div class="admin-table-wrap">
+            <table>
+                <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
+                <tbody>{{ bookings.booking_rows(currentBookings, false) }}</tbody>
+            </table>
+        </div>
     </section>
 
     <section class="admin-section">
@@ -104,7 +87,12 @@
             <h3 class="admin-section-title">Próximas reservas</h3>
             <p class="admin-section-desc">Chegadas futuras confirmadas.</p>
         </div>
-        {{ bookings.booking_section(upcomingBookings, false) }}
+        <div class="admin-table-wrap">
+            <table>
+                <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
+                <tbody>{{ bookings.booking_rows(upcomingBookings, false) }}</tbody>
+            </table>
+        </div>
     </section>
 
     <section class="admin-section">
@@ -112,7 +100,12 @@
             <h3 class="admin-section-title">Reservas anteriores{% if pastBookings|length > 0 %} ({{ pastBookings|length }}){% endif %}</h3>
             <p class="admin-section-desc">Estadias já encerradas.</p>
         </div>
-        {{ bookings.booking_section(pastBookings, false) }}
+        <div class="admin-table-wrap">
+            <table>
+                <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
+                <tbody>{{ bookings.booking_rows(pastBookings, false) }}</tbody>
+            </table>
+        </div>
     </section>
 </div>
 {% endblock %}
