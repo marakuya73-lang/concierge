@@ -12,8 +12,6 @@ export default class extends Controller {
         'extrasRequests', 'extrasRequestsList', 'extrasAvailableList', 'extrasEmpty',
         'homeExtras', 'homeExtrasList',
         'foodExtrasBooked', 'foodExtrasAvailable',
-        'cancelConfirm', 'cancelConfirmTitle', 'cancelConfirmLead', 'cancelConfirmItem',
-        'cancelConfirmKeep', 'cancelConfirmSubmit',
     ];
     static values = {
         code: String,
@@ -34,10 +32,6 @@ export default class extends Controller {
         statusConfirmed: String,
         statusCancelled: String,
         cancelRequest: String,
-        cancelRequestTitle: String,
-        cancelRequestLead: String,
-        cancelRequestKeep: String,
-        cancelRequestConfirmBtn: String,
         offlineExtraQueued: String,
     };
 
@@ -45,23 +39,9 @@ export default class extends Controller {
         this.show('home');
         this.cacheStayPage();
         window.addEventListener('online', () => this.cacheStayPage());
-        this.boundCancelEscape = (event) => this.handleCancelEscape(event);
-        this.boundCancelClick = (event) => {
-            const btn = event.target.closest('.extras-cancel-btn, .food-cancel-btn');
-            if (!btn || !this.element.contains(btn)) {
-                return;
-            }
-
-            event.preventDefault();
-            this.cancelExtra({ currentTarget: btn });
-        };
-        this.element.addEventListener('click', this.boundCancelClick);
-        this.cancelModalEl = this.element.querySelector('[data-stay-target="cancelConfirm"]');
     }
 
     disconnect() {
-        document.removeEventListener('keydown', this.boundCancelEscape);
-        this.element.removeEventListener('click', this.boundCancelClick);
         document.body.classList.remove('stay-dialog-open');
     }
 
@@ -129,131 +109,6 @@ export default class extends Controller {
         } catch (err) {
             alert(err.message);
             btn.disabled = false;
-        }
-    }
-
-    cancelExtra(event) {
-        const btn = event.currentTarget;
-        const requestId = parseInt(btn.dataset.requestId, 10);
-        if (!requestId) {
-            return;
-        }
-
-        const card = btn.closest('[data-request-id]');
-        const name = card?.querySelector('.extras-item-name, .food-service-name')?.textContent?.trim() || '';
-
-        this.pendingCancelRequestId = requestId;
-        this.pendingCancelBtn = btn;
-
-        if (this.cancelModalEl && this.hasCancelConfirmItemTarget) {
-            this.cancelConfirmItemTarget.textContent = name;
-        }
-        if (this.cancelModalEl && this.hasCancelConfirmTitleTarget && this.hasCancelRequestTitleValue) {
-            this.cancelConfirmTitleTarget.textContent = this.cancelRequestTitleValue;
-        }
-        if (this.cancelModalEl && this.hasCancelConfirmLeadTarget && this.hasCancelRequestLeadValue) {
-            this.cancelConfirmLeadTarget.textContent = this.cancelRequestLeadValue;
-        }
-        if (this.cancelModalEl && this.hasCancelConfirmKeepTarget && this.hasCancelRequestKeepValue) {
-            this.cancelConfirmKeepTarget.textContent = this.cancelRequestKeepValue;
-        }
-        if (this.cancelModalEl && this.hasCancelConfirmSubmitTarget && this.hasCancelRequestConfirmBtnValue) {
-            this.cancelConfirmSubmitTarget.textContent = this.cancelRequestConfirmBtnValue;
-        }
-
-        this.showCancelConfirm();
-    }
-
-    showCancelConfirm() {
-        if (!this.cancelModalEl) {
-            return;
-        }
-
-        this.cancelModalEl.hidden = false;
-        this.cancelModalEl.removeAttribute('hidden');
-        document.body.classList.add('stay-dialog-open');
-        document.addEventListener('keydown', this.boundCancelEscape);
-
-        if (this.hasCancelConfirmKeepTarget) {
-            this.cancelConfirmKeepTarget.focus();
-        }
-    }
-
-    dismissCancelConfirm() {
-        if (this.cancelModalEl) {
-            this.cancelModalEl.hidden = true;
-            this.cancelModalEl.setAttribute('hidden', '');
-        }
-
-        document.body.classList.remove('stay-dialog-open');
-        document.removeEventListener('keydown', this.boundCancelEscape);
-        this.pendingCancelRequestId = null;
-        this.pendingCancelBtn = null;
-
-        if (this.hasCancelConfirmSubmitTarget) {
-            this.cancelConfirmSubmitTarget.disabled = false;
-        }
-    }
-
-    dismissCancelConfirmBackdrop(event) {
-        if (event.target !== event.currentTarget) {
-            return;
-        }
-
-        this.dismissCancelConfirm();
-    }
-
-    handleCancelEscape(event) {
-        if (event.key === 'Escape' && this.cancelModalEl && !this.cancelModalEl.hidden) {
-            this.dismissCancelConfirm();
-        }
-    }
-
-    stopDialogClick(event) {
-        event.stopPropagation();
-    }
-
-    async confirmCancelExtra() {
-        const requestId = this.pendingCancelRequestId;
-        if (!requestId) {
-            return;
-        }
-
-        const submitBtn = this.hasCancelConfirmSubmitTarget ? this.cancelConfirmSubmitTarget : null;
-        const triggerBtn = this.pendingCancelBtn;
-
-        if (submitBtn) {
-            submitBtn.disabled = true;
-        }
-        if (triggerBtn) {
-            triggerBtn.disabled = true;
-        }
-
-        try {
-            const response = await fetch('/api/concierge/extras/cancel', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: this.codeValue, requestId }),
-            });
-            let data = {};
-            try {
-                data = await response.json();
-            } catch {
-                // ignore invalid JSON bodies
-            }
-            if (!response.ok) {
-                throw new Error(data.error || 'Não foi possível cancelar a solicitação.');
-            }
-            this.dismissCancelConfirm();
-            window.location.reload();
-        } catch (err) {
-            alert(err.message);
-            if (submitBtn) {
-                submitBtn.disabled = false;
-            }
-            if (triggerBtn) {
-                triggerBtn.disabled = false;
-            }
         }
     }
 

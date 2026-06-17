@@ -40,10 +40,6 @@
      data-stay-status-confirmed-value="{{ 'app.extra_status_confirmed'|trans }}"
      data-stay-status-cancelled-value="{{ 'app.extra_status_cancelled'|trans }}"
      data-stay-cancel-request-value="{{ 'app.cancel_request'|trans }}"
-     data-stay-cancel-request-title-value="{{ 'app.cancel_request_title'|trans }}"
-     data-stay-cancel-request-lead-value="{{ 'app.cancel_request_lead'|trans }}"
-     data-stay-cancel-request-keep-value="{{ 'app.cancel_request_keep'|trans }}"
-     data-stay-cancel-request-confirm-btn-value="{{ 'app.cancel_request_confirm_btn'|trans }}"
      data-stay-offline-extra-queued-value="{{ 'app.offline_extra_queued'|trans }}">
     <header class="stay-header">
         <div class="stay-header-inner">
@@ -902,21 +898,121 @@
         </div>
     </div>
 
-    <div class="extras-confirm-overlay stay-cancel-overlay" data-stay-target="cancelConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" data-action="click->stay#dismissCancelConfirmBackdrop">
-        <div class="extras-confirm stay-cancel-confirm" data-action="click->stay#stopDialogClick">
+    <div class="extras-confirm-overlay stay-cancel-overlay" id="stay-cancel-modal" data-stay-target="cancelConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle">
+        <div class="extras-confirm stay-cancel-confirm" id="stay-cancel-modal-panel">
             <div class="stay-cancel-icon" aria-hidden="true">
                 <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
             </div>
             <h3 id="cancelConfirmTitle" class="extras-confirm-title font-serif" data-stay-target="cancelConfirmTitle">{{ 'app.cancel_request_title'|trans }}</h3>
             <p class="extras-confirm-lead" data-stay-target="cancelConfirmLead">{{ 'app.cancel_request_lead'|trans }}</p>
             <div class="extras-confirm-summary stay-cancel-summary">
-                <p class="extras-confirm-item font-serif" data-stay-target="cancelConfirmItem"></p>
+                <p class="extras-confirm-item font-serif" id="stay-cancel-modal-item" data-stay-target="cancelConfirmItem"></p>
             </div>
             <div class="stay-cancel-actions">
-                <button type="button" class="btn btn-outline btn-block stay-cancel-keep" data-action="click->stay#dismissCancelConfirm" data-stay-target="cancelConfirmKeep">{{ 'app.cancel_request_keep'|trans }}</button>
-                <button type="button" class="btn btn-block stay-cancel-submit" data-action="click->stay#confirmCancelExtra" data-stay-target="cancelConfirmSubmit">{{ 'app.cancel_request_confirm_btn'|trans }}</button>
+                <button type="button" class="btn btn-outline btn-block stay-cancel-keep" id="stay-cancel-modal-keep" data-stay-target="cancelConfirmKeep">{{ 'app.cancel_request_keep'|trans }}</button>
+                <button type="button" class="btn btn-block stay-cancel-submit" id="stay-cancel-modal-submit" data-stay-target="cancelConfirmSubmit">{{ 'app.cancel_request_confirm_btn'|trans }}</button>
             </div>
         </div>
     </div>
+
+    <script>
+    (function () {
+        const root = document.currentScript?.closest('[data-controller="stay"]')
+            || document.querySelector('[data-controller="stay"]');
+        if (!root) return;
+
+        const modal = root.querySelector('#stay-cancel-modal');
+        const itemEl = root.querySelector('#stay-cancel-modal-item');
+        const keepBtn = root.querySelector('#stay-cancel-modal-keep');
+        const submitBtn = root.querySelector('#stay-cancel-modal-submit');
+        const panel = root.querySelector('#stay-cancel-modal-panel');
+        const accessCode = root.dataset.stayCodeValue || '';
+        let pendingRequestId = null;
+        let pendingTriggerBtn = null;
+
+        function openModal(btn) {
+            const card = btn.closest('[data-request-id]');
+            const name = card?.querySelector('.extras-item-name, .food-service-name')?.textContent?.trim() || '';
+            pendingRequestId = btn.dataset.requestId;
+            pendingTriggerBtn = btn;
+            if (itemEl) itemEl.textContent = name;
+            modal.hidden = false;
+            modal.removeAttribute('hidden');
+            document.body.classList.add('stay-dialog-open');
+            keepBtn?.focus();
+        }
+
+        function closeModal() {
+            if (submitBtn) submitBtn.disabled = false;
+            if (pendingTriggerBtn) pendingTriggerBtn.disabled = false;
+            modal.hidden = true;
+            modal.setAttribute('hidden', '');
+            document.body.classList.remove('stay-dialog-open');
+            pendingRequestId = null;
+            pendingTriggerBtn = null;
+        }
+
+        async function confirmCancel() {
+            if (!pendingRequestId || !accessCode) return;
+            if (submitBtn) submitBtn.disabled = true;
+            if (pendingTriggerBtn) pendingTriggerBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/concierge/extras/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: accessCode, requestId: Number(pendingRequestId) }),
+                });
+                let data = {};
+                try { data = await response.json(); } catch (e) { /* ignore */ }
+                if (!response.ok) {
+                    throw new Error(data.error || '{{ 'app.cancel_request_error'|trans|e('js') }}');
+                }
+                closeModal();
+                window.location.reload();
+            } catch (err) {
+                alert(err.message);
+                if (submitBtn) submitBtn.disabled = false;
+                if (pendingTriggerBtn) pendingTriggerBtn.disabled = false;
+            }
+        }
+
+        root.addEventListener('click', (event) => {
+            const cancelBtn = event.target.closest('.extras-cancel-btn, .food-cancel-btn');
+            if (cancelBtn && root.contains(cancelBtn)) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                openModal(cancelBtn);
+                return;
+            }
+
+            if (event.target === keepBtn) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                closeModal();
+                return;
+            }
+
+            if (event.target === submitBtn) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                confirmCancel();
+                return;
+            }
+
+            if (event.target === modal) {
+                closeModal();
+            }
+        }, true);
+
+        panel?.addEventListener('click', (event) => event.stopPropagation());
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal && !modal.hidden) {
+                closeModal();
+            }
+        });
+    })();
+    </script>
 </div>
 {% endblock %}

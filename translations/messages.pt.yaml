@@ -80,6 +80,7 @@ app:
     cancel_request_lead: "Esta ação não pode ser desfeita. O extra voltará a ficar disponível para reserva."
     cancel_request_keep: "Manter solicitação"
     cancel_request_confirm_btn: "Sim, cancelar"
+    cancel_request_error: "Não foi possível cancelar a solicitação."
     no_extras: "Nenhum extra disponível no momento."
     pix_payment: "Pagamento via Pix"
     smoking: "Fumo"

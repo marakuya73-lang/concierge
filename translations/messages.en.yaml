@@ -80,6 +80,7 @@ app:
     cancel_request_lead: "This cannot be undone. The extra will become available to book again."
     cancel_request_keep: "Keep request"
     cancel_request_confirm_btn: "Yes, cancel"
+    cancel_request_error: "Could not cancel the request."
     no_extras: "No extras available at the moment."
     pix_payment: "Pay via Pix"
     smoking: "Smoking"
