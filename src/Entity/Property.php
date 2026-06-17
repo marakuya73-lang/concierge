@@ -134,10 +134,10 @@ class Property
     private string $mapUrl = 'https://maps.app.goo.gl/APPumVUKa8P1LPgg8';
 
     #[ORM\Column(length: 50)]
-    private string $latitude = '-14.058554351871225';
+    private string $latitude = '-14.058523129412333';
 
     #[ORM\Column(length: 50)]
-    private string $longitude = '-47.46630422690646';
+    private string $longitude = '-47.466154023211494';
 
     #[ORM\Column(length: 255)]
     private string $pixKey = 'domo.xango@gmail.com';

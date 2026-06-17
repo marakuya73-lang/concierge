@@ -1549,14 +1549,31 @@ button, input, select, textarea { font: inherit; }
 }
 .location-transfer-hint { color: var(--muted-foreground); }
 .location-transfer-blocked { color: #9a5b00; }
-.location-transfer-field { display: block; margin-top: .75rem; }
+.location-transfer-field {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    margin-top: .75rem;
+    min-width: 0;
+    width: 100%;
+}
 .location-transfer-field-label {
-    display: block; margin-bottom: .35rem; font-size: .72rem; letter-spacing: .08em;
-    text-transform: uppercase; color: var(--muted-foreground);
+    display: block;
+    margin: 0;
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
 }
 .location-transfer-notes {
-    width: 100%; padding: .65rem .75rem; border: 1px solid var(--border);
-    border-radius: var(--radius); background: var(--card); font-size: .84rem;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: .65rem .75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    font-size: .84rem;
 }
 .location-transfer-btn { margin-top: .75rem; }
 .location-transfer-status {

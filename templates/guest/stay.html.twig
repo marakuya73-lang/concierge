@@ -329,7 +329,7 @@
                         class="location-map"
                         loading="lazy"
                         title="{{ 'app.location_heading'|trans }}"
-                        src="https://www.openstreetmap.org/export/embed.html?bbox={{ (lng - mapDelta)|number_format(4, '.', '') }}%2C{{ (lat - mapDelta)|number_format(4, '.', '') }}%2C{{ (lng + mapDelta)|number_format(4, '.', '') }}%2C{{ (lat + mapDelta)|number_format(4, '.', '') }}&amp;layer=mapnik&amp;marker={{ lat|number_format(4, '.', '') }}%2C{{ lng|number_format(4, '.', '') }}"
+                        src="https://www.openstreetmap.org/export/embed.html?bbox={{ (lng - mapDelta)|number_format(6, '.', '') }}%2C{{ (lat - mapDelta)|number_format(6, '.', '') }}%2C{{ (lng + mapDelta)|number_format(6, '.', '') }}%2C{{ (lat + mapDelta)|number_format(6, '.', '') }}&amp;layer=mapnik&amp;marker={{ lat|number_format(6, '.', '') }}%2C{{ lng|number_format(6, '.', '') }}"
                     ></iframe>
                     <a href="{{ stay.mapUrl }}" target="_blank" rel="noopener" class="location-map-float">
                         {{ 'app.open_in_maps'|trans }}
@@ -396,10 +396,10 @@
                                         {% endif %}
                                     </div>
                                     {% if transferExtra.bookable %}
-                                        <label class="location-transfer-field">
-                                            <span class="location-transfer-field-label">{{ 'app.notes_optional'|trans }}</span>
+                                        <div class="location-transfer-field">
+                                            <label for="transfer-notes-{{ transferExtra.id }}" class="location-transfer-field-label">{{ 'app.notes_optional'|trans }}</label>
                                             <input type="text" id="transfer-notes-{{ transferExtra.id }}" placeholder="{{ 'app.location_transfer_notes_placeholder'|trans }}" class="location-transfer-notes">
-                                        </label>
+                                        </div>
                                         <button type="button" class="btn btn-accent btn-block location-transfer-btn" data-extra-id="{{ transferExtra.id }}" data-qty-prefix="transfer-" data-action="click->stay#requestExtra">{{ 'app.location_transfer_book'|trans }}</button>
                                     {% endif %}
                                 {% endif %}
