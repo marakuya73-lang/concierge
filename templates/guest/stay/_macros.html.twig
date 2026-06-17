@@ -28,6 +28,26 @@
     {% endif %}
 {% endmacro %}
 
+{% macro checkin_dogs_paragraph(instructions) %}
+    {% set paragraphs = instructions|split('\n\n')|filter(p => p|trim != '') %}
+    {% if paragraphs|length > 0 %}
+        {% set last = paragraphs|last|trim %}
+        {% if 'cães' in last|lower or 'dogs' in last|lower %}
+            {{ last }}
+        {% endif %}
+    {% endif %}
+{% endmacro %}
+
+{% macro checkin_reception_body(instructions, selfCheckIn) %}
+    {% if selfCheckIn %}
+        {{ 'app.self_checkin_reception_text'|trans }}{% set dogs = _self.checkin_dogs_paragraph(instructions)|trim %}{% if dogs %}
+
+{{ dogs }}{% endif %}
+    {% else %}
+        {{ _self.checkin_access_text(instructions) }}
+    {% endif %}
+{% endmacro %}
+
 {% macro arrival_intro(text) %}
     {% if '\n\n1. ' in text %}
         {{ text|split('\n\n1. ')|first|trim }}

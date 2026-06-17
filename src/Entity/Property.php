@@ -26,7 +26,7 @@ class Property
     private string $descriptionPt = 'Aqui, natureza e sofisticação se entrelaçam para oferecer uma vivência sensorial e memorável. Permita-se desacelerar, contemplar o céu estrelado e habitar o silêncio deste refúgio sagrado. Cada detalhe foi pensado para que você simplesmente... esteja.';
 
     #[ORM\Column(type: Types::TEXT)]
-    private string $checkInInstructionsPt = "Das 14h às 18h.\n\nPedimos gentilmente que nos avise por WhatsApp assim que estiver saindo de Alto Paraíso. Assim, poderemos preparar sua chegada com todo cuidado e atenção.\n\nAo chegar, buzine e aguarde. O anfitrião irá ao seu encontro para recebê-lo pessoalmente.\n\nNossos cães são mansos e costumam vir dar as boas-vindas com entusiasmo.";
+    private string $checkInInstructionsPt = "Das 14h às 18h.\n\nPedimos gentilmente que nos avise por WhatsApp assim que estiver saindo de Alto Paraíso. Assim, poderemos preparar sua chegada com todo cuidado e atenção.\n\nAo chegar, toque o sino e aguarde. O anfitrião irá ao seu encontro para recebê-lo pessoalmente.\n\nNossos cães são mansos e costumam vir dar as boas-vindas com entusiasmo.";
 
     #[ORM\Column(type: Types::TEXT)]
     private string $checkOutInstructionsPt = "Até as 11:00.\n\nAntes de partir, pedimos gentilmente que nos envie uma mensagem para que possamos encerrar sua estadia com cuidado e gratidão.\n\nPor gentileza, leve consigo seus pertences e resíduos, sua atenção contribui para mantermos este refúgio sempre acolhedor.\n\nCaso precise sair sem nos encontrar, por favor, nos envie uma mensagem avisando que deixou o domo.";
@@ -35,10 +35,10 @@ class Property
     private string $locationDetailsPt = 'Moinho, Alto Paraíso de Goiás, 14 km do centro, em meio à natureza intocada da Chapada dos Veadeiros. A 10 minutos a pé das cachoeiras Anjos e Arcanjos.';
 
     #[ORM\Column(type: Types::TEXT)]
-    private string $addressPt = 'Estrada de terra do km 14 da GO-239, 2,3 km após o entroncamento, Alto Paraíso de Goiás, GO';
+    private string $addressPt = 'Rua do Paraíso, Moinho, Alto Paraíso de Goiás, GO';
 
     #[ORM\Column(type: Types::TEXT)]
-    private string $addressEn = 'Dirt road at km 14 of GO-239, 2.3 km after the junction, Alto Paraíso de Goiás, GO, Brazil';
+    private string $addressEn = 'Rua do Paraíso, Moinho, Alto Paraíso de Goiás, GO, Brazil';
 
     #[ORM\Column(type: Types::TEXT)]
     private string $rulesIntroPt = 'Nosso desejo é que sua estadia aqui seja memorável. Para isso, pedimos atenção a algumas orientações essenciais que preservam o conforto, a segurança e a harmonia deste espaço sagrado:';
@@ -71,7 +71,7 @@ class Property
     private string $descriptionEn = 'Here, nature and sophistication intertwine for a sensory, memorable stay. Slow down, gaze at the starry sky, and inhabit the silence of this sacred refuge. Every detail was designed so you can simply... be.';
 
     #[ORM\Column(type: Types::TEXT)]
-    private string $checkInInstructionsEn = "From 2pm to 6pm.\n\nPlease message us on WhatsApp when leaving Alto Paraíso so we can prepare your arrival with care.\n\nWhen you arrive, honk and wait. Your host will come to greet you personally.\n\nOur dogs are gentle and may welcome you enthusiastically.";
+    private string $checkInInstructionsEn = "From 2pm to 6pm.\n\nPlease message us on WhatsApp when leaving Alto Paraíso so we can prepare your arrival with care.\n\nWhen you arrive, ring the bell and wait. Your host will come to greet you personally.\n\nOur dogs are gentle and may welcome you enthusiastically.";
 
     #[ORM\Column(type: Types::TEXT)]
     private string $checkOutInstructionsEn = "By 11:00am.\n\nBefore leaving, please send us a message so we can close your stay with care and gratitude.\n\nPlease take your belongings and waste with you.\n\nIf you must leave without meeting us, please message us to let us know you have departed safely.";
@@ -134,10 +134,10 @@ class Property
     private string $mapUrl = 'https://maps.app.goo.gl/APPumVUKa8P1LPgg8';
 
     #[ORM\Column(length: 50)]
-    private string $latitude = '-14.058769';
+    private string $latitude = '-14.058554351871225';
 
     #[ORM\Column(length: 50)]
-    private string $longitude = '-47.466251';
+    private string $longitude = '-47.46630422690646';
 
     #[ORM\Column(length: 255)]
     private string $pixKey = 'domo.xango@gmail.com';

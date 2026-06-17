@@ -15,6 +15,7 @@ export default class extends Controller {
         'locationTransfer',
         'selfCheckInModal', 'selfCheckInTitle', 'selfCheckInLead', 'selfCheckInConfirm', 'selfCheckInCancel',
         'selfCheckInBtn', 'selfCheckInStatus',
+        'checkinReception', 'checkinReceptionTitle', 'checkinReceptionBody',
     ];
     static values = {
         code: String,
@@ -41,6 +42,9 @@ export default class extends Controller {
         selfCheckinConfirm: String,
         selfCheckinCancel: String,
         selfCheckinDone: String,
+        selfCheckinReceptionTitle: String,
+        selfCheckinReceptionBody: String,
+        selfCheckinWindowHint: String,
     };
 
     connect() {
@@ -135,10 +139,31 @@ export default class extends Controller {
             } else if (this.hasSelfCheckInStatusTarget) {
                 this.selfCheckInStatusTarget.textContent = message;
             }
+
+            this.applySelfCheckInReceptionCopy();
         } catch (err) {
             alert(err.message);
             btn.disabled = false;
         }
+    }
+
+    applySelfCheckInReceptionCopy() {
+        const hint = this.element.querySelector('.checkin-time-hint');
+        if (hint && this.hasSelfCheckinWindowHintValue) {
+            hint.textContent = this.selfCheckinWindowHintValue;
+        }
+
+        if (this.hasCheckinReceptionTitleTarget && this.hasSelfCheckinReceptionTitleValue) {
+            this.checkinReceptionTitleTarget.textContent = this.selfCheckinReceptionTitleValue;
+        }
+
+        if (this.hasCheckinReceptionBodyTarget && this.hasSelfCheckinReceptionBodyValue) {
+            this.checkinReceptionBodyTarget.innerHTML = this.selfCheckinReceptionBodyValue
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
+        }
+
+        this.element.querySelector('.checkin-note')?.remove();
     }
 
     async requestExtra(event) {

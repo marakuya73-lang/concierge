@@ -45,7 +45,10 @@
      data-stay-self-checkin-lead-value="{{ 'app.self_checkin_modal_lead'|trans }}"
      data-stay-self-checkin-confirm-value="{{ 'app.self_checkin_confirm'|trans }}"
      data-stay-self-checkin-cancel-value="{{ 'app.self_checkin_cancel'|trans }}"
-     data-stay-self-checkin-done-value="{{ 'app.self_checkin_confirmed'|trans }}">
+     data-stay-self-checkin-done-value="{{ 'app.self_checkin_confirmed'|trans }}"
+     data-stay-self-checkin-reception-title-value="{{ 'app.self_checkin_reception_title'|trans }}"
+     data-stay-self-checkin-reception-body-value="{{ g.checkin_reception_body(stay.accessInstructions, true)|e('html_attr') }}"
+     data-stay-self-checkin-window-hint-value="{{ 'app.self_checkin_window_hint'|trans }}">
     <header class="stay-header">
         <div class="stay-header-inner">
             <div class="stay-header-brand">
@@ -271,7 +274,7 @@
                     <div class="checkin-time-card">
                         <p class="checkin-time-label">{{ 'app.checkin_entry'|trans }}</p>
                         <p class="checkin-time-value checkin-time-value--accent font-serif">{{ stay.checkInTime }} – {{ stay.checkInTimeEnd }}</p>
-                        <p class="checkin-time-hint">{{ 'app.checkin_window_hint'|trans }}</p>
+                        <p class="checkin-time-hint">{% if stay.selfCheckInRequested %}{{ 'app.self_checkin_window_hint'|trans }}{% else %}{{ 'app.checkin_window_hint'|trans }}{% endif %}</p>
                         {% if stay.selfCheckInRequested %}
                             <p class="checkin-self-status" data-stay-target="selfCheckInStatus">{{ 'app.self_checkin_confirmed'|trans }}</p>
                         {% elseif stay.selfCheckInAvailable %}
@@ -286,9 +289,9 @@
 
                 {{ access.access_codes(stay.domeEntranceCode, 'checkin') }}
 
-                <section class="checkin-card">
-                    <p class="checkin-card-label">{{ 'app.checkin_reception_title'|trans }}</p>
-                    <p class="checkin-card-text">{{ g.checkin_access_text(stay.accessInstructions)|nl2br }}</p>
+                <section class="checkin-card" data-stay-target="checkinReception">
+                    <p class="checkin-card-label" data-stay-target="checkinReceptionTitle">{% if stay.selfCheckInRequested %}{{ 'app.self_checkin_reception_title'|trans }}{% else %}{{ 'app.checkin_reception_title'|trans }}{% endif %}</p>
+                    <p class="checkin-card-text" data-stay-target="checkinReceptionBody">{{ g.checkin_reception_body(stay.accessInstructions, stay.selfCheckInRequested)|nl2br }}</p>
                 </section>
 
                 {% if checkoutNote %}
@@ -298,10 +301,12 @@
                     </section>
                 {% endif %}
 
+                {% if not stay.selfCheckInRequested %}
                 <aside class="checkin-note">
                     {{ icon.clock('checkin-note-icon') }}
                     <p>{{ 'app.checkin_arrival_request'|trans({'%from%': stay.checkInTime, '%to%': stay.checkInTimeEnd}) }}</p>
                 </aside>
+                {% endif %}
             </div>
         </div>
 
