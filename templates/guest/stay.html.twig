@@ -446,18 +446,11 @@
                     <div class="wifi-row">
                         <div class="wifi-row-main">
                             <p class="wifi-row-label">{{ 'app.wifi_password'|trans }}</p>
-                            <p class="wifi-row-value wifi-row-value--masked font-serif" data-stay-target="wifiPasswordMask">{% for i in 1..stay.wifiPassword|length %}•{% endfor %}</p>
-                            <p class="wifi-row-value font-serif" data-stay-target="wifiPassword" hidden>{{ stay.wifiPassword }}</p>
+                            <p class="wifi-row-value font-serif">{{ stay.wifiPassword }}</p>
                         </div>
-                        <div class="wifi-row-actions">
-                            <button type="button" class="wifi-icon-btn" data-stay-target="wifiPasswordToggle" data-action="click->stay#toggleWifiPassword" aria-label="{{ 'app.show_password'|trans }}">
-                                <span data-stay-target="wifiPasswordEyeShow">{{ icon.eye('') }}</span>
-                                <span data-stay-target="wifiPasswordEyeHide" hidden>{{ icon.eye_off('') }}</span>
-                            </button>
-                            <button type="button" class="wifi-icon-btn" data-copy="{{ stay.wifiPassword }}" data-copied-label="✓" data-action="click->stay#copyIcon" aria-label="{{ 'app.copy'|trans }}">
-                                {{ icon.copy('') }}
-                            </button>
-                        </div>
+                        <button type="button" class="wifi-icon-btn" data-copy="{{ stay.wifiPassword }}" data-copied-label="✓" data-action="click->stay#copyIcon" aria-label="{{ 'app.copy'|trans }}">
+                            {{ icon.copy('') }}
+                        </button>
                     </div>
                 </div>
 
@@ -478,18 +471,11 @@
                             <div class="wifi-row">
                                 <div class="wifi-row-main">
                                     <p class="wifi-row-label">{{ 'app.wifi_password'|trans }}</p>
-                                    <p class="wifi-row-value wifi-row-value--masked font-serif" data-stay-target="wifiSecondaryPasswordMask">{% for i in 1..stay.wifiSecondaryPassword|length %}•{% endfor %}</p>
-                                    <p class="wifi-row-value font-serif" data-stay-target="wifiSecondaryPassword" hidden>{{ stay.wifiSecondaryPassword }}</p>
+                                    <p class="wifi-row-value font-serif">{{ stay.wifiSecondaryPassword }}</p>
                                 </div>
-                                <div class="wifi-row-actions">
-                                    <button type="button" class="wifi-icon-btn" data-action="click->stay#toggleSecondaryWifiPassword" aria-label="{{ 'app.show_password'|trans }}">
-                                        <span data-stay-target="wifiSecondaryPasswordEyeShow">{{ icon.eye('') }}</span>
-                                        <span data-stay-target="wifiSecondaryPasswordEyeHide" hidden>{{ icon.eye_off('') }}</span>
-                                    </button>
-                                    <button type="button" class="wifi-icon-btn" data-copy="{{ stay.wifiSecondaryPassword }}" data-copied-label="✓" data-action="click->stay#copyIcon" aria-label="{{ 'app.copy'|trans }}">
-                                        {{ icon.copy('') }}
-                                    </button>
-                                </div>
+                                <button type="button" class="wifi-icon-btn" data-copy="{{ stay.wifiSecondaryPassword }}" data-copied-label="✓" data-action="click->stay#copyIcon" aria-label="{{ 'app.copy'|trans }}">
+                                    {{ icon.copy('') }}
+                                </button>
                             </div>
                         {% endif %}
                     </div>

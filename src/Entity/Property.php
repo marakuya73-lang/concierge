@@ -86,10 +86,10 @@ class Property
     private string $wifiName = 'MARA DECK';
 
     #[ORM\Column(length: 100)]
-    private string $wifiPassword = 'UaiFai Cosmico';
+    private string $wifiPassword = 'd.sucodealegria';
 
     #[ORM\Column(length: 100)]
-    private string $wifiSecondaryName = 'd.sucodealegria';
+    private string $wifiSecondaryName = 'UaiFai Cosmico';
 
     #[ORM\Column(length: 100)]
     private string $wifiSecondaryPassword = 'estacionoudireito?';

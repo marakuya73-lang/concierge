@@ -4,8 +4,6 @@ import { reportClientError, shouldReportHttpStatus } from '../utils/report_clien
 export default class extends Controller {
     static targets = [
         'panel', 'home', 'headerHome', 'headerSection',
-        'wifiPassword', 'wifiPasswordMask', 'wifiPasswordEyeShow', 'wifiPasswordEyeHide',
-        'wifiSecondaryPassword', 'wifiSecondaryPasswordMask', 'wifiSecondaryPasswordEyeShow', 'wifiSecondaryPasswordEyeHide',
         'extraConfirm', 'extrasContent',
         'confirmTitle', 'confirmLead', 'confirmItem', 'confirmTotal',
         'confirmPixBlock', 'confirmPixLabel', 'confirmPixHint', 'confirmPixKey', 'confirmPixCopy',
@@ -514,32 +512,6 @@ export default class extends Controller {
             btn.classList.add('is-copied');
             setTimeout(() => btn.classList.remove('is-copied'), 1500);
         });
-    }
-
-    toggleWifiPassword() {
-        if (!this.hasWifiPasswordTarget || !this.hasWifiPasswordMaskTarget) return;
-
-        const reveal = this.wifiPasswordTarget.hidden;
-        this.wifiPasswordTarget.hidden = !reveal;
-        this.wifiPasswordMaskTarget.hidden = reveal;
-
-        if (this.hasWifiPasswordEyeShowTarget && this.hasWifiPasswordEyeHideTarget) {
-            this.wifiPasswordEyeShowTarget.hidden = reveal;
-            this.wifiPasswordEyeHideTarget.hidden = !reveal;
-        }
-    }
-
-    toggleSecondaryWifiPassword() {
-        if (!this.hasWifiSecondaryPasswordTarget || !this.hasWifiSecondaryPasswordMaskTarget) return;
-
-        const reveal = this.wifiSecondaryPasswordTarget.hidden;
-        this.wifiSecondaryPasswordTarget.hidden = !reveal;
-        this.wifiSecondaryPasswordMaskTarget.hidden = reveal;
-
-        if (this.hasWifiSecondaryPasswordEyeShowTarget && this.hasWifiSecondaryPasswordEyeHideTarget) {
-            this.wifiSecondaryPasswordEyeShowTarget.hidden = reveal;
-            this.wifiSecondaryPasswordEyeHideTarget.hidden = !reveal;
-        }
     }
 
     logout() {
