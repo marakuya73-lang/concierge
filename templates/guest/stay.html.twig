@@ -275,17 +275,22 @@
                         <p class="checkin-time-label">{{ 'app.checkin_entry'|trans }}</p>
                         <p class="checkin-time-value checkin-time-value--accent font-serif">{{ stay.checkInTime }} – {{ stay.checkInTimeEnd }}</p>
                         <p class="checkin-time-hint">{% if stay.selfCheckInRequested %}{{ 'app.self_checkin_window_hint'|trans }}{% else %}{{ 'app.checkin_window_hint'|trans }}{% endif %}</p>
-                        {% if stay.selfCheckInRequested %}
-                            <p class="checkin-self-status" data-stay-target="selfCheckInStatus">{{ 'app.self_checkin_confirmed'|trans }}</p>
-                        {% elseif stay.selfCheckInAvailable %}
-                            <button type="button" class="checkin-self-btn" data-stay-target="selfCheckInBtn" data-action="click->stay#openSelfCheckInModal">{{ 'app.self_checkin_prefer'|trans }}</button>
-                        {% endif %}
                     </div>
                     <div class="checkin-time-card">
                         <p class="checkin-time-label">{{ 'app.checkout_exit'|trans }}</p>
                         <p class="checkin-time-value font-serif">{{ stay.checkOutTime }}</p>
                     </div>
                 </div>
+
+                {% if stay.selfCheckInRequested or stay.selfCheckInAvailable %}
+                    <div class="checkin-self-wrap" data-stay-target="selfCheckInWrap">
+                        {% if stay.selfCheckInRequested %}
+                            <p class="checkin-self-status" data-stay-target="selfCheckInStatus">{{ 'app.self_checkin_confirmed'|trans }}</p>
+                        {% else %}
+                            <button type="button" class="checkin-self-btn" data-stay-target="selfCheckInBtn" data-action="click->stay#openSelfCheckInModal">{{ 'app.self_checkin_prefer'|trans }}</button>
+                        {% endif %}
+                    </div>
+                {% endif %}
 
                 {{ access.access_codes(stay.domeEntranceCode, 'checkin') }}
 
@@ -314,7 +319,7 @@
         <div class="section-panel stay-panel" data-stay-target="panel" data-section="location">
             {% set lat = stay.latitude + 0 %}
             {% set lng = stay.longitude + 0 %}
-            {% set mapDelta = 0.012 %}
+            {% set mapDelta = 0.004 %}
 
             <div class="location-page">
                 {{ g.panel_back() }}
@@ -396,9 +401,11 @@
                                         {% endif %}
                                     </div>
                                     {% if transferExtra.bookable %}
-                                        <div class="location-transfer-field">
-                                            <label for="transfer-notes-{{ transferExtra.id }}" class="location-transfer-field-label">{{ 'app.notes_optional'|trans }}</label>
-                                            <input type="text" id="transfer-notes-{{ transferExtra.id }}" placeholder="{{ 'app.location_transfer_notes_placeholder'|trans }}" class="location-transfer-notes">
+                                        <div class="location-transfer-form">
+                                            <label class="extras-field extras-field--grow">
+                                                <span class="extras-field-label">{{ 'app.notes_optional'|trans }}</span>
+                                                <input type="text" id="transfer-notes-{{ transferExtra.id }}" placeholder="{{ 'app.location_transfer_notes_placeholder'|trans }}" class="extras-notes-input">
+                                            </label>
                                         </div>
                                         <button type="button" class="btn btn-accent btn-block location-transfer-btn" data-extra-id="{{ transferExtra.id }}" data-qty-prefix="transfer-" data-action="click->stay#requestExtra">{{ 'app.location_transfer_book'|trans }}</button>
                                     {% endif %}

@@ -1331,17 +1331,50 @@ button, input, select, textarea { font: inherit; }
     margin: .45rem 0 0; font-size: .72rem; line-height: 1.45;
     color: var(--muted-foreground);
 }
-.checkin-self-btn {
-    display: block; width: 100%; margin-top: .75rem; padding: .55rem .65rem;
-    border: 1px dashed rgba(26, 58, 46, 0.22); border-radius: calc(var(--radius) + 2px);
-    background: rgba(235, 227, 214, 0.35); color: var(--foreground);
-    font-size: .72rem; line-height: 1.4; text-align: left; cursor: pointer;
+.checkin-self-wrap {
+    margin: -.15rem 0 1rem;
 }
-.checkin-self-btn:hover { background: rgba(235, 227, 214, 0.55); }
+.checkin-self-btn {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: .8rem 1rem;
+    border: 1px solid rgba(26, 58, 46, 0.14);
+    border-radius: calc(var(--radius) + 4px);
+    background: var(--card);
+    color: var(--muted-foreground);
+    font: inherit;
+    font-size: .68rem;
+    font-weight: 500;
+    letter-spacing: .08em;
+    line-height: 1.45;
+    text-align: center;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(26, 58, 46, 0.04);
+    -webkit-appearance: none;
+    appearance: none;
+    transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.checkin-self-btn:hover {
+    background: rgba(235, 227, 214, 0.55);
+    border-color: rgba(26, 58, 46, 0.22);
+    color: var(--foreground);
+}
+.checkin-self-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
 .checkin-self-status {
-    margin: .75rem 0 0; padding: .5rem .65rem; border-radius: calc(var(--radius) + 2px);
-    background: rgba(200, 134, 42, 0.12); color: var(--accent);
-    font-size: .72rem; line-height: 1.45; font-weight: 500;
+    margin: 0;
+    padding: .75rem 1rem;
+    border-radius: calc(var(--radius) + 4px);
+    background: rgba(200, 134, 42, 0.12);
+    color: var(--accent);
+    font-size: .72rem;
+    line-height: 1.45;
+    font-weight: 500;
+    text-align: center;
 }
 .checkin-card {
     background: var(--card); border: 1px solid var(--border);
@@ -1549,31 +1582,13 @@ button, input, select, textarea { font: inherit; }
 }
 .location-transfer-hint { color: var(--muted-foreground); }
 .location-transfer-blocked { color: #9a5b00; }
-.location-transfer-field {
-    display: flex;
-    flex-direction: column;
-    gap: .35rem;
+.location-transfer-form {
+    display: block;
+    width: 100%;
     margin-top: .75rem;
-    min-width: 0;
-    width: 100%;
 }
-.location-transfer-field-label {
-    display: block;
-    margin: 0;
-    font-size: .72rem;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--muted-foreground);
-}
-.location-transfer-notes {
-    display: block;
+.location-transfer-form .extras-field {
     width: 100%;
-    min-width: 0;
-    padding: .65rem .75rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--card);
-    font-size: .84rem;
 }
 .location-transfer-btn { margin-top: .75rem; }
 .location-transfer-status {
@@ -1670,9 +1685,16 @@ button, input, select, textarea { font: inherit; }
     background: var(--background);
 }
 .extras-notes-input {
-    width: 100%; padding: .65rem .75rem;
-    border: 1px solid var(--border); border-radius: calc(var(--radius) + 2px);
+    display: block;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: .65rem .75rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 2px);
     background: var(--background);
+    -webkit-appearance: none;
+    appearance: none;
 }
 .extras-request-btn { margin-top: .85rem; padding: .95rem 1.25rem; }
 .extras-item-requested,
