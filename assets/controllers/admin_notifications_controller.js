@@ -1,30 +1,50 @@
 import { Controller } from '@hotwired/stimulus';
 
 const LAST_SEEN_KEY = 'domoAdminLastSeenExtra';
-const POLL_INTERVAL_MS = 15000;
+const POLL_INTERVAL_MS = 10000;
 const SEEN_IDS_KEY = 'domoAdminSeenExtraIds';
+const POLL_OVERLAP_SECONDS = 15;
 
 export default class extends Controller {
-    static targets = ['banner', 'prompt', 'promptText', 'enableBtn'];
+    static targets = ['banner', 'prompt', 'promptText', 'enableBtn', 'status', 'testBtn'];
 
     connect() {
         this.seenIds = this.loadSeenIds();
         this.lastSeen = this.loadLastSeen();
         this.pollTimer = null;
         this.audioContext = null;
+        this.pushSubscribed = false;
 
         this.setupNotifications();
+        this.refreshStatus();
         this.startPolling();
+
+        document.addEventListener('visibilitychange', this.onVisibilityChange);
+        window.addEventListener('online', this.onOnline);
     }
 
     disconnect() {
         if (this.pollTimer) {
             clearInterval(this.pollTimer);
         }
+        document.removeEventListener('visibilitychange', this.onVisibilityChange);
+        window.removeEventListener('online', this.onOnline);
     }
+
+    onVisibilityChange = () => {
+        if (!document.hidden) {
+            this.poll();
+        }
+    };
+
+    onOnline = () => {
+        this.poll();
+        this.subscribeToPush();
+    };
 
     async setupNotifications() {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            this.setStatus('Notificações push não suportadas neste navegador.');
             return;
         }
 
@@ -32,6 +52,7 @@ export default class extends Controller {
             await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
         } catch (e) {
             console.warn('Admin SW registration failed', e);
+            this.setStatus('Erro ao registar service worker.');
             return;
         }
 
@@ -45,6 +66,8 @@ export default class extends Controller {
 
         if (permission === 'default' && this.hasPromptTarget) {
             this.promptTarget.hidden = false;
+        } else if (permission === 'denied') {
+            this.setStatus('Notificações bloqueadas. Ative nas definições do telemóvel/navegador.');
         }
     }
 
@@ -64,9 +87,28 @@ export default class extends Controller {
             return;
         }
 
-        await this.subscribeToPush();
-        this.hidePrompt();
-        this.playAlert();
+        const subscribed = await this.subscribeToPush();
+        if (subscribed) {
+            this.hidePrompt();
+            this.playAlert();
+        }
+        await this.refreshStatus();
+    }
+
+    async testNotification(event) {
+        event?.preventDefault();
+
+        try {
+            const response = await fetch('/admin/api/notifications/test', { method: 'POST' });
+            const data = await response.json();
+            if (!response.ok) {
+                alert(data.error || 'Teste falhou.');
+                return;
+            }
+            alert(`Notificação de teste enviada (${data.sent} dispositivo(s)).`);
+        } catch {
+            alert('Não foi possível enviar o teste.');
+        }
     }
 
     hidePrompt() {
@@ -80,7 +122,8 @@ export default class extends Controller {
             const configResponse = await fetch('/admin/api/notifications/vapid-key');
             const config = await configResponse.json();
             if (!config.configured || !config.publicKey) {
-                return;
+                this.setStatus('Servidor: chaves VAPID em falta no .env');
+                return false;
             }
 
             const registration = await navigator.serviceWorker.ready;
@@ -93,13 +136,85 @@ export default class extends Controller {
                 });
             }
 
-            await fetch('/admin/api/notifications/subscribe', {
+            const payload = this.serializeSubscription(subscription);
+            const subscribeResponse = await fetch('/admin/api/notifications/subscribe', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(subscription),
+                body: JSON.stringify(payload),
             });
+
+            if (!subscribeResponse.ok) {
+                const error = await subscribeResponse.json().catch(() => ({}));
+                this.setStatus(error.error || 'Erro ao registar subscrição push.');
+                return false;
+            }
+
+            this.pushSubscribed = true;
+            await this.refreshStatus();
+            return true;
         } catch (e) {
             console.warn('Push subscription failed', e);
+            this.setStatus('Erro ao activar push. Tente recarregar a página.');
+            return false;
+        }
+    }
+
+    serializeSubscription(subscription) {
+        const json = subscription.toJSON();
+        let contentEncoding = 'aesgcm';
+
+        if ('supportedContentEncodings' in PushManager && PushManager.supportedContentEncodings.length > 0) {
+            contentEncoding = PushManager.supportedContentEncodings.includes('aes128gcm')
+                ? 'aes128gcm'
+                : PushManager.supportedContentEncodings[0];
+        }
+
+        return {
+            endpoint: json.endpoint,
+            keys: json.keys,
+            contentEncoding,
+        };
+    }
+
+    async refreshStatus() {
+        try {
+            const response = await fetch('/admin/api/notifications/status');
+            if (!response.ok) return;
+
+            const data = await response.json();
+            const parts = [];
+
+            if (!data.pushConfigured) {
+                parts.push('VAPID não configurado no servidor');
+            } else if (data.subscriptionCount === 0) {
+                parts.push('Push: aguardando subscrição neste dispositivo');
+            } else {
+                parts.push(`Push activo (${data.subscriptionCount} dispositivo(s))`);
+            }
+
+            if (Notification.permission === 'granted') {
+                parts.push('permissão OK');
+            }
+
+            this.setStatus(parts.join(' · '));
+
+            if (this.hasTestBtnTarget) {
+                this.testBtnTarget.hidden = !data.pushConfigured || data.subscriptionCount === 0;
+            }
+
+            if (data.pushConfigured && data.subscriptionCount > 0 && Notification.permission === 'granted') {
+                this.hidePrompt();
+            } else if (Notification.permission === 'default' && this.hasPromptTarget) {
+                this.promptTarget.hidden = false;
+            }
+        } catch {
+            this.setStatus('Não foi possível verificar estado das notificações.');
+        }
+    }
+
+    setStatus(message) {
+        if (this.hasStatusTarget && message) {
+            this.statusTarget.textContent = message;
         }
     }
 
@@ -110,18 +225,20 @@ export default class extends Controller {
 
     async poll() {
         try {
-            const response = await fetch(`/admin/api/notifications/recent?since=${this.lastSeen}`);
+            const since = Math.max(0, this.lastSeen - POLL_OVERLAP_SECONDS);
+            const response = await fetch(`/admin/api/notifications/recent?since=${since}`);
             if (!response.ok) return;
 
             const data = await response.json();
-            if (data.serverTime) {
-                this.lastSeen = data.serverTime;
-                this.saveLastSeen();
-            }
 
             const newRequests = (data.requests || []).filter((req) => !this.seenIds.has(req.id));
             for (const req of newRequests) {
                 this.handleNewRequest(req);
+            }
+
+            if (data.serverTime) {
+                this.lastSeen = data.serverTime;
+                this.saveLastSeen();
             }
         } catch {
             // offline or session expired
@@ -136,7 +253,7 @@ export default class extends Controller {
         this.vibrate();
         this.playAlert();
 
-        if (Notification.permission === 'granted' && document.hidden) {
+        if (Notification.permission === 'granted') {
             this.showLocalNotification(req);
         }
     }
@@ -238,7 +355,7 @@ export default class extends Controller {
 
     loadLastSeen() {
         const stored = sessionStorage.getItem(LAST_SEEN_KEY);
-        return stored ? parseInt(stored, 10) : Math.floor(Date.now() / 1000) - 30;
+        return stored ? parseInt(stored, 10) : Math.floor(Date.now() / 1000) - 60;
     }
 
     saveLastSeen() {

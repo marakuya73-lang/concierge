@@ -85,7 +85,10 @@ class GuestController extends AbstractController
             'stay' => $stay,
             'extras' => $extras,
             'foodExtras' => $foodExtras,
-            'requestedExtraIds' => array_column($extras['myRequests'], 'extraId'),
+            'requestedExtraIds' => array_column(
+                array_filter($extras['myRequests'], static fn (array $request): bool => 'cancelled' !== ($request['status'] ?? '')),
+                'extraId',
+            ),
             'photos' => $this->photoRepository->findByPropertyOrdered($property),
             'guideSpots' => $this->guideSpotRepository->findActiveByPropertyOrdered($property),
             'faqItems' => $this->faqItemRepository->findActiveByPropertyOrdered($property),

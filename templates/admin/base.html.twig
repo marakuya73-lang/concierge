@@ -51,8 +51,16 @@
             </div>
         </header>
         <div class="admin-notify-prompt" data-admin-notifications-target="prompt" hidden>
-            <p data-admin-notifications-target="promptText">Receba alertas de extras no telemóvel (som, vibração e notificações).</p>
-            <button type="button" class="btn btn-primary btn-sm" data-admin-notifications-target="enableBtn" data-action="click->admin-notifications#enableNotifications">Ativar notificações</button>
+            <div class="admin-notify-prompt-copy">
+                <p data-admin-notifications-target="promptText">Receba alertas de extras no telemóvel (som, vibração e notificações).</p>
+            </div>
+            <div class="admin-notify-prompt-actions">
+                <button type="button" class="btn btn-primary btn-sm" data-admin-notifications-target="enableBtn" data-action="click->admin-notifications#enableNotifications">Ativar notificações</button>
+            </div>
+        </div>
+        <div class="admin-notify-bar">
+            <p class="admin-notify-status" data-admin-notifications-target="status">A verificar notificações…</p>
+            <button type="button" class="btn btn-outline btn-sm" data-admin-notifications-target="testBtn" data-action="click->admin-notifications#testNotification" hidden>Testar alerta</button>
         </div>
         <div class="admin-alert-banner" data-admin-notifications-target="banner" hidden></div>
         <main class="admin-main">

@@ -1612,15 +1612,18 @@ button, input, select, textarea { font: inherit; }
     margin: .85rem 0 0; font-size: .84rem; color: var(--muted-foreground);
 }
 
-.extras-confirm-overlay {
+.extras-confirm-overlay,
+.stay-dialog-overlay {
     position: fixed; inset: 0; z-index: 120;
     display: grid; place-items: center;
     padding: 1.25rem;
     background: rgba(26, 58, 46, 0.42);
     backdrop-filter: blur(4px);
 }
-.extras-confirm-overlay[hidden] { display: none !important; }
-.extras-confirm-overlay > .extras-confirm {
+.extras-confirm-overlay[hidden],
+.stay-dialog-overlay[hidden] { display: none !important; }
+.extras-confirm-overlay > .extras-confirm,
+.stay-dialog-overlay > .stay-dialog {
     width: min(100%, 24rem);
     background: var(--background);
     border: 1px solid var(--border);
@@ -1692,6 +1695,52 @@ button, input, select, textarea { font: inherit; }
 .extras-confirm-copy:hover { border-color: rgba(26, 58, 46, 0.2); }
 .extras-confirm-wa { margin-bottom: .65rem; padding: 1rem 1.25rem; }
 .extras-confirm-back { padding: .9rem 1.25rem; }
+
+.stay-dialog {
+    text-align: center;
+}
+.stay-dialog-icon {
+    width: 3.25rem; height: 3.25rem; margin: 0 auto 1rem;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 1.35rem; font-weight: 700; line-height: 1;
+}
+.stay-dialog--warning .stay-dialog-icon {
+    background: hsl(0 72% 51% / .12);
+    color: var(--destructive);
+}
+.stay-dialog-title {
+    margin: 0 0 .65rem; font-size: 1.55rem; font-weight: 500; line-height: 1.15;
+}
+.stay-dialog-lead {
+    margin: 0 auto 1rem; max-width: 22rem;
+    font-size: .875rem; line-height: 1.65; color: var(--muted-foreground);
+}
+.stay-dialog-item {
+    margin: 0 0 1.15rem; padding: .9rem 1rem;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 4px);
+    font-size: 1.05rem; line-height: 1.35; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(26, 58, 46, 0.04);
+}
+.stay-dialog-actions {
+    display: grid; gap: .65rem;
+}
+.stay-dialog-confirm-danger {
+    background: var(--destructive);
+    color: #fff;
+    border: 1px solid var(--destructive);
+    padding: .95rem 1.25rem;
+}
+.stay-dialog-confirm-danger:hover {
+    background: hsl(0 72% 45%);
+    border-color: hsl(0 72% 45%);
+}
+.stay-dialog-confirm-danger:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+body.stay-dialog-open { overflow: hidden; }
 
 .faq-page { padding-bottom: 1.5rem; }
 .faq-header { margin-bottom: 1.25rem; }
@@ -1932,6 +1981,27 @@ button, input, select, textarea { font: inherit; }
 }
 .food-service-booked .food-service-meta {
     margin: .2rem 0 0; font-size: .78rem; color: var(--muted-foreground);
+}
+.food-service-booked-aside {
+    display: flex; flex-direction: column; align-items: flex-end; gap: .55rem; flex-shrink: 0;
+}
+.extras-cancel-btn {
+    margin-top: .85rem;
+    padding: .85rem 1.25rem;
+    font-size: .82rem;
+    color: var(--destructive);
+    border-color: hsl(0 72% 51% / .35);
+}
+.extras-cancel-btn:hover {
+    background: hsl(0 72% 51% / .08);
+    border-color: hsl(0 72% 51% / .5);
+}
+.food-cancel-btn {
+    color: var(--destructive);
+    border-color: hsl(0 72% 51% / .35);
+}
+.food-cancel-btn:hover {
+    background: hsl(0 72% 51% / .08);
 }
 .food-services-list { display: grid; gap: .75rem; }
 .food-services-empty {
@@ -2370,7 +2440,30 @@ button, input, select, textarea { font: inherit; }
     color: var(--foreground);
 }
 .admin-notify-prompt[hidden] { display: none; }
-.admin-notify-prompt p { margin: 0; flex: 1; min-width: 12rem; }
+.admin-notify-prompt-copy { flex: 1; min-width: 12rem; }
+.admin-notify-prompt-copy p { margin: 0; }
+.admin-notify-status {
+    margin: 0;
+    font-size: .75rem;
+    color: var(--muted-foreground);
+}
+.admin-notify-prompt-actions {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.admin-notify-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    flex-wrap: wrap;
+    padding: .45rem 1rem;
+    background: rgba(26, 58, 46, 0.04);
+    border-bottom: 1px solid var(--border);
+    font-size: .75rem;
+}
 
 .admin-alert-banner {
     display: flex;

@@ -12,6 +12,8 @@ export default class extends Controller {
         'extrasRequests', 'extrasRequestsList', 'extrasAvailableList', 'extrasEmpty',
         'homeExtras', 'homeExtrasList',
         'foodExtrasBooked', 'foodExtrasAvailable',
+        'cancelConfirm', 'cancelConfirmTitle', 'cancelConfirmLead', 'cancelConfirmItem',
+        'cancelConfirmKeep', 'cancelConfirmSubmit',
     ];
     static values = {
         code: String,
@@ -30,6 +32,12 @@ export default class extends Controller {
         statusRequested: String,
         statusPaid: String,
         statusConfirmed: String,
+        statusCancelled: String,
+        cancelRequest: String,
+        cancelRequestTitle: String,
+        cancelRequestLead: String,
+        cancelRequestKeep: String,
+        cancelRequestConfirmBtn: String,
         offlineExtraQueued: String,
     };
 
@@ -37,6 +45,12 @@ export default class extends Controller {
         this.show('home');
         this.cacheStayPage();
         window.addEventListener('online', () => this.cacheStayPage());
+        this.boundCancelEscape = (event) => this.handleCancelEscape(event);
+    }
+
+    disconnect() {
+        document.removeEventListener('keydown', this.boundCancelEscape);
+        document.body.classList.remove('stay-dialog-open');
     }
 
     navigate(event) {
@@ -103,6 +117,115 @@ export default class extends Controller {
         } catch (err) {
             alert(err.message);
             btn.disabled = false;
+        }
+    }
+
+    cancelExtra(event) {
+        const btn = event.currentTarget;
+        const requestId = parseInt(btn.dataset.requestId, 10);
+        if (!requestId) {
+            return;
+        }
+
+        const card = btn.closest('[data-request-id]');
+        const name = card?.querySelector('.extras-item-name, .food-service-name')?.textContent?.trim() || '';
+
+        this.pendingCancelRequestId = requestId;
+        this.pendingCancelBtn = btn;
+
+        if (this.hasCancelConfirmItemTarget) {
+            this.cancelConfirmItemTarget.textContent = name;
+        }
+        if (this.hasCancelConfirmTitleTarget && this.hasCancelRequestTitleValue) {
+            this.cancelConfirmTitleTarget.textContent = this.cancelRequestTitleValue;
+        }
+        if (this.hasCancelConfirmLeadTarget && this.hasCancelRequestLeadValue) {
+            this.cancelConfirmLeadTarget.textContent = this.cancelRequestLeadValue;
+        }
+        if (this.hasCancelConfirmKeepTarget && this.hasCancelRequestKeepValue) {
+            this.cancelConfirmKeepTarget.textContent = this.cancelRequestKeepValue;
+        }
+        if (this.hasCancelConfirmSubmitTarget && this.hasCancelRequestConfirmBtnValue) {
+            this.cancelConfirmSubmitTarget.textContent = this.cancelRequestConfirmBtnValue;
+        }
+
+        this.showCancelConfirm();
+    }
+
+    showCancelConfirm() {
+        if (!this.hasCancelConfirmTarget) {
+            return;
+        }
+
+        this.cancelConfirmTarget.hidden = false;
+        document.body.classList.add('stay-dialog-open');
+        document.addEventListener('keydown', this.boundCancelEscape);
+
+        if (this.hasCancelConfirmKeepTarget) {
+            this.cancelConfirmKeepTarget.focus();
+        }
+    }
+
+    dismissCancelConfirm() {
+        if (this.hasCancelConfirmTarget) {
+            this.cancelConfirmTarget.hidden = true;
+        }
+
+        document.body.classList.remove('stay-dialog-open');
+        document.removeEventListener('keydown', this.boundCancelEscape);
+        this.pendingCancelRequestId = null;
+        this.pendingCancelBtn = null;
+
+        if (this.hasCancelConfirmSubmitTarget) {
+            this.cancelConfirmSubmitTarget.disabled = false;
+        }
+    }
+
+    handleCancelEscape(event) {
+        if (event.key === 'Escape' && this.hasCancelConfirmTarget && !this.cancelConfirmTarget.hidden) {
+            this.dismissCancelConfirm();
+        }
+    }
+
+    stopDialogClick(event) {
+        event.stopPropagation();
+    }
+
+    async confirmCancelExtra() {
+        const requestId = this.pendingCancelRequestId;
+        if (!requestId) {
+            return;
+        }
+
+        const submitBtn = this.hasCancelConfirmSubmitTarget ? this.cancelConfirmSubmitTarget : null;
+        const triggerBtn = this.pendingCancelBtn;
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
+        if (triggerBtn) {
+            triggerBtn.disabled = true;
+        }
+
+        try {
+            const response = await fetch('/api/concierge/extras/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: this.codeValue, requestId }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error);
+            }
+            window.location.reload();
+        } catch (err) {
+            alert(err.message);
+            if (submitBtn) {
+                submitBtn.disabled = false;
+            }
+            if (triggerBtn) {
+                triggerBtn.disabled = false;
+            }
         }
     }
 
@@ -198,12 +321,20 @@ export default class extends Controller {
 
         const article = document.createElement('article');
         article.className = 'food-service-booked';
+        article.dataset.requestId = String(data.id);
+        article.dataset.extraId = String(data.extraId ?? '');
+        const cancelBtn = ['requested', 'paid'].includes(data.status)
+            ? `<button type="button" class="btn btn-outline btn-sm food-cancel-btn" data-request-id="${data.id}" data-action="click->stay#cancelExtra">${this.cancelRequestValue}</button>`
+            : '';
         article.innerHTML = `
             <div>
                 <p class="food-service-name font-serif">${data.name}</p>
                 <p class="food-service-meta">${meta}</p>
             </div>
-            <span class="status-pill status-${data.status}">${this.statusLabel(data.status)}</span>
+            <div class="food-service-booked-aside">
+                <span class="status-pill status-${data.status}">${this.statusLabel(data.status)}</span>
+                ${cancelBtn}
+            </div>
         `;
         this.foodExtrasBookedTarget.appendChild(article);
     }
@@ -231,8 +362,13 @@ export default class extends Controller {
 
         const article = document.createElement('article');
         article.className = 'extras-request-card';
+        article.dataset.requestId = String(data.id);
+        article.dataset.extraId = String(data.extraId ?? '');
         const pixNote = data.pixKey
             ? `<p class="extras-pix-note">${this.pixPaymentValue}: <strong>${data.pixKey}</strong></p>`
+            : '';
+        const cancelBtn = ['requested', 'paid'].includes(data.status)
+            ? `<button type="button" class="btn btn-outline btn-block extras-cancel-btn" data-request-id="${data.id}" data-action="click->stay#cancelExtra">${this.cancelRequestValue}</button>`
             : '';
         article.innerHTML = `
             <div class="extras-request-top">
@@ -240,9 +376,10 @@ export default class extends Controller {
                     <p class="extras-item-name font-serif">${data.name}</p>
                     <p class="extras-request-qty">${data.quantity}x</p>
                 </div>
-                <span class="status-pill status-requested">${this.statusLabel(data.status)}</span>
+                <span class="status-pill status-${data.status}">${this.statusLabel(data.status)}</span>
             </div>
             ${pixNote}
+            ${cancelBtn}
         `;
         this.extrasRequestsListTarget.appendChild(article);
         this.addToHomeExtras(data);
@@ -286,6 +423,7 @@ export default class extends Controller {
             requested: this.statusRequestedValue,
             paid: this.statusPaidValue,
             confirmed: this.statusConfirmedValue,
+            cancelled: this.statusCancelledValue,
         };
         return labels[status] || status;
     }

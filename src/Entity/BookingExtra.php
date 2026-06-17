@@ -69,4 +69,9 @@ class BookingExtra
     public function getPriceAtBooking(): ?float { return $this->priceAtBooking; }
     public function setPriceAtBooking(?float $v): static { $this->priceAtBooking = $v; return $this; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
+
+    public function canBeCancelledByGuest(): bool
+    {
+        return \in_array($this->status, [self::STATUS_REQUESTED, self::STATUS_PAID], true);
+    }
 }

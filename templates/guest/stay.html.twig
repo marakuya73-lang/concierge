@@ -38,6 +38,12 @@
      data-stay-status-requested-value="{{ 'app.extra_status_requested'|trans }}"
      data-stay-status-paid-value="{{ 'app.extra_status_paid'|trans }}"
      data-stay-status-confirmed-value="{{ 'app.extra_status_confirmed'|trans }}"
+     data-stay-status-cancelled-value="{{ 'app.extra_status_cancelled'|trans }}"
+     data-stay-cancel-request-value="{{ 'app.cancel_request'|trans }}"
+     data-stay-cancel-request-title-value="{{ 'app.cancel_request_title'|trans }}"
+     data-stay-cancel-request-lead-value="{{ 'app.cancel_request_lead'|trans }}"
+     data-stay-cancel-request-keep-value="{{ 'app.cancel_request_keep'|trans }}"
+     data-stay-cancel-request-confirm-btn-value="{{ 'app.cancel_request_confirm_btn'|trans }}"
      data-stay-offline-extra-queued-value="{{ 'app.offline_extra_queued'|trans }}">
     <header class="stay-header">
         <div class="stay-header-inner">
@@ -574,12 +580,17 @@
 
                     <div class="food-services-booked" data-stay-target="foodExtrasBooked"{% if foodExtras.requested|length == 0 %} hidden{% endif %}>
                         {% for req in foodExtras.requested %}
-                            <article class="food-service-booked">
+                            <article class="food-service-booked" data-request-id="{{ req.id }}" data-extra-id="{{ req.extraId }}">
                                 <div>
                                     <p class="food-service-name font-serif">{{ req.name }}</p>
                                     <p class="food-service-meta">{{ req.quantity }}×{% if req.priceAtBooking %} · R$ {{ (req.priceAtBooking * req.quantity)|number_format(2, ',', '.') }}{% endif %}</p>
                                 </div>
-                                <span class="status-pill status-{{ req.status }}">{{ ('app.extra_status_' ~ req.status)|trans }}</span>
+                                <div class="food-service-booked-aside">
+                                    <span class="status-pill status-{{ req.status }}">{{ ('app.extra_status_' ~ req.status)|trans }}</span>
+                                    {% if req.status in ['requested', 'paid'] %}
+                                        <button type="button" class="btn btn-outline btn-sm food-cancel-btn" data-request-id="{{ req.id }}" data-action="click->stay#cancelExtra">{{ 'app.cancel_request'|trans }}</button>
+                                    {% endif %}
+                                </div>
                             </article>
                         {% endfor %}
                     </div>
@@ -765,11 +776,12 @@
                     <h2 class="extras-title font-serif">{{ 'app.tab_extras'|trans }}</h2>
                 </header>
 
-                <section class="extras-section" data-stay-target="extrasRequests"{% if extras.myRequests|length == 0 %} hidden{% endif %}>
+                {% set activeRequests = extras.myRequests|filter(r => r.status != 'cancelled') %}
+                <section class="extras-section" data-stay-target="extrasRequests"{% if activeRequests|length == 0 %} hidden{% endif %}>
                     <p class="extras-section-label">{{ 'app.your_requests'|trans }}</p>
                     <div data-stay-target="extrasRequestsList">
-                        {% for req in extras.myRequests %}
-                            <article class="extras-request-card">
+                        {% for req in activeRequests %}
+                            <article class="extras-request-card" data-request-id="{{ req.id }}" data-extra-id="{{ req.extraId }}">
                                 <div class="extras-request-top">
                                     <div>
                                         <p class="extras-item-name font-serif">{{ req.name }}</p>
@@ -779,6 +791,9 @@
                                 </div>
                                 {% if req.status == 'requested' and stay.pixKey %}
                                     <p class="extras-pix-note">{{ 'app.pix_payment'|trans }}: <strong>{{ stay.pixKey }}</strong></p>
+                                {% endif %}
+                                {% if req.status in ['requested', 'paid'] %}
+                                    <button type="button" class="btn btn-outline btn-block extras-cancel-btn" data-request-id="{{ req.id }}" data-action="click->stay#cancelExtra">{{ 'app.cancel_request'|trans }}</button>
                                 {% endif %}
                             </article>
                         {% endfor %}
@@ -884,6 +899,19 @@
                 {{ 'app.extra_confirm_whatsapp'|trans }} ↗
             </a>
             <button type="button" class="btn btn-outline btn-block extras-confirm-back" data-action="click->stay#dismissExtraConfirm" data-stay-target="confirmBack"></button>
+        </div>
+    </div>
+
+    <div class="stay-dialog-overlay" data-stay-target="cancelConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" data-action="click->stay#dismissCancelConfirm">
+        <div class="stay-dialog stay-dialog--warning" data-action="click->stay#stopDialogClick">
+            <div class="stay-dialog-icon" aria-hidden="true">!</div>
+            <h3 id="cancelConfirmTitle" class="stay-dialog-title font-serif" data-stay-target="cancelConfirmTitle">{{ 'app.cancel_request_title'|trans }}</h3>
+            <p class="stay-dialog-lead" data-stay-target="cancelConfirmLead">{{ 'app.cancel_request_lead'|trans }}</p>
+            <p class="stay-dialog-item font-serif" data-stay-target="cancelConfirmItem"></p>
+            <div class="stay-dialog-actions">
+                <button type="button" class="btn btn-outline btn-block" data-action="click->stay#dismissCancelConfirm" data-stay-target="cancelConfirmKeep">{{ 'app.cancel_request_keep'|trans }}</button>
+                <button type="button" class="btn btn-block stay-dialog-confirm-danger" data-action="click->stay#confirmCancelExtra" data-stay-target="cancelConfirmSubmit">{{ 'app.cancel_request_confirm_btn'|trans }}</button>
+            </div>
         </div>
     </div>
 </div>

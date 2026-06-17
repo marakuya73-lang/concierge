@@ -53,4 +53,30 @@ class ConciergeApiController extends AbstractController
             return $this->json(['error' => $e->getMessage()], $status >= 100 ? $status : 400);
         }
     }
+
+    #[Route('/extras/cancel', name: 'api_concierge_cancel_extra', methods: ['POST'])]
+    public function cancelExtra(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true) ?? [];
+        $code = strtoupper(trim((string) ($data['code'] ?? '')));
+        $requestId = (int) ($data['requestId'] ?? 0);
+
+        if (!$code || !$requestId) {
+            return $this->json(['error' => 'code and requestId are required'], 400);
+        }
+
+        try {
+            $result = $this->conciergeService->cancelExtraRequest($code, $requestId, $request->getLocale());
+
+            return $this->json($result);
+        } catch (\Throwable $e) {
+            $status = match (true) {
+                str_contains($e->getMessage(), 'confirmada') || str_contains($e->getMessage(), 'confirmed') => 403,
+                str_contains($e->getMessage(), 'não encontrada') || str_contains($e->getMessage(), 'not found') => 404,
+                default => $e->getCode() ?: 400,
+            };
+
+            return $this->json(['error' => $e->getMessage()], $status >= 100 ? $status : 400);
+        }
+    }
 }

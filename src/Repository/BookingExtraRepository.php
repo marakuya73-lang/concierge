@@ -32,17 +32,30 @@ class BookingExtraRepository extends ServiceEntityRepository
             ->select('COUNT(be.id)')
             ->andWhere('be.booking = :booking')
             ->andWhere('be.extra = :extraId')
+            ->andWhere('be.status != :cancelled')
             ->setParameter('booking', $booking)
             ->setParameter('extraId', $extraId)
+            ->setParameter('cancelled', BookingExtra::STATUS_CANCELLED)
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    public function findOneForBooking(Booking $booking, int $bookingExtraId): ?BookingExtra
+    {
+        return $this->createQueryBuilder('be')
+            ->andWhere('be.booking = :booking')
+            ->andWhere('be.id = :id')
+            ->setParameter('booking', $booking)
+            ->setParameter('id', $bookingExtraId)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     /** @return BookingExtra[] */
     public function findGuestRequestsSince(\DateTimeImmutable $since): array
     {
         return $this->createQueryBuilder('be')
-            ->andWhere('be.createdAt > :since')
+            ->andWhere('be.createdAt >= :since')
             ->andWhere('be.requestedBy = :guest')
             ->andWhere('be.status = :status')
             ->setParameter('since', $since)

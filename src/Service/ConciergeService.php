@@ -184,6 +184,29 @@ class ConciergeService
         return $result;
     }
 
+    public function cancelExtraRequest(string $code, int $bookingExtraId, string $locale = 'pt'): array
+    {
+        $booking = $this->getValidBooking($code);
+        $bookingExtra = $this->bookingExtraRepository->findOneForBooking($booking, $bookingExtraId);
+
+        if (!$bookingExtra) {
+            throw new NotFoundHttpException('en' === $locale
+                ? 'Request not found'
+                : 'Solicitação não encontrada');
+        }
+
+        if (!$bookingExtra->canBeCancelledByGuest()) {
+            throw new AccessDeniedHttpException('en' === $locale
+                ? 'This request has already been confirmed and can no longer be cancelled.'
+                : 'Esta solicitação já foi confirmada e não pode mais ser cancelada.');
+        }
+
+        $bookingExtra->setStatus(BookingExtra::STATUS_CANCELLED);
+        $this->bookingExtraRepository->getEntityManager()->flush();
+
+        return $this->serializeBookingExtra($bookingExtra, $locale);
+    }
+
     private function getValidBooking(string $code): Booking
     {
         $today = new \DateTimeImmutable('today');
@@ -243,6 +266,7 @@ class ConciergeService
             'requestedBy' => $be->getRequestedBy(),
             'isBreakfast' => $extra ? $this->isBreakfastExtra($extra) : false,
             'createdAt' => $be->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            'canCancel' => $be->canBeCancelledByGuest(),
         ];
     }
 
