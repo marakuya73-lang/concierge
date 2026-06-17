@@ -11,6 +11,7 @@ use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
@@ -70,14 +71,14 @@ class BookingType extends AbstractType
                 'required' => false,
                 'row_attr' => ['data-booking-form-target' => 'rajaaramField'],
             ])
-            ->add('rajaaramTherapyTime', TextType::class, [
+            ->add('rajaaramTherapyTime', TimeType::class, [
                 'label' => 'Horário da terapia',
                 'required' => false,
-                'attr' => [
-                    'placeholder' => '09:00',
-                    'pattern' => '^([01]\\d|2[0-3]):[0-5]\\d$',
-                    'inputmode' => 'numeric',
-                ],
+                'input' => 'string',
+                'format' => 'H:i',
+                'widget' => 'single_text',
+                'with_seconds' => false,
+                'html5' => true,
                 'help' => 'Formato 24h (ex.: 09:00, 14:30).',
                 'row_attr' => ['data-booking-form-target' => 'rajaaramField'],
             ])
@@ -110,7 +111,7 @@ class BookingType extends AbstractType
                 $data['stayPrice'] = self::normalizeMoneyInput($data['stayPrice']);
             }
             if (isset($data['rajaaramTherapyTime']) && \is_string($data['rajaaramTherapyTime'])) {
-                $data['rajaaramTherapyTime'] = trim($data['rajaaramTherapyTime']) ?: null;
+                $data['rajaaramTherapyTime'] = self::normalizeTimeInput($data['rajaaramTherapyTime']);
             }
             if (isset($data['guestWhatsapp']) && \is_string($data['guestWhatsapp'])) {
                 $data['guestWhatsapp'] = trim($data['guestWhatsapp']) ?: null;
@@ -131,6 +132,36 @@ class BookingType extends AbstractType
 
             $booking->clearRajaaramDetails();
         });
+    }
+
+    private static function normalizeTimeInput(string $value): ?string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('/^([01]\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/', $value, $matches)) {
+            return sprintf('%s:%s', $matches[1], $matches[2]);
+        }
+
+        if (preg_match('/^\d{3,4}$/', $value)) {
+            $digits = str_pad($value, 4, '0', STR_PAD_LEFT);
+            $hour = (int) substr($digits, 0, 2);
+            $minute = (int) substr($digits, 2, 2);
+            if ($hour <= 23 && $minute <= 59) {
+                return sprintf('%02d:%02d', $hour, $minute);
+            }
+        }
+
+        if (preg_match('/^\d{1,2}$/', $value)) {
+            $hour = (int) $value;
+            if ($hour <= 23) {
+                return sprintf('%02d:00', $hour);
+            }
+        }
+
+        return $value;
     }
 
     private static function normalizeMoneyInput(string $value): string

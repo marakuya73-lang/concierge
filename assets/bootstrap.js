@@ -6,6 +6,7 @@ import DiscoveriesController from './controllers/discoveries_controller.js';
 import AdminNavController from './controllers/admin_nav_controller.js';
 import PropertyTabsController from './controllers/property_tabs_controller.js';
 import AdminNotificationsController from './controllers/admin_notifications_controller.js';
+import AdminBookingRowController from './controllers/admin_booking_row_controller.js';
 
 const app = startStimulusApp();
 app.register('access-code', AccessCodeController);
@@ -15,3 +16,4 @@ app.register('discoveries', DiscoveriesController);
 app.register('admin-nav', AdminNavController);
 app.register('property-tabs', PropertyTabsController);
 app.register('admin-notifications', AdminNotificationsController);
+app.register('admin-booking-row', AdminBookingRowController);

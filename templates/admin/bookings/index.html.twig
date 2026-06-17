@@ -4,7 +4,14 @@
 
 {% macro booking_rows(bookings, highlightPending) %}
     {% for booking in bookings %}
-        <tr{% if highlightPending and booking.needsGuestInfo %} class="row-pending"{% endif %}>
+        {% set showUrl = path('admin_booking_show', {id: booking.id, edit: booking.needsGuestInfo ? 1 : 0}) %}
+        <tr class="admin-booking-row{% if highlightPending and booking.needsGuestInfo %} row-pending{% endif %}"
+            data-controller="admin-booking-row"
+            data-admin-booking-row-url-value="{{ showUrl }}"
+            data-action="click->admin-booking-row#open keydown->admin-booking-row#keydown"
+            tabindex="0"
+            role="link"
+            aria-label="{{ booking.guestName }} · {{ booking.checkIn|date('d/m/Y') }} → {{ booking.checkOut|date('d/m/Y') }}">
             <td>
                 <strong>{{ booking.guestName }}</strong>
                 {% if booking.needsGuestInfo %}<br><span class="admin-pending-badge">Preencher dados do hóspede</span>{% endif %}
@@ -14,7 +21,7 @@
             <td><code>{{ booking.accessCode }}</code></td>
             <td>{{ booking.source }}</td>
             <td><span class="status-pill status-{{ booking.status == 'confirmed' ? 'confirmed' : (booking.status == 'completed' ? 'paid' : 'cancelled') }}">{{ booking.status == 'confirmed' ? 'confirmada' : (booking.status == 'completed' ? 'concluída' : 'cancelada') }}</span></td>
-            <td><a href="{{ path('admin_booking_show', {id: booking.id, edit: booking.needsGuestInfo ? 1 : 0}) }}">{% if booking.needsGuestInfo %}Completar{% else %}Ver / editar{% endif %}</a></td>
+            <td><a href="{{ showUrl }}">{% if booking.needsGuestInfo %}Completar{% else %}Ver / editar{% endif %}</a></td>
         </tr>
     {% else %}
         <tr><td colspan="7" style="text-align:center;color:var(--muted-foreground);padding:1.5rem">Nenhuma reserva nesta seção.</td></tr>
