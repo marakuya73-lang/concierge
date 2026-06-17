@@ -48,12 +48,12 @@ Symfony application for property concierge services.
 
 6. Create writable cache/log directories, compile assets, and set permissions:
    ```bash
-   mkdir -p var/cache var/log
+   mkdir -p var/cache var/log var/sessions
    /opt/alt/php84/usr/bin/php bin/console importmap:install
    /opt/alt/php84/usr/bin/php bin/console asset-map:compile
    /opt/alt/php84/usr/bin/php bin/console cache:clear --env=prod
    /opt/alt/php84/usr/bin/php bin/console cache:warmup --env=prod
-   chmod -R 775 var public/uploads
+   chmod -R 777 var public/uploads
    ```
 
 7. Point your web server document root to the `public/` directory.

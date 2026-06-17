@@ -18,3 +18,5 @@ when@prod:
         session:
             cookie_secure: auto
             cookie_samesite: lax
+            cookie_path: /
+            save_path: '%kernel.project_dir%/var/sessions'
