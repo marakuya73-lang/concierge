@@ -6,7 +6,7 @@ const SEEN_IDS_KEY = 'domoAdminSeenExtraIds';
 const POLL_OVERLAP_SECONDS = 15;
 
 export default class extends Controller {
-    static targets = ['banner', 'prompt', 'promptText', 'enableBtn', 'status', 'testBtn'];
+    static targets = ['banner', 'prompt', 'promptText', 'enableBtn', 'status'];
 
     connect() {
         this.seenIds = this.loadSeenIds();
@@ -95,22 +95,6 @@ export default class extends Controller {
         await this.refreshStatus();
     }
 
-    async testNotification(event) {
-        event?.preventDefault();
-
-        try {
-            const response = await fetch('/admin/api/notifications/test', { method: 'POST' });
-            const data = await response.json();
-            if (!response.ok) {
-                alert(data.error || 'Teste falhou.');
-                return;
-            }
-            alert(`Notificação de teste enviada (${data.sent} dispositivo(s)).`);
-        } catch {
-            alert('Não foi possível enviar o teste.');
-        }
-    }
-
     hidePrompt() {
         if (this.hasPromptTarget) {
             this.promptTarget.hidden = true;
@@ -197,10 +181,6 @@ export default class extends Controller {
             }
 
             this.setStatus(parts.join(' · '));
-
-            if (this.hasTestBtnTarget) {
-                this.testBtnTarget.hidden = !data.pushConfigured || data.subscriptionCount === 0;
-            }
 
             if (data.pushConfigured && data.subscriptionCount > 0 && Notification.permission === 'granted') {
                 this.hidePrompt();

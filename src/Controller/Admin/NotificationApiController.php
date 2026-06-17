@@ -80,31 +80,6 @@ class NotificationApiController extends AbstractController
         ]);
     }
 
-    #[Route('/test', name: 'admin_api_notifications_test', methods: ['POST'])]
-    public function test(): JsonResponse
-    {
-        if (!$this->webPushService->isConfigured()) {
-            return $this->json(['error' => 'VAPID keys not configured in .env'], Response::HTTP_SERVICE_UNAVAILABLE);
-        }
-
-        if (0 === $this->webPushService->getSubscriptionCount()) {
-            return $this->json(['error' => 'No push subscription registered. Tap "Ativar notificações" first.'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $result = $this->webPushService->send(
-            'Teste — Domo Xangô',
-            'Notificações estão a funcionar.',
-            '/admin',
-            'extra-request-test',
-        );
-
-        return $this->json([
-            'ok' => $result['sent'] > 0,
-            'sent' => $result['sent'],
-            'failed' => $result['failed'],
-        ]);
-    }
-
     #[Route('/recent', name: 'admin_api_notifications_recent', methods: ['GET'])]
     public function recent(Request $request): JsonResponse
     {

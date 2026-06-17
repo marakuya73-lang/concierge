@@ -1,4 +1,4 @@
-const CACHE_NAME = 'domo-xango-v6';
+const CACHE_NAME = 'domo-xango-v7';
 const APP_SHELL = [
     '/',
     '/offline.html',

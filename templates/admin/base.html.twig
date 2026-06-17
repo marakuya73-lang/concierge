@@ -14,7 +14,7 @@
     {% block stylesheets %}{% endblock %}
     {% block javascripts %}{% block importmap %}{{ importmap('app') }}{% endblock %}{% endblock %}
 </head>
-<body data-turbo="false">
+<body class="admin-app" data-turbo="false">
 <div class="admin-layout" data-controller="admin-nav admin-notifications">
     <div class="admin-nav-backdrop" data-action="click->admin-nav#close"></div>
     <aside class="admin-sidebar" id="admin-sidebar">
@@ -60,7 +60,6 @@
         </div>
         <div class="admin-notify-bar">
             <p class="admin-notify-status" data-admin-notifications-target="status">A verificar notificações…</p>
-            <button type="button" class="btn btn-outline btn-sm" data-admin-notifications-target="testBtn" data-action="click->admin-notifications#testNotification" hidden>Testar alerta</button>
         </div>
         <div class="admin-alert-banner" data-admin-notifications-target="banner" hidden></div>
         <main class="admin-main">
