@@ -49,6 +49,14 @@
             .admin-section { padding: 1rem; overflow: hidden; }
             .admin-dashboard-grid { grid-template-columns: 1fr; }
             .admin-calendar { width: 100%; min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .admin-calendar-header { flex-direction: column; align-items: stretch; gap: .75rem; }
+            .admin-calendar-nav {
+                display: flex; align-items: center; gap: .35rem; flex-wrap: wrap;
+                justify-content: space-between; max-width: 100%; min-width: 0;
+            }
+            .admin-calendar-nav-label { min-width: 0; flex: 1 1 auto; font-size: .95rem; text-align: center; }
+            .admin-calendar-nav-btn { flex-shrink: 0; }
+            .admin-calendar-nav-today { flex-shrink: 0; white-space: nowrap; }
             .admin-calendar-head,
             .admin-calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .2rem; min-width: 0; }
             .admin-calendar-head span { font-size: 0; }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'domo-xango-v8';
+const CACHE_NAME = 'domo-xango-v9';
 const APP_SHELL = [
     '/',
     '/offline.html',
@@ -127,7 +127,7 @@ async function staleWhileRevalidate(request, event) {
 async function networkFirst(request) {
     try {
         const response = await fetch(request);
-        if (response.ok) {
+        if (response.ok && !shouldSkipDocumentCache(request)) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
@@ -150,6 +150,16 @@ async function networkFirst(request) {
 
 async function networkOnly(request) {
     return fetch(request);
+}
+
+function shouldSkipDocumentCache(request) {
+    if (request.mode !== 'navigate') {
+        return false;
+    }
+
+    const url = new URL(request.url);
+
+    return url.pathname.startsWith('/admin');
 }
 
 self.addEventListener('push', (event) => {
