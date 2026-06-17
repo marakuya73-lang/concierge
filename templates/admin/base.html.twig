@@ -11,6 +11,56 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <title>{% block title %}Admin{% endblock %} | Domo Xangô</title>
     <link rel="icon" href="/images/favicon.png">
+    <style>
+        /* Inline admin mobile fixes — load with HTML so PWA updates work without stale CSS cache */
+        [data-admin-notifications-target="testBtn"] { display: none !important; }
+        @media (max-width: 768px) {
+            body.admin-app { overflow-x: hidden; max-width: 100%; }
+            .admin-layout { display: block; overflow-x: hidden; max-width: 100%; }
+            .admin-shell { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
+            .admin-main {
+                padding: 1rem;
+                padding-left: max(1rem, env(safe-area-inset-left));
+                padding-right: max(1rem, env(safe-area-inset-right));
+                padding-bottom: max(1rem, env(safe-area-inset-bottom));
+                overflow-x: hidden;
+                max-width: 100%;
+                min-width: 0;
+            }
+            .admin-content { width: 100%; max-width: 100%; min-width: 0; }
+            .admin-topbar { display: flex !important; }
+            .admin-sidebar {
+                position: fixed;
+                inset: 0 auto 0 0;
+                z-index: 50;
+                width: min(280px, 85vw);
+                transform: translateX(-100%);
+            }
+            .admin-layout.admin-nav-open .admin-sidebar { transform: translateX(0); }
+            .admin-header { flex-direction: column; align-items: stretch; gap: .85rem; }
+            .admin-header-actions { width: 100%; flex-direction: column; }
+            .admin-header-actions .btn,
+            .admin-header-actions form,
+            .admin-header-actions form .btn { width: 100%; }
+            .admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+            .admin-stat { padding: .85rem .75rem; min-width: 0; }
+            .admin-stat-value { font-size: 1.5rem; }
+            .admin-stat-label { font-size: .6rem; line-height: 1.25; letter-spacing: .04em; }
+            .admin-section { padding: 1rem; overflow: hidden; }
+            .admin-dashboard-grid { grid-template-columns: 1fr; }
+            .admin-calendar { width: 100%; min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .admin-calendar-head,
+            .admin-calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .2rem; min-width: 0; }
+            .admin-calendar-head span { font-size: 0; }
+            .admin-calendar-head span::first-letter { font-size: .65rem; }
+            .admin-calendar-day,
+            .admin-calendar-empty { min-height: 3rem; }
+            .admin-table-wrap { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+            .admin-notify-bar { flex-direction: column; align-items: stretch; gap: .5rem; }
+            .admin-list-item { flex-direction: column; align-items: flex-start; }
+            .admin-list-item span { white-space: normal; }
+        }
+    </style>
     {% block stylesheets %}{% endblock %}
     {% block javascripts %}{% block importmap %}{{ importmap('app') }}{% endblock %}{% endblock %}
 </head>
@@ -72,5 +122,8 @@
         </main>
     </div>
 </div>
+<script>
+    document.querySelector('[data-admin-notifications-target="testBtn"]')?.remove();
+</script>
 </body>
 </html>

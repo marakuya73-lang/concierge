@@ -1,4 +1,4 @@
-const CACHE_NAME = 'domo-xango-v7';
+const CACHE_NAME = 'domo-xango-v8';
 const APP_SHELL = [
     '/',
     '/offline.html',
@@ -72,6 +72,11 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (url.pathname === '/' || url.pathname.startsWith('/stay/')) {
+        event.respondWith(networkFirst(request));
+        return;
+    }
+
+    if (url.pathname.startsWith('/admin')) {
         event.respondWith(networkFirst(request));
         return;
     }
