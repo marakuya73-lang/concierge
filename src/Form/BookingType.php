@@ -75,7 +75,7 @@ class BookingType extends AbstractType
                 'label' => 'Horário da terapia',
                 'required' => false,
                 'input' => 'string',
-                'format' => 'H:i',
+                'input_format' => 'H:i',
                 'widget' => 'single_text',
                 'with_seconds' => false,
                 'html5' => true,
