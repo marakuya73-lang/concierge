@@ -131,13 +131,13 @@ class Property
     private int $maxGuests = 5;
 
     #[ORM\Column(length: 500)]
-    private string $mapUrl = 'https://www.google.com/maps/search/?api=1&query=-14.061994,-47.467243';
+    private string $mapUrl = 'https://maps.app.goo.gl/APPumVUKa8P1LPgg8';
 
     #[ORM\Column(length: 50)]
-    private string $latitude = '-14.061994';
+    private string $latitude = '-14.058769';
 
     #[ORM\Column(length: 50)]
-    private string $longitude = '-47.467243';
+    private string $longitude = '-47.466251';
 
     #[ORM\Column(length: 255)]
     private string $pixKey = 'domo.xango@gmail.com';
@@ -330,11 +330,7 @@ class Property
     public function setMapUrl(string $v): static { $this->mapUrl = $v; return $this; }
     public function getGoogleMapsUrl(): string
     {
-        return sprintf(
-            'https://www.google.com/maps/search/?api=1&query=%s,%s',
-            $this->latitude,
-            $this->longitude,
-        );
+        return $this->mapUrl;
     }
     public function getLatitude(): string { return $this->latitude; }
     public function setLatitude(string $v): static { $this->latitude = $v; return $this; }
