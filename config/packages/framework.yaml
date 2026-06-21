@@ -3,7 +3,10 @@ framework:
     default_locale: pt
     http_method_override: false
     handle_all_throwables: true
-    session: true
+    session:
+        cookie_lifetime: 31536000
+        gc_maxlifetime: 31536000
+        cookie_samesite: lax
     php_errors:
         log: true
 
@@ -17,6 +20,5 @@ when@prod:
     framework:
         session:
             cookie_secure: auto
-            cookie_samesite: lax
             cookie_path: /
             save_path: '%kernel.project_dir%/var/sessions'

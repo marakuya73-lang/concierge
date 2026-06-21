@@ -211,6 +211,10 @@ export default class extends Controller {
         try {
             const since = Math.max(0, this.lastSeen - POLL_OVERLAP_SECONDS);
             const response = await fetch(`/admin/api/notifications/recent?since=${since}`);
+            if (response.status === 401) {
+                window.location.reload();
+                return;
+            }
             if (!response.ok) return;
 
             const data = await response.json();

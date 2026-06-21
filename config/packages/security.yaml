@@ -20,7 +20,10 @@ security:
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 31536000
-                path: /admin
+                path: /
+                secure: auto
+                samesite: lax
+                name: domo_admin_remember
                 always_remember_me: true
 
     access_control:
