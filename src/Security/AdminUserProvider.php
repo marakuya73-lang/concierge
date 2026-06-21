@@ -9,13 +9,18 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 class AdminUserProvider implements UserProviderInterface
 {
+    public function __construct(
+        private string $adminPassword,
+    ) {
+    }
+
     public function loadUserByIdentifier(string $identifier): UserInterface
     {
         if ('admin' !== $identifier) {
             throw new UserNotFoundException(sprintf('User "%s" not found.', $identifier));
         }
 
-        return new AdminUser();
+        return new AdminUser($this->passwordVerifier());
     }
 
     public function refreshUser(UserInterface $user): UserInterface
@@ -24,11 +29,16 @@ class AdminUserProvider implements UserProviderInterface
             throw new UnsupportedUserException(sprintf('Invalid user class "%s".', $user::class));
         }
 
-        return new AdminUser();
+        return new AdminUser($this->passwordVerifier());
     }
 
     public function supportsClass(string $class): bool
     {
         return AdminUser::class === $class || is_subclass_of($class, AdminUser::class);
+    }
+
+    private function passwordVerifier(): string
+    {
+        return hash('sha256', $this->adminPassword);
     }
 }

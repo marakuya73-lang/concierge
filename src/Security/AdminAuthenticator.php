@@ -34,7 +34,7 @@ class AdminAuthenticator extends AbstractLoginFormAuthenticator
         }
 
         return new SelfValidatingPassport(
-            new UserBadge('admin', fn () => new AdminUser()),
+            new UserBadge('admin', fn () => new AdminUser(hash('sha256', $this->adminPassword))),
             [
                 new CsrfTokenBadge('authenticate', (string) $request->request->get('_csrf_token')),
                 new RememberMeBadge(),
