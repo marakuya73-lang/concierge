@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
 import { reportClientError, shouldReportHttpStatus } from '../utils/report_client_error.js';
+import { canUseCachedStay, clearStayCache } from '../utils/stay_access.js';
 
 export default class extends Controller {
     static targets = ['input', 'error', 'submit'];
@@ -52,12 +53,11 @@ export default class extends Controller {
         this.errorTarget.hidden = true;
 
         if (!navigator.onLine) {
-            const cachedCode = localStorage.getItem('accessCode');
-            const stayDetails = localStorage.getItem('stayDetails');
-            if (cachedCode === code && stayDetails) {
+            if (canUseCachedStay(code)) {
                 window.location.href = '/stay/' + code;
                 return;
             }
+            clearStayCache();
             this.showError(this.hasOfflineNoCacheValue ? this.offlineNoCacheValue : 'Offline — open your stay once online first.');
             this.submitTarget.disabled = false;
             return;
@@ -71,7 +71,10 @@ export default class extends Controller {
             });
             const data = await response.json();
             if (!response.ok) {
-                if (shouldReportHttpStatus(response.status)) {
+                if (data.reason === 'stay_ended') {
+                    clearStayCache();
+                }
+                if (shouldReportHttpStatus(response.status) && data.reason !== 'stay_ended') {
                     reportClientError(data.error || 'Verify code failed', 'guest.verifyCode', {
                         code,
                         httpStatus: response.status,
@@ -87,12 +90,11 @@ export default class extends Controller {
             window.location.href = '/stay/' + code;
         } catch (err) {
             if (!navigator.onLine) {
-                const cachedCode = localStorage.getItem('accessCode');
-                const stayDetails = localStorage.getItem('stayDetails');
-                if (cachedCode === code && stayDetails) {
+                if (canUseCachedStay(code)) {
                     window.location.href = '/stay/' + code;
                     return;
                 }
+                clearStayCache();
                 this.showError(this.hasOfflineNoCacheValue ? this.offlineNoCacheValue : err.message);
             } else {
                 if (!err.skipReport) {

@@ -28,13 +28,15 @@ rules:
   rule1_title: "Calçados? Só do lado de fora."
   rule1_text: "Dentro do domo, pedimos que permaneça descalço ou de meias limpas. Essa prática ajuda a manter o espaço aconchegante, puro e acolhedor para todos que aqui chegam."
   rule2_title: "Fogo? Somente o da alma."
-  rule2_text: "Estamos em uma RPPN (Reserva Particular do Patrimônio Natural), e qualquer chama aberta representa risco de incêndio. Por isso, não utilizamos velas, incensos em brasa ou quaisquer experimentos com fogo.\n\n— PROIBIDO FUMAR —\n(Sob risco de multa do IBAMA)"
+  rule2_text: "Estamos em uma RPPN (Reserva Particular do Patrimônio Natural), e qualquer chama aberta representa risco de incêndio. Por isso, não utilizamos velas, incensos em brasa ou quaisquer experimentos com fogo.\n\n— PROIBIDO FUMAR —\nÉ estritamente proibido fumar dentro do domo, no deck ou em qualquer área do espaço. Odor de fumo detectado na check-out será cobrado R$ 1.000 (sujeito ainda a multa do IBAMA)."
   rule3_title: "Na beira do deck, com presença."
   rule3_text: "A vista é realmente de tirar o fôlego, mas por segurança, pedimos atenção e presença ao caminhar próximo à borda. Queremos que você contemple — com os pés no chão."
   rule4_title: "Nossos cães são parte da experiência."
   rule4_text: "Eles adoram carinho e estarão por perto para dar boas-vindas. Se preferir manter distância, basta nos avisar — faremos o possível para que você se sinta totalmente à vontade."
   rule5_title: "Frigobar & Itens à parte"
   rule5_text: "Os produtos disponíveis estão listados no menu. Sinta-se à vontade para consumir e, caso tenha dúvidas sobre valores ou formas de pagamento, fale conosco — estamos por aqui para ajudar."
+  rule6_title: "Cobertores e travesseiros ficam dentro."
+  rule6_text: "É proibido levar cobertores, travesseiros ou qualquer enxoval do interior do domo para fora (deck, área externa, etc.). Qualquer dano constatado no material será cobrado R$ 250."
 
 faq:
   voltage_q: "Qual a voltagem das tomadas?"

@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { canUseCachedStay, clearStayCache } from '../utils/stay_access.js';
 
 const PENDING_EXTRAS_KEY = 'domoPendingExtraRequests';
 
@@ -57,9 +58,12 @@ export default class extends Controller {
         if (navigator.onLine || window.location.pathname !== '/') return;
 
         const code = localStorage.getItem('accessCode');
-        if (code) {
+        if (code && canUseCachedStay(code)) {
             window.location.href = '/stay/' + code;
+            return;
         }
+
+        clearStayCache();
     }
 
     updateOnlineStatus() {

@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Exception\StayEndedException;
 use App\Entity\Booking;
 use App\Entity\BookingExtra;
 use App\Entity\Extra;
@@ -29,7 +30,7 @@ class ConciergeService
 
     public function verifyAccessCode(string $code, string $locale = 'pt'): array
     {
-        $booking = $this->getValidBooking($code);
+        $booking = $this->getValidBooking($code, $locale);
         $property = $this->propertyRepository->getOrCreate();
 
         $result = [
@@ -81,7 +82,7 @@ class ConciergeService
 
     public function requestSelfCheckIn(string $code, string $locale = 'pt'): array
     {
-        $booking = $this->getValidBooking($code);
+        $booking = $this->getValidBooking($code, $locale);
 
         if ($booking->isSelfCheckInRequested()) {
             throw new AccessDeniedHttpException('en' === $locale
@@ -127,7 +128,7 @@ class ConciergeService
 
     public function getExtrasForGuest(string $code, string $locale = 'pt'): array
     {
-        $booking = $this->getValidBooking($code);
+        $booking = $this->getValidBooking($code, $locale);
         $available = $this->extraRepository->findActiveForGuestCount($booking->getGuests());
 
         if ($booking->hasRajaaramSession()) {
@@ -196,7 +197,7 @@ class ConciergeService
 
     public function requestExtra(string $code, int $extraId, int $quantity, ?string $notes, string $locale = 'pt'): array
     {
-        $booking = $this->getValidBooking($code);
+        $booking = $this->getValidBooking($code, $locale);
         $extra = $this->extraRepository->find($extraId);
 
         if (!$extra || !$extra->isActive()) {
@@ -252,7 +253,7 @@ class ConciergeService
 
     public function cancelExtraRequest(string $code, int $bookingExtraId, string $locale = 'pt'): array
     {
-        $booking = $this->getValidBooking($code);
+        $booking = $this->getValidBooking($code, $locale);
         $bookingExtra = $this->bookingExtraRepository->findOneForBooking($booking, $bookingExtraId);
 
         if (!$bookingExtra) {
@@ -273,20 +274,43 @@ class ConciergeService
         return $this->serializeBookingExtra($bookingExtra, $locale);
     }
 
-    private function getValidBooking(string $code): Booking
+    private function getValidBooking(string $code, string $locale = 'pt'): Booking
     {
-        $today = new \DateTimeImmutable('today');
+        $today = new \DateTimeImmutable('today', new \DateTimeZone(self::CHECKIN_TIMEZONE));
         $booking = $this->bookingRepository->findByAccessCode($code);
 
         if (!$booking) {
-            throw new AccessDeniedHttpException('Código inválido. Verifique seu código de acesso.');
+            throw new AccessDeniedHttpException('en' === $locale
+                ? 'Invalid code. Please check your access code.'
+                : 'Código inválido. Verifique seu código de acesso.');
         }
 
         if ($booking->isExpired($today)) {
-            throw new AccessDeniedHttpException('Sua estadia já encerrou. Entre em contato com o anfitrião.');
+            throw new StayEndedException($this->getStayEndedMessage($locale));
         }
 
         return $booking;
+    }
+
+    private function getStayEndedMessage(string $locale): string
+    {
+        $property = $this->propertyRepository->getOrCreate();
+        $phone = $property->getContactPhone();
+        $email = $property->getContactEmail();
+
+        if ('en' === $locale) {
+            return sprintf(
+                'Your stay has ended. Thank you for staying with us at Domo Xangô! If you need any information, please contact us on WhatsApp %s or by email at %s.',
+                $phone,
+                $email,
+            );
+        }
+
+        return sprintf(
+            'Sua estadia já encerrou. Obrigado por estar conosco no Domo Xangô! Se precisar de qualquer informação, entre em contato pelo WhatsApp %s ou pelo e-mail %s.',
+            $phone,
+            $email,
+        );
     }
 
     private function serializeExtra(Extra $extra, string $locale, Booking $booking): array

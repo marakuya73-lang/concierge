@@ -13,6 +13,7 @@ app:
     code_hint: "Recebeu um código de 5 caracteres do anfitrião?"
     access_concierge: "Acessar estadia"
     access_denied: "Acesso negado"
+    stay_ended_title: "Sua estadia encerrou"
     back: "Voltar"
     welcome: "Bem-vindo"
     your_stay: "Sua estadia"

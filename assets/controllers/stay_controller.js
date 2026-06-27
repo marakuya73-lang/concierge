@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
 import { reportClientError, shouldReportHttpStatus } from '../utils/report_client_error.js';
+import { isStayCacheValid, clearStayCache } from '../utils/stay_access.js';
 
 export default class extends Controller {
     static targets = [
@@ -48,6 +49,14 @@ export default class extends Controller {
     };
 
     connect() {
+        if (!isStayCacheValid()) {
+            clearStayCache();
+            if (!navigator.onLine) {
+                window.location.href = '/';
+                return;
+            }
+        }
+
         this.show('home');
         this.cacheStayPage();
         window.addEventListener('online', () => this.cacheStayPage());

@@ -316,9 +316,10 @@ class Booking
             && $this->checkOut >= $date;
     }
 
+    /** Guest concierge access ends after checkout + 1 day (inclusive grace day). */
     public function isExpired(\DateTimeImmutable $date): bool
     {
-        return $this->checkOut <= $date;
+        return $date > $this->checkOut->modify('+1 day');
     }
 
     public function overlapsPeriod(\DateTimeImmutable $checkIn, \DateTimeImmutable $checkOut): bool

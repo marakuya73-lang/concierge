@@ -10,6 +10,7 @@ use App\Repository\KitchenPhotoRepository;
 use App\Repository\KitchenUtensilRepository;
 use App\Repository\PropertyPhotoRepository;
 use App\Repository\PropertyRepository;
+use App\Exception\StayEndedException;
 use App\Service\ClientErrorService;
 use App\Service\ConciergeService;
 use App\Entity\KitchenUtensil;
@@ -60,6 +61,8 @@ class GuestController extends AbstractController
             $stay = $this->conciergeService->verifyAccessCode($code, $request->getLocale());
 
             return $this->json($stay);
+        } catch (StayEndedException $e) {
+            return $this->json(['error' => $e->getMessage(), 'reason' => 'stay_ended'], 401);
         } catch (\Throwable $e) {
             $this->clientErrorService->reportUnexpected($e, 'guest_verify_code', $code, 401);
 
@@ -76,6 +79,11 @@ class GuestController extends AbstractController
             $stay = $this->conciergeService->verifyAccessCode($code, $request->getLocale());
             $extras = $this->conciergeService->getExtrasForGuest($code, $request->getLocale());
             $foodExtras = $this->conciergeService->getFoodExtrasForGuest($code, $request->getLocale());
+        } catch (StayEndedException $e) {
+            return $this->render('guest/denied.html.twig', [
+                'error' => $e->getMessage(),
+                'titleKey' => 'app.stay_ended_title',
+            ]);
         } catch (\Throwable $e) {
             $this->clientErrorService->reportUnexpected($e, 'guest_stay', $code, 401);
 

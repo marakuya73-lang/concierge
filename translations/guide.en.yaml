@@ -28,13 +28,15 @@ rules:
   rule1_title: "Shoes? Outside only."
   rule1_text: "Inside the dome, please remain barefoot or in clean socks. This practice helps keep the space cozy, pure, and welcoming for everyone who arrives."
   rule2_title: "Fire? Only the soul's."
-  rule2_text: "We are in an RPPN (Private Natural Heritage Reserve), and any open flame poses a fire risk. For this reason, we do not use candles, burning incense, or any experiments with fire.\n\n— NO SMOKING —\n(Subject to IBAMA fine)"
+  rule2_text: "We are in an RPPN (Private Natural Heritage Reserve), and any open flame poses a fire risk. For this reason, we do not use candles, burning incense, or any experiments with fire.\n\n— NO SMOKING —\nSmoking is strictly forbidden inside the dome, on the deck, or anywhere on the property. Any smoke odor detected at check-out will incur a R$ 1,000 charge (in addition to possible IBAMA fines)."
   rule3_title: "On the deck edge, stay present."
   rule3_text: "The view is truly breathtaking, but for your safety we ask for attention and presence when walking near the edge. We want you to take it in — with your feet on the ground."
   rule4_title: "Our dogs are part of the experience."
   rule4_text: "They love affection and will be nearby to welcome you. If you prefer to keep your distance, just let us know — we will do our best to ensure you feel completely at ease."
   rule5_title: "Minibar & à la carte items"
   rule5_text: "Available products are listed in the menu. Feel free to enjoy them, and if you have questions about prices or payment methods, talk to us — we are here to help."
+  rule6_title: "Blankets and pillows stay inside."
+  rule6_text: "It is forbidden to take blankets, pillows, or any bedding from inside the dome outside (deck, outdoor areas, etc.). Any damage to the materials will incur a R$ 250 charge."
 
 faq:
   voltage_q: "What is the outlet voltage?"

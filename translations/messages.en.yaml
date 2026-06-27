@@ -13,6 +13,7 @@ app:
     code_hint: "Received a 5-character code from your host?"
     access_concierge: "Access your stay"
     access_denied: "Access denied"
+    stay_ended_title: "Your stay has ended"
     back: "Back"
     welcome: "Welcome"
     your_stay: "Your stay"

@@ -110,7 +110,7 @@ class Property
     private string $petsPolicy = 'Nossos cães fazem parte da experiência, avise se preferir distância';
 
     #[ORM\Column(length: 255)]
-    private string $smokingPolicy = 'Proibido fumar (RPPN, multa IBAMA)';
+    private string $smokingPolicy = 'Proibido fumar — odor de fumo: R$ 1.000';
 
     #[ORM\Column(length: 255)]
     private string $silencePolicy = 'Descalço ou meias limpas dentro do domo';
