@@ -3,9 +3,26 @@
         <h3 class="admin-section-title">Jornada Rajaaram</h3>
         <p class="admin-section-desc">Terapia e café da manhã incluídos na estadia.</p>
     </div>
-    <div class="form-row-2">
-        {{ form_row(form.rajaaramTherapy) }}
+
+    {{ form_row(form.rajaaramIsDuo) }}
+
+    <div class="admin-rajaaram-therapy-block">
+        <p class="admin-subsection-label" data-booking-form-target="rajaaramTherapy1Label">Terapia</p>
+        <div class="form-row-2">
+            {{ form_row(form.rajaaramTherapy) }}
+            {{ form_row(form.rajaaramTherapyDate) }}
+        </div>
         {{ form_row(form.rajaaramTherapyTime) }}
     </div>
+
+    <div class="admin-rajaaram-therapy-block admin-rajaaram-duo-block" data-booking-form-target="rajaaramDuoSection"{% if not form.rajaaramIsDuo.vars.data %} hidden{% endif %}>
+        <p class="admin-subsection-label">Terapia 2</p>
+        <div class="form-row-2">
+            {{ form_row(form.rajaaramTherapy2) }}
+            {{ form_row(form.rajaaramTherapy2Date) }}
+        </div>
+        {{ form_row(form.rajaaramTherapy2Time) }}
+    </div>
+
     {{ form_row(form.rajaaramBreakfastIncluded) }}
 </section>

@@ -27,8 +27,14 @@ class BookingExtra
     private ?Booking $booking = null;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Extra $extra = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $customNamePt = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $customNameEn = null;
 
     #[ORM\Column]
     private int $quantity = 1;
@@ -58,6 +64,21 @@ class BookingExtra
     public function setBooking(?Booking $v): static { $this->booking = $v; return $this; }
     public function getExtra(): ?Extra { return $this->extra; }
     public function setExtra(?Extra $v): static { $this->extra = $v; return $this; }
+    public function getCustomNamePt(): ?string { return $this->customNamePt; }
+    public function setCustomNamePt(?string $v): static { $this->customNamePt = $v; return $this; }
+    public function getCustomNameEn(): ?string { return $this->customNameEn; }
+    public function setCustomNameEn(?string $v): static { $this->customNameEn = $v; return $this; }
+    public function isCustom(): bool { return null === $this->extra; }
+    public function getDisplayName(string $locale = 'pt'): string
+    {
+        if ($this->extra) {
+            return $this->extra->getName($locale);
+        }
+
+        $name = 'en' === $locale ? ($this->customNameEn ?: $this->customNamePt) : ($this->customNamePt ?: $this->customNameEn);
+
+        return $name ?? 'Extra personalizado';
+    }
     public function getQuantity(): int { return $this->quantity; }
     public function setQuantity(int $v): static { $this->quantity = $v; return $this; }
     public function getStatus(): string { return $this->status; }

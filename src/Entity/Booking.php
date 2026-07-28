@@ -122,8 +122,23 @@ class Booking
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $rajaaramTherapy = null;
 
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $rajaaramTherapyDate = null;
+
     #[ORM\Column(length: 5, nullable: true)]
     private ?string $rajaaramTherapyTime = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?bool $rajaaramIsDuo = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $rajaaramTherapy2 = null;
+
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $rajaaramTherapy2Date = null;
+
+    #[ORM\Column(length: 5, nullable: true)]
+    private ?string $rajaaramTherapy2Time = null;
 
     #[ORM\Column(nullable: true)]
     private ?bool $rajaaramBreakfastIncluded = null;
@@ -137,15 +152,31 @@ class Booking
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $selfCheckInRequestedAt = null;
 
+    #[ORM\Column(length: 5, nullable: true)]
+    private ?string $plannedArrivalTime = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $plannedArrivalSubmittedAt = null;
+
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $upcomingReminderSentAt = null;
 
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastLoginAt = null;
+
+    #[ORM\Column(options: ['default' => 0])]
+    private int $loginCount = 0;
+
     /** @var Collection<int, BookingExtra> */
     #[ORM\OneToMany(targetEntity: BookingExtra::class, mappedBy: 'booking', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $bookingExtras;
+
+    /** @var Collection<int, BookingDisabledExtra> */
+    #[ORM\OneToMany(targetEntity: BookingDisabledExtra::class, mappedBy: 'booking', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $disabledExtras;
 
     public function __construct()
     {
@@ -153,6 +184,7 @@ class Booking
         $this->checkIn = new \DateTimeImmutable();
         $this->checkOut = new \DateTimeImmutable('+1 day');
         $this->bookingExtras = new ArrayCollection();
+        $this->disabledExtras = new ArrayCollection();
     }
 
     public function getId(): ?int { return $this->id; }
@@ -186,8 +218,19 @@ class Booking
     public function setLastSyncedAt(?\DateTimeImmutable $v): static { $this->lastSyncedAt = $v; return $this; }
     public function getRajaaramTherapy(): ?string { return $this->rajaaramTherapy; }
     public function setRajaaramTherapy(?string $v): static { $this->rajaaramTherapy = $v; return $this; }
+    public function getRajaaramTherapyDate(): ?\DateTimeImmutable { return $this->rajaaramTherapyDate; }
+    public function setRajaaramTherapyDate(?\DateTimeImmutable $v): static { $this->rajaaramTherapyDate = $v; return $this; }
     public function getRajaaramTherapyTime(): ?string { return $this->rajaaramTherapyTime; }
     public function setRajaaramTherapyTime(?string $v): static { $this->rajaaramTherapyTime = $v; return $this; }
+    public function isRajaaramDuo(): bool { return true === $this->rajaaramIsDuo; }
+    public function getRajaaramIsDuo(): ?bool { return $this->rajaaramIsDuo; }
+    public function setRajaaramIsDuo(?bool $v): static { $this->rajaaramIsDuo = $v; return $this; }
+    public function getRajaaramTherapy2(): ?string { return $this->rajaaramTherapy2; }
+    public function setRajaaramTherapy2(?string $v): static { $this->rajaaramTherapy2 = $v; return $this; }
+    public function getRajaaramTherapy2Date(): ?\DateTimeImmutable { return $this->rajaaramTherapy2Date; }
+    public function setRajaaramTherapy2Date(?\DateTimeImmutable $v): static { $this->rajaaramTherapy2Date = $v; return $this; }
+    public function getRajaaramTherapy2Time(): ?string { return $this->rajaaramTherapy2Time; }
+    public function setRajaaramTherapy2Time(?string $v): static { $this->rajaaramTherapy2Time = $v; return $this; }
     public function isRajaaramBreakfastIncluded(): ?bool { return $this->rajaaramBreakfastIncluded; }
     public function setRajaaramBreakfastIncluded(?bool $v): static { $this->rajaaramBreakfastIncluded = $v; return $this; }
     public function isManualDates(): bool { return $this->manualDates; }
@@ -196,9 +239,17 @@ class Booking
     public function setSelfCheckInRequested(bool $v): static { $this->selfCheckInRequested = $v; return $this; }
     public function getSelfCheckInRequestedAt(): ?\DateTimeImmutable { return $this->selfCheckInRequestedAt; }
     public function setSelfCheckInRequestedAt(?\DateTimeImmutable $v): static { $this->selfCheckInRequestedAt = $v; return $this; }
+    public function getPlannedArrivalTime(): ?string { return $this->plannedArrivalTime; }
+    public function setPlannedArrivalTime(?string $v): static { $this->plannedArrivalTime = $v; return $this; }
+    public function getPlannedArrivalSubmittedAt(): ?\DateTimeImmutable { return $this->plannedArrivalSubmittedAt; }
+    public function setPlannedArrivalSubmittedAt(?\DateTimeImmutable $v): static { $this->plannedArrivalSubmittedAt = $v; return $this; }
     public function getUpcomingReminderSentAt(): ?\DateTimeImmutable { return $this->upcomingReminderSentAt; }
     public function setUpcomingReminderSentAt(?\DateTimeImmutable $v): static { $this->upcomingReminderSentAt = $v; return $this; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
+    public function getLastLoginAt(): ?\DateTimeImmutable { return $this->lastLoginAt; }
+    public function setLastLoginAt(?\DateTimeImmutable $v): static { $this->lastLoginAt = $v; return $this; }
+    public function getLoginCount(): int { return $this->loginCount; }
+    public function setLoginCount(int $v): static { $this->loginCount = $v; return $this; }
 
     public function isRajaaram(): bool
     {
@@ -209,32 +260,71 @@ class Booking
     {
         return $this->isRajaaram()
             || null !== $this->rajaaramTherapy
-            || null !== $this->rajaaramTherapyTime;
+            || null !== $this->rajaaramTherapyDate
+            || null !== $this->rajaaramTherapyTime
+            || null !== $this->rajaaramTherapy2
+            || null !== $this->rajaaramTherapy2Date
+            || null !== $this->rajaaramTherapy2Time;
     }
 
     public function getRajaaramTherapyLabel(string $locale = 'pt'): ?string
     {
-        if (!$this->rajaaramTherapy) {
+        return self::rajaaramTherapyLabelFor($this->rajaaramTherapy, $locale);
+    }
+
+    public function getRajaaramTherapy2Label(string $locale = 'pt'): ?string
+    {
+        return self::rajaaramTherapyLabelFor($this->rajaaramTherapy2, $locale);
+    }
+
+    public static function rajaaramTherapyLabelFor(?string $therapy, string $locale = 'pt'): ?string
+    {
+        if (!$therapy) {
             return null;
         }
 
         if ('en' === $locale) {
-            return self::rajaaramTherapyLabelsEn()[$this->rajaaramTherapy] ?? $this->rajaaramTherapy;
+            return self::rajaaramTherapyLabelsEn()[$therapy] ?? $therapy;
         }
 
         foreach (self::rajaaramTherapyChoices() as $label => $value) {
-            if ($value === $this->rajaaramTherapy) {
+            if ($value === $therapy) {
                 return $label;
             }
         }
 
-        return $this->rajaaramTherapy;
+        return $therapy;
+    }
+
+    /** @return list<array{therapy: ?string, date: ?string, time: ?string}> */
+    public function getRajaaramSessions(string $locale = 'pt'): array
+    {
+        $sessions = [[
+            'therapy' => $this->getRajaaramTherapyLabel($locale),
+            'date' => $this->rajaaramTherapyDate?->format('d/m/Y'),
+            'time' => $this->rajaaramTherapyTime,
+        ]];
+
+        if ($this->isRajaaramDuo()) {
+            $sessions[] = [
+                'therapy' => $this->getRajaaramTherapy2Label($locale),
+                'date' => $this->rajaaramTherapy2Date?->format('d/m/Y'),
+                'time' => $this->rajaaramTherapy2Time,
+            ];
+        }
+
+        return $sessions;
     }
 
     public function clearRajaaramDetails(): static
     {
         $this->rajaaramTherapy = null;
+        $this->rajaaramTherapyDate = null;
         $this->rajaaramTherapyTime = null;
+        $this->rajaaramIsDuo = null;
+        $this->rajaaramTherapy2 = null;
+        $this->rajaaramTherapy2Date = null;
+        $this->rajaaramTherapy2Time = null;
         $this->rajaaramBreakfastIncluded = null;
 
         return $this;
@@ -300,6 +390,9 @@ class Booking
 
     /** @return Collection<int, BookingExtra> */
     public function getBookingExtras(): Collection { return $this->bookingExtras; }
+
+    /** @return Collection<int, BookingDisabledExtra> */
+    public function getDisabledExtras(): Collection { return $this->disabledExtras; }
 
     public function isActiveOn(\DateTimeImmutable $date): bool
     {

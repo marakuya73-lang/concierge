@@ -95,6 +95,7 @@ class NotificationApiController extends AbstractController
 
         $requests = $this->bookingExtraRepository->findGuestRequestsSince($sinceDate);
         $selfCheckIns = $this->bookingRepository->findSelfCheckInRequestsSince($sinceDate);
+        $plannedArrivals = $this->bookingRepository->findPlannedArrivalSubmissionsSince($sinceDate);
         $clientErrors = $this->guestClientErrorRepository->findSince($sinceDate);
 
         return $this->json([
@@ -131,6 +132,23 @@ class NotificationApiController extends AbstractController
                     ),
                 ];
             }, $selfCheckIns),
+            'plannedArrivals' => array_map(function ($booking) {
+                $submittedAt = $booking->getPlannedArrivalSubmittedAt()?->getTimestamp() ?? time();
+
+                return [
+                    'id' => $booking->getId().'-'.$submittedAt,
+                    'bookingId' => $booking->getId(),
+                    'guestName' => $booking->getGuestName(),
+                    'plannedArrivalTime' => $booking->getPlannedArrivalTime(),
+                    'checkIn' => $booking->getCheckIn()->format('d/m/Y'),
+                    'createdAt' => $submittedAt,
+                    'bookingUrl' => $this->generateUrl(
+                        'admin_booking_show',
+                        ['id' => $booking->getId()],
+                        UrlGeneratorInterface::ABSOLUTE_PATH,
+                    ),
+                ];
+            }, $plannedArrivals),
             'clientErrors' => array_map(function (GuestClientError $error) {
                 $booking = $error->getBooking();
 

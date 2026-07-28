@@ -13,6 +13,7 @@ use App\Repository\PropertyRepository;
 use App\Exception\StayEndedException;
 use App\Service\ClientErrorService;
 use App\Service\ConciergeService;
+use App\Service\GuestActivityService;
 use App\Entity\KitchenUtensil;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,6 +34,7 @@ class GuestController extends AbstractController
         private KitchenUtensilRepository $kitchenUtensilRepository,
         private ConciergeService $conciergeService,
         private ClientErrorService $clientErrorService,
+        private GuestActivityService $guestActivityService,
     ) {
     }
 
@@ -59,6 +61,8 @@ class GuestController extends AbstractController
 
         try {
             $stay = $this->conciergeService->verifyAccessCode($code, $request->getLocale());
+            $booking = $this->conciergeService->getBookingForActivity($code, $request->getLocale());
+            $this->guestActivityService->recordLogin($booking);
 
             return $this->json($stay);
         } catch (StayEndedException $e) {

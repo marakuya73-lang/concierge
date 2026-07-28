@@ -181,6 +181,18 @@ class BookingRepository extends ServiceEntityRepository
     }
 
     /** @return Booking[] */
+    public function findPlannedArrivalSubmissionsSince(\DateTimeImmutable $since): array
+    {
+        return $this->createQueryBuilder('b')
+            ->andWhere('b.plannedArrivalTime IS NOT NULL')
+            ->andWhere('b.plannedArrivalSubmittedAt >= :since')
+            ->setParameter('since', $since)
+            ->orderBy('b.plannedArrivalSubmittedAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** @return Booking[] */
     public function findNeedingUpcomingReminder(\DateTimeImmutable $checkInDate): array
     {
         return $this->createQueryBuilder('b')

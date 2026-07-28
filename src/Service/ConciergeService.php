@@ -6,6 +6,7 @@ use App\Exception\StayEndedException;
 use App\Entity\Booking;
 use App\Entity\BookingExtra;
 use App\Entity\Extra;
+use App\Repository\BookingDisabledExtraRepository;
 use App\Repository\BookingExtraRepository;
 use App\Repository\BookingRepository;
 use App\Repository\ExtraRepository;
@@ -20,13 +21,20 @@ class ConciergeService
         private PropertyRepository $propertyRepository,
         private ExtraRepository $extraRepository,
         private BookingExtraRepository $bookingExtraRepository,
+        private BookingDisabledExtraRepository $bookingDisabledExtraRepository,
         private ExtraRequestNotificationService $extraRequestNotificationService,
         private SelfCheckInNotificationService $selfCheckInNotificationService,
+        private PlannedArrivalNotificationService $plannedArrivalNotificationService,
     ) {
     }
 
     private const CHECKIN_TIMEZONE = 'America/Sao_Paulo';
     private const SELF_CHECKIN_DEADLINE_HOUR = 9;
+
+    public function getBookingForActivity(string $code, string $locale = 'pt'): Booking
+    {
+        return $this->getValidBooking($code, $locale);
+    }
 
     public function verifyAccessCode(string $code, string $locale = 'pt'): array
     {
@@ -67,12 +75,13 @@ class ConciergeService
             'visitsPolicy' => $property->getVisitsPolicy(),
             'selfCheckInRequested' => $booking->isSelfCheckInRequested(),
             'selfCheckInAvailable' => $this->canRequestSelfCheckIn($booking),
+            'plannedArrivalTime' => $booking->getPlannedArrivalTime(),
         ];
 
         if ($booking->hasRajaaramSession()) {
             $result['rajaaram'] = [
-                'therapy' => $booking->getRajaaramTherapyLabel($locale),
-                'therapyTime' => $booking->getRajaaramTherapyTime(),
+                'isDuo' => $booking->isRajaaramDuo(),
+                'sessions' => $booking->getRajaaramSessions($locale),
                 'breakfastIncluded' => $booking->isRajaaramBreakfastIncluded(),
             ];
         }
@@ -126,6 +135,57 @@ class ConciergeService
         return $now < $deadline;
     }
 
+    public function submitPlannedArrival(string $code, string $time, string $locale = 'pt'): array
+    {
+        $booking = $this->getValidBooking($code, $locale);
+
+        if ($booking->isSelfCheckInRequested()) {
+            throw new AccessDeniedHttpException('en' === $locale
+                ? 'Planned arrival time is not needed for self check-in stays.'
+                : 'Horário de chegada não é necessário para estadias com self check-in.');
+        }
+
+        $normalized = $this->normalizeArrivalTime($time);
+        if (null === $normalized) {
+            throw new AccessDeniedHttpException('en' === $locale
+                ? 'Please enter a valid arrival time.'
+                : 'Indique um horário de chegada válido.');
+        }
+
+        $previous = $booking->getPlannedArrivalTime();
+        $isUpdate = null !== $previous && $previous !== $normalized;
+
+        $booking->setPlannedArrivalTime($normalized);
+        $booking->setPlannedArrivalSubmittedAt(new \DateTimeImmutable('now', new \DateTimeZone(self::CHECKIN_TIMEZONE)));
+        $this->bookingRepository->getEntityManager()->flush();
+
+        if (!$previous || $isUpdate) {
+            $this->plannedArrivalNotificationService->notifyAdmin($booking, $isUpdate);
+        }
+
+        return [
+            'plannedArrivalTime' => $normalized,
+            'updated' => $isUpdate,
+            'message' => 'en' === $locale
+                ? ($isUpdate ? 'Arrival time updated. Thank you!' : 'Arrival time saved. Thank you!')
+                : ($isUpdate ? 'Horário de chegada actualizado. Obrigado!' : 'Horário de chegada registado. Obrigado!'),
+        ];
+    }
+
+    private function normalizeArrivalTime(string $time): ?string
+    {
+        $time = trim($time);
+        if (preg_match('/^(\d{1,2}):(\d{2})$/', $time, $matches)) {
+            $hours = (int) $matches[1];
+            $minutes = (int) $matches[2];
+            if ($hours >= 0 && $hours <= 23 && $minutes >= 0 && $minutes <= 59) {
+                return sprintf('%02d:%02d', $hours, $minutes);
+            }
+        }
+
+        return null;
+    }
+
     public function getExtrasForGuest(string $code, string $locale = 'pt'): array
     {
         $booking = $this->getValidBooking($code, $locale);
@@ -135,6 +195,14 @@ class ConciergeService
             $available = array_values(array_filter(
                 $available,
                 static fn (Extra $extra): bool => !$extra->isRajaaramExtra(),
+            ));
+        }
+
+        $disabledIds = $this->bookingDisabledExtraRepository->findDisabledExtraIds($booking);
+        if ($disabledIds) {
+            $available = array_values(array_filter(
+                $available,
+                static fn (Extra $extra): bool => !\in_array($extra->getId(), $disabledIds, true),
             ));
         }
 
@@ -212,6 +280,13 @@ class ConciergeService
             throw new AccessDeniedHttpException('en' === $locale
                 ? 'Rajaaram therapies are already included in your Rajaaram stay.'
                 : 'As terapias Rajaaram já fazem parte da sua estadia Rajaaram.');
+        }
+
+        $disabledIds = $this->bookingDisabledExtraRepository->findDisabledExtraIds($booking);
+        if (\in_array($extraId, $disabledIds, true)) {
+            throw new AccessDeniedHttpException('en' === $locale
+                ? 'This extra is not available for your stay.'
+                : 'Este extra não está disponível para a sua estadia.');
         }
 
         if (!$extra->canBeBookedBefore($this->getCheckInDateTime($booking))) {
@@ -349,7 +424,7 @@ class ConciergeService
         return [
             'id' => $be->getId(),
             'extraId' => $extra?->getId(),
-            'name' => $extra?->getName($locale),
+            'name' => $be->getDisplayName($locale),
             'quantity' => $be->getQuantity(),
             'status' => $be->getStatus(),
             'notes' => $be->getNotes(),
@@ -357,6 +432,7 @@ class ConciergeService
             'requestedBy' => $be->getRequestedBy(),
             'category' => $extra?->getCategory(),
             'isBreakfast' => $extra ? $this->isBreakfastExtra($extra) : false,
+            'isCustom' => $be->isCustom(),
             'createdAt' => $be->getCreatedAt()->format(\DateTimeInterface::ATOM),
             'canCancel' => $be->canBeCancelledByGuest(),
         ];
@@ -379,7 +455,7 @@ class ConciergeService
     ): string {
         $phone = preg_replace('/\D/', '', $property->getContactPhone());
         $extra = $bookingExtra->getExtra();
-        $name = $extra?->getName($locale) ?? '';
+        $name = $bookingExtra->getDisplayName($locale);
         $qty = $bookingExtra->getQuantity();
         $total = number_format(($bookingExtra->getPriceAtBooking() ?? 0) * $qty, 2, ',', '.');
         $code = $booking->getAccessCode();

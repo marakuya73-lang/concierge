@@ -2,6 +2,7 @@ import { Controller } from '@hotwired/stimulus';
 
 const LAST_SEEN_KEY = 'domoAdminLastSeenExtra';
 const SEEN_SELF_CHECKIN_KEY = 'domoAdminSeenSelfCheckInIds';
+const SEEN_PLANNED_ARRIVAL_KEY = 'domoAdminSeenPlannedArrivalIds';
 const SEEN_CLIENT_ERROR_KEY = 'domoAdminSeenClientErrorIds';
 const POLL_INTERVAL_MS = 10000;
 const SEEN_IDS_KEY = 'domoAdminSeenExtraIds';
@@ -13,6 +14,7 @@ export default class extends Controller {
     connect() {
         this.seenIds = this.loadSeenIds();
         this.seenSelfCheckInIds = this.loadSeenSelfCheckInIds();
+        this.seenPlannedArrivalIds = this.loadSeenPlannedArrivalIds();
         this.seenClientErrorIds = this.loadSeenClientErrorIds();
         this.lastSeen = this.loadLastSeen();
         this.pollTimer = null;
@@ -231,6 +233,13 @@ export default class extends Controller {
                 this.handleNewSelfCheckIn(item);
             }
 
+            const newPlannedArrivals = (data.plannedArrivals || []).filter(
+                (item) => !this.seenPlannedArrivalIds.has(item.id),
+            );
+            for (const item of newPlannedArrivals) {
+                this.handleNewPlannedArrival(item);
+            }
+
             const newClientErrors = (data.clientErrors || []).filter(
                 (item) => !this.seenClientErrorIds.has(item.id),
             );
@@ -340,6 +349,59 @@ export default class extends Controller {
             badge: '/icons/icon-192.png',
             vibrate: [200, 100, 200, 100, 400],
             tag: `self-checkin-${item.bookingId}`,
+            renotify: true,
+            requireInteraction: true,
+            data: { url: item.bookingUrl },
+        };
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready
+                .then((reg) => reg.showNotification(title, options))
+                .catch(() => {
+                    try { new Notification(title, options); } catch { /* unsupported */ }
+                });
+        } else {
+            try { new Notification(title, options); } catch { /* unsupported */ }
+        }
+    }
+
+    handleNewPlannedArrival(item) {
+        this.seenPlannedArrivalIds.add(item.id);
+        this.saveSeenPlannedArrivalIds();
+
+        this.showPlannedArrivalBanner(item);
+        this.vibrate();
+        this.playAlert();
+
+        if (Notification.permission === 'granted') {
+            this.showPlannedArrivalNotification(item);
+        }
+    }
+
+    showPlannedArrivalBanner(item) {
+        if (!this.hasBannerTarget) return;
+
+        this.bannerTarget.classList.remove('admin-alert-banner--error');
+        this.bannerTarget.hidden = false;
+        this.bannerTarget.innerHTML = `
+            <div class="admin-alert-banner-inner">
+                <strong>Horário de chegada informado</strong>
+                <span>${item.guestName} · chegada ${item.plannedArrivalTime} · check-in ${item.checkIn}</span>
+            </div>
+            <a href="${item.bookingUrl}" class="admin-alert-banner-link">Ver reserva →</a>
+            <button type="button" class="admin-alert-banner-dismiss" data-action="click->admin-notifications#dismissBanner" aria-label="Fechar">×</button>
+        `;
+    }
+
+    showPlannedArrivalNotification(item) {
+        const title = 'Horário de chegada informado';
+        const body = `${item.guestName} · chegada ${item.plannedArrivalTime} · check-in ${item.checkIn}`;
+        const options = {
+            body,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/icon-192.png',
+            vibrate: [200, 100, 200, 100, 400],
+            tag: `planned-arrival-${item.id}`,
             renotify: true,
             requireInteraction: true,
             data: { url: item.bookingUrl },
@@ -499,6 +561,19 @@ export default class extends Controller {
 
     saveSeenSelfCheckInIds() {
         sessionStorage.setItem(SEEN_SELF_CHECKIN_KEY, JSON.stringify([...this.seenSelfCheckInIds]));
+    }
+
+    loadSeenPlannedArrivalIds() {
+        try {
+            const raw = sessionStorage.getItem(SEEN_PLANNED_ARRIVAL_KEY);
+            return new Set(raw ? JSON.parse(raw) : []);
+        } catch {
+            return new Set();
+        }
+    }
+
+    saveSeenPlannedArrivalIds() {
+        sessionStorage.setItem(SEEN_PLANNED_ARRIVAL_KEY, JSON.stringify([...this.seenPlannedArrivalIds]));
     }
 
     loadSeenClientErrorIds() {

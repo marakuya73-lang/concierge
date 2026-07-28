@@ -3,12 +3,15 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Booking;
+use App\Entity\BookingDisabledExtra;
 use App\Entity\BookingExtra;
 use App\Entity\Extra;
 use App\Form\BookingType;
+use App\Repository\BookingDisabledExtraRepository;
 use App\Repository\BookingExtraRepository;
 use App\Repository\BookingRepository;
 use App\Repository\ExtraRepository;
+use App\Repository\GuestActivityLogRepository;
 use App\Repository\PropertyRepository;
 use App\Service\AccessCodeGenerator;
 use App\Service\BookingLifecycleService;
@@ -25,6 +28,8 @@ class BookingController extends AbstractAdminController
         private BookingRepository $bookingRepository,
         private ExtraRepository $extraRepository,
         private BookingExtraRepository $bookingExtraRepository,
+        private BookingDisabledExtraRepository $bookingDisabledExtraRepository,
+        private GuestActivityLogRepository $guestActivityLogRepository,
         private AccessCodeGenerator $accessCodeGenerator,
         private BookingLifecycleService $bookingLifecycleService,
         private BookingWhatsAppService $bookingWhatsAppService,
@@ -99,7 +104,11 @@ class BookingController extends AbstractAdminController
             'isEditing' => $isEditing || $form->isSubmitted(),
             'bookingExtras' => $this->bookingExtraRepository->findByBooking($booking),
             'availableExtras' => $this->extraRepository->findActive(),
-            'guestWhatsappWelcomeUrl' => $this->bookingWhatsAppService->getWelcomeUrl($booking),
+            'disabledExtraIds' => $this->bookingDisabledExtraRepository->findDisabledExtraIds($booking),
+            'guestWhatsappWelcomeMessage' => $booking->getGuestWhatsappDigits()
+                ? $this->bookingWhatsAppService->buildWelcomeMessage($booking)
+                : null,
+            'activityLogs' => $this->guestActivityLogRepository->findByBooking($booking),
         ]);
     }
 
@@ -122,7 +131,56 @@ class BookingController extends AbstractAdminController
         $this->em->flush();
         $this->addFlash('success', 'Reserva removida.');
 
-        return $this->redirectToRoute('admin_bookings');
+        return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+    }
+
+    #[Route('/{id}/self-checkin', name: 'admin_booking_toggle_self_checkin', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function toggleSelfCheckIn(Booking $booking, Request $request): Response
+    {
+        $this->validateAdminCsrf($request);
+
+        if ($booking->isSelfCheckInRequested()) {
+            $booking->setSelfCheckInRequested(false);
+            $booking->setSelfCheckInRequestedAt(null);
+            $this->em->flush();
+            $this->addFlash('success', 'Self check-in desactivado para esta estadia.');
+        } else {
+            $booking->setSelfCheckInRequested(true);
+            $booking->setSelfCheckInRequestedAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
+            $this->em->flush();
+            $this->addFlash('success', 'Self check-in activado. O hóspede verá as instruções de entrada autónoma na concierge.');
+        }
+
+        return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+    }
+
+    #[Route('/{id}/planned-arrival', name: 'admin_booking_planned_arrival', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function updatePlannedArrival(Booking $booking, Request $request): Response
+    {
+        $this->validateAdminCsrf($request);
+
+        if ('clear' === $request->request->get('action')) {
+            $booking->setPlannedArrivalTime(null);
+            $booking->setPlannedArrivalSubmittedAt(null);
+            $this->em->flush();
+            $this->addFlash('success', 'Horário de chegada removido.');
+
+            return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+        }
+
+        $normalized = $this->normalizePlannedArrivalTime(trim((string) $request->request->get('time', '')));
+        if (null === $normalized) {
+            $this->addFlash('error', 'Indique um horário válido (HH:MM).');
+
+            return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+        }
+
+        $booking->setPlannedArrivalTime($normalized);
+        $booking->setPlannedArrivalSubmittedAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
+        $this->em->flush();
+        $this->addFlash('success', 'Horário de chegada actualizado: '.$normalized.'.');
+
+        return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
     }
 
     #[Route('/{id}/extras', name: 'admin_booking_add_extra', methods: ['POST'], requirements: ['id' => '\d+'])]
@@ -180,6 +238,68 @@ class BookingController extends AbstractAdminController
         return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
     }
 
+    #[Route('/{id}/extras/toggle', name: 'admin_booking_toggle_extra', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function toggleExtraAvailability(Booking $booking, Request $request): Response
+    {
+        $this->validateAdminCsrf($request);
+        $extraId = (int) $request->request->get('extraId');
+        $extra = $extraId > 0 ? $this->extraRepository->find($extraId) : null;
+
+        if (!$extra) {
+            $this->addFlash('error', 'Extra inválido.');
+
+            return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+        }
+
+        $existing = $this->bookingDisabledExtraRepository->findOneForBookingAndExtra($booking, $extra);
+        if ($existing) {
+            $this->em->remove($existing);
+            $this->em->flush();
+            $this->addFlash('success', 'Extra activado para o hóspede: '.$extra->getNamePt().'.');
+        } else {
+            $disabled = new BookingDisabledExtra();
+            $disabled->setBooking($booking);
+            $disabled->setExtra($extra);
+            $this->em->persist($disabled);
+            $this->em->flush();
+            $this->addFlash('success', 'Extra desactivado para o hóspede: '.$extra->getNamePt().'.');
+        }
+
+        return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+    }
+
+    #[Route('/{id}/extras/custom', name: 'admin_booking_add_custom_extra', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function addCustomExtra(Booking $booking, Request $request): Response
+    {
+        $this->validateAdminCsrf($request);
+        $namePt = trim((string) $request->request->get('customNamePt', ''));
+        $nameEn = trim((string) $request->request->get('customNameEn', ''));
+        $price = (float) $request->request->get('price', 0);
+        $quantity = max(1, (int) $request->request->get('quantity', 1));
+        $notes = trim((string) $request->request->get('notes', ''));
+
+        if ('' === $namePt && '' === $nameEn) {
+            $this->addFlash('error', 'Indique um nome para o extra personalizado.');
+
+            return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+        }
+
+        $be = new BookingExtra();
+        $be->setBooking($booking);
+        $be->setCustomNamePt('' !== $namePt ? $namePt : $nameEn);
+        $be->setCustomNameEn('' !== $nameEn ? $nameEn : $namePt);
+        $be->setQuantity($quantity);
+        $be->setRequestedBy(BookingExtra::REQUESTED_BY_HOST);
+        $be->setStatus(BookingExtra::STATUS_CONFIRMED);
+        $be->setPriceAtBooking($price);
+        $be->setNotes('' !== $notes ? $notes : null);
+        $this->em->persist($be);
+        $this->em->flush();
+        $this->addFlash('success', 'Extra personalizado adicionado: '.$be->getDisplayName().'.');
+
+        return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+    }
+
     private function lockDatesIfManuallyChanged(Booking $booking): void
     {
         $original = $this->em->getUnitOfWork()->getOriginalEntityData($booking);
@@ -198,5 +318,22 @@ class BookingController extends AbstractAdminController
             || $booking->getCheckOut()->format('Y-m-d') !== $origCheckOut->format('Y-m-d')) {
             $booking->setManualDates(true);
         }
+    }
+
+    private function normalizePlannedArrivalTime(string $time): ?string
+    {
+        if ('' === $time) {
+            return null;
+        }
+
+        if (preg_match('/^(\d{1,2}):(\d{2})$/', $time, $matches)) {
+            $hours = (int) $matches[1];
+            $minutes = (int) $matches[2];
+            if ($hours >= 0 && $hours <= 23 && $minutes >= 0 && $minutes <= 59) {
+                return sprintf('%02d:%02d', $hours, $minutes);
+            }
+        }
+
+        return null;
     }
 }

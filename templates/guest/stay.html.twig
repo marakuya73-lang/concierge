@@ -20,8 +20,9 @@
 {% set spots = guideSpots|filter(s => s.type == 'spot') %}
 {% set hero_lead = hero ? hero.body(locale)|split('\n\n')|first : 'welcome.intro'|trans({}, 'guide') %}
 
-<div data-controller="stay"
+<div data-controller="stay guest-activity"
      data-stay-code-value="{{ code }}"
+     data-guest-activity-code-value="{{ code }}"
      data-stay-guest-name-value="{{ firstName }}"
      data-stay-confirm-title-value="{{ 'app.extra_confirm_title'|trans }}"
      data-stay-confirm-lead-value="{{ 'app.extra_confirm_lead'|trans({'%name%': firstName}) }}"
@@ -49,7 +50,13 @@
      data-stay-self-checkin-done-value="{{ 'app.self_checkin_confirmed'|trans }}"
      data-stay-self-checkin-reception-title-value="{{ 'app.self_checkin_reception_title'|trans }}"
      data-stay-self-checkin-reception-body-value="{{ g.checkin_reception_body(stay.accessInstructions, true)|e('html_attr') }}"
-     data-stay-self-checkin-window-hint-value="{{ 'app.self_checkin_window_hint'|trans }}">
+     data-stay-self-checkin-window-hint-value="{{ 'app.self_checkin_window_hint'|trans }}"
+     data-stay-planned-arrival-label-value="{{ 'app.planned_arrival_label'|trans }}"
+     data-stay-planned-arrival-hint-value="{{ 'app.planned_arrival_hint'|trans({'%from%': stay.checkInTime, '%to%': stay.checkInTimeEnd}) }}"
+     data-stay-planned-arrival-submit-value="{{ 'app.planned_arrival_submit'|trans }}"
+     data-stay-planned-arrival-update-value="{{ 'app.planned_arrival_update'|trans }}"
+     data-stay-planned-arrival-confirmed-value="{{ 'app.planned_arrival_confirmed'|trans }}"
+     data-stay-planned-arrival-done-value="{{ 'app.planned_arrival_done'|trans }}">
     <header class="stay-header">
         <div class="stay-header-inner">
             <div class="stay-header-brand">
@@ -116,6 +123,60 @@
                     </div>
                 </div>
             </div>
+
+            {% if stay.selfCheckInRequested %}
+                <section class="stay-self-checkin-home" data-stay-target="selfCheckInHome">
+                    <div class="stay-self-checkin-home-inner">
+                        {{ icon.key('stay-self-checkin-home-icon') }}
+                        <div class="stay-self-checkin-home-copy">
+                            <p class="stay-self-checkin-home-label">{{ 'app.self_checkin_home_title'|trans }}</p>
+                            <p class="stay-self-checkin-home-lead">{{ 'app.self_checkin_home_lead'|trans }}</p>
+                            <div class="stay-self-checkin-home-instructions">{{ g.checkin_reception_body(stay.accessInstructions, true)|nl2br }}</div>
+                            <p class="stay-self-checkin-home-hint">{{ 'app.self_checkin_window_hint'|trans }}</p>
+                            <button type="button" class="btn btn-outline btn-sm" data-action="click->stay#navigate" data-section="checkin" data-label="{{ 'app.tab_checkin'|trans }}">{{ 'app.self_checkin_home_details'|trans }}</button>
+                        </div>
+                    </div>
+                </section>
+            {% else %}
+                <section class="stay-self-checkin-home" data-stay-target="selfCheckInHome" hidden>
+                    <div class="stay-self-checkin-home-inner">
+                        {{ icon.key('stay-self-checkin-home-icon') }}
+                        <div class="stay-self-checkin-home-copy">
+                            <p class="stay-self-checkin-home-label">{{ 'app.self_checkin_home_title'|trans }}</p>
+                            <p class="stay-self-checkin-home-lead">{{ 'app.self_checkin_home_lead'|trans }}</p>
+                            <div class="stay-self-checkin-home-instructions" data-stay-target="selfCheckInHomeInstructions">{{ g.checkin_reception_body(stay.accessInstructions, true)|nl2br }}</div>
+                            <p class="stay-self-checkin-home-hint">{{ 'app.self_checkin_window_hint'|trans }}</p>
+                            <button type="button" class="btn btn-outline btn-sm" data-action="click->stay#navigate" data-section="checkin" data-label="{{ 'app.tab_checkin'|trans }}">{{ 'app.self_checkin_home_details'|trans }}</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="stay-planned-arrival" data-stay-target="plannedArrival">
+                    <div class="stay-planned-arrival-inner">
+                        {{ icon.clock('stay-planned-arrival-icon') }}
+                        <div class="stay-planned-arrival-copy">
+                            <p class="stay-planned-arrival-label">{{ 'app.planned_arrival_label'|trans }}</p>
+                            {% if stay.plannedArrivalTime %}
+                                <p class="stay-planned-arrival-confirmed" data-stay-target="plannedArrivalConfirmed">
+                                    {{ 'app.planned_arrival_confirmed'|trans({'%time%': stay.plannedArrivalTime}) }}
+                                </p>
+                                <form class="stay-planned-arrival-form stay-planned-arrival-form--update" data-stay-target="plannedArrivalForm" data-action="submit->stay#submitPlannedArrival">
+                                    <label class="sr-only" for="planned-arrival-time">{{ 'app.planned_arrival_label'|trans }}</label>
+                                    <input id="planned-arrival-time" type="time" name="time" value="{{ stay.plannedArrivalTime }}" required>
+                                    <button type="submit" class="btn btn-outline btn-sm" data-stay-target="plannedArrivalSubmit">{{ 'app.planned_arrival_update'|trans }}</button>
+                                </form>
+                            {% else %}
+                                <p class="stay-planned-arrival-hint">{{ 'app.planned_arrival_hint'|trans({'%from%': stay.checkInTime, '%to%': stay.checkInTimeEnd}) }}</p>
+                                <form class="stay-planned-arrival-form" data-stay-target="plannedArrivalForm" data-action="submit->stay#submitPlannedArrival">
+                                    <label class="sr-only" for="planned-arrival-time">{{ 'app.planned_arrival_label'|trans }}</label>
+                                    <input id="planned-arrival-time" type="time" name="time" required>
+                                    <button type="submit" class="btn btn-accent btn-sm" data-stay-target="plannedArrivalSubmit">{{ 'app.planned_arrival_submit'|trans }}</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+            {% endif %}
 
             {% if stay.rajaaram is defined %}
                 {{ rajaaram.rajaaram_experience(firstName, stay.rajaaram) }}

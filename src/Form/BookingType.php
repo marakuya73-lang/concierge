@@ -64,11 +64,32 @@ class BookingType extends AbstractType
                 ],
             ])
             ->add('notes', TextareaType::class, ['label' => 'Notas especiais', 'required' => false])
+            ->add('rajaaramIsDuo', ChoiceType::class, [
+                'label' => 'Tipo de terapia',
+                'choices' => [
+                    'Individual' => false,
+                    'Duo' => true,
+                ],
+                'expanded' => true,
+                'multiple' => false,
+                'required' => false,
+                'placeholder' => false,
+                'row_attr' => [
+                    'data-booking-form-target' => 'rajaaramField rajaaramIsDuo',
+                    'data-action' => 'change->booking-form#sync',
+                ],
+            ])
             ->add('rajaaramTherapy', ChoiceType::class, [
-                'label' => 'Terapia Rajaaram',
+                'label' => 'Terapia',
                 'choices' => Booking::rajaaramTherapyChoices(),
                 'placeholder' => 'Selecionar terapia...',
                 'required' => false,
+                'row_attr' => ['data-booking-form-target' => 'rajaaramField'],
+            ])
+            ->add('rajaaramTherapyDate', DateType::class, [
+                'label' => 'Data da terapia',
+                'required' => false,
+                'widget' => 'single_text',
                 'row_attr' => ['data-booking-form-target' => 'rajaaramField'],
             ])
             ->add('rajaaramTherapyTime', TimeType::class, [
@@ -81,6 +102,30 @@ class BookingType extends AbstractType
                 'html5' => true,
                 'help' => 'Formato 24h (ex.: 09:00, 14:30).',
                 'row_attr' => ['data-booking-form-target' => 'rajaaramField'],
+            ])
+            ->add('rajaaramTherapy2', ChoiceType::class, [
+                'label' => 'Terapia 2',
+                'choices' => Booking::rajaaramTherapyChoices(),
+                'placeholder' => 'Selecionar terapia...',
+                'required' => false,
+                'row_attr' => ['data-booking-form-target' => 'rajaaramField rajaaramDuoField'],
+            ])
+            ->add('rajaaramTherapy2Date', DateType::class, [
+                'label' => 'Data da terapia 2',
+                'required' => false,
+                'widget' => 'single_text',
+                'row_attr' => ['data-booking-form-target' => 'rajaaramField rajaaramDuoField'],
+            ])
+            ->add('rajaaramTherapy2Time', TimeType::class, [
+                'label' => 'Horário da terapia 2',
+                'required' => false,
+                'input' => 'string',
+                'input_format' => 'H:i',
+                'widget' => 'single_text',
+                'with_seconds' => false,
+                'html5' => true,
+                'help' => 'Formato 24h (ex.: 09:00, 14:30).',
+                'row_attr' => ['data-booking-form-target' => 'rajaaramField rajaaramDuoField'],
             ])
             ->add('rajaaramBreakfastIncluded', CheckboxType::class, [
                 'label' => 'Café da manhã incluído',
@@ -113,24 +158,46 @@ class BookingType extends AbstractType
             if (isset($data['rajaaramTherapyTime']) && \is_string($data['rajaaramTherapyTime'])) {
                 $data['rajaaramTherapyTime'] = self::normalizeTimeInput($data['rajaaramTherapyTime']);
             }
+            if (isset($data['rajaaramTherapy2Time']) && \is_string($data['rajaaramTherapy2Time'])) {
+                $data['rajaaramTherapy2Time'] = self::normalizeTimeInput($data['rajaaramTherapy2Time']);
+            }
             if (isset($data['guestWhatsapp']) && \is_string($data['guestWhatsapp'])) {
                 $data['guestWhatsapp'] = trim($data['guestWhatsapp']) ?: null;
             }
             if (($data['source'] ?? null) !== Booking::SOURCE_RAJAARAM) {
                 $data['rajaaramTherapy'] = null;
+                $data['rajaaramTherapyDate'] = null;
                 $data['rajaaramTherapyTime'] = null;
+                $data['rajaaramIsDuo'] = null;
+                $data['rajaaramTherapy2'] = null;
+                $data['rajaaramTherapy2Date'] = null;
+                $data['rajaaramTherapy2Time'] = null;
                 $data['rajaaramBreakfastIncluded'] = null;
+            } elseif (empty($data['rajaaramIsDuo'])) {
+                $data['rajaaramTherapy2'] = null;
+                $data['rajaaramTherapy2Date'] = null;
+                $data['rajaaramTherapy2Time'] = null;
             }
             $event->setData($data);
         });
 
         $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event): void {
             $booking = $event->getData();
-            if (!$booking instanceof Booking || $booking->isRajaaram()) {
+            if (!$booking instanceof Booking) {
                 return;
             }
 
-            $booking->clearRajaaramDetails();
+            if (!$booking->isRajaaram()) {
+                $booking->clearRajaaramDetails();
+
+                return;
+            }
+
+            if (!$booking->isRajaaramDuo()) {
+                $booking->setRajaaramTherapy2(null);
+                $booking->setRajaaramTherapy2Date(null);
+                $booking->setRajaaramTherapy2Time(null);
+            }
         });
     }
 

@@ -10,31 +10,48 @@
 
         <div class="rajaaram-session">
             <p class="rajaaram-session-label">{{ 'app.rajaaram_session_label'|trans }}</p>
-            <div class="rajaaram-session-grid">
-                {% if rajaaram.therapy %}
-                    <div class="rajaaram-session-item">
-                        <span class="rajaaram-session-key">{{ 'app.rajaaram_therapy'|trans }}</span>
-                        <span class="rajaaram-session-value font-serif">{{ rajaaram.therapy }}</span>
+            {% for session in rajaaram.sessions %}
+                {% if session.therapy or session.date or session.time %}
+                    <div class="rajaaram-session-grid{% if rajaaram.isDuo %} rajaaram-session-grid--duo{% endif %}">
+                        {% if rajaaram.isDuo %}
+                            <p class="rajaaram-session-duo-label">{{ 'app.rajaaram_therapy_number'|trans({'%number%': loop.index}) }}</p>
+                        {% endif %}
+                        {% if session.therapy %}
+                            <div class="rajaaram-session-item">
+                                <span class="rajaaram-session-key">{{ 'app.rajaaram_therapy'|trans }}</span>
+                                <span class="rajaaram-session-value font-serif">{{ session.therapy }}</span>
+                            </div>
+                        {% endif %}
+                        {% if session.date %}
+                            <div class="rajaaram-session-item">
+                                <span class="rajaaram-session-key">{{ 'app.rajaaram_therapy_date'|trans }}</span>
+                                <span class="rajaaram-session-value">{{ session.date }}</span>
+                            </div>
+                        {% endif %}
+                        {% if session.time %}
+                            <div class="rajaaram-session-item">
+                                <span class="rajaaram-session-key">{{ 'app.rajaaram_therapy_time'|trans }}</span>
+                                <span class="rajaaram-session-value">{{ session.time }}</span>
+                            </div>
+                        {% endif %}
                     </div>
                 {% endif %}
-                {% if rajaaram.therapyTime %}
-                    <div class="rajaaram-session-item">
-                        <span class="rajaaram-session-key">{{ 'app.rajaaram_therapy_time'|trans }}</span>
-                        <span class="rajaaram-session-value">{{ rajaaram.therapyTime }}</span>
-                    </div>
-                {% endif %}
-                {% if rajaaram.breakfastIncluded is same as(true) %}
-                    <div class="rajaaram-session-item rajaaram-session-item--wide">
-                        <span class="rajaaram-session-key">{{ 'app.rajaaram_breakfast_label'|trans }}</span>
-                        <span class="rajaaram-session-value">{{ 'app.rajaaram_breakfast_included'|trans }}</span>
-                    </div>
-                {% elseif rajaaram.breakfastIncluded is same as(false) %}
-                    <div class="rajaaram-session-item rajaaram-session-item--wide">
-                        <span class="rajaaram-session-key">{{ 'app.rajaaram_breakfast_label'|trans }}</span>
-                        <span class="rajaaram-session-value">{{ 'app.rajaaram_breakfast_not_included'|trans }}</span>
-                    </div>
-                {% endif %}
-            </div>
+            {% endfor %}
+            {% if rajaaram.breakfastIncluded is same as(true) or rajaaram.breakfastIncluded is same as(false) %}
+                <div class="rajaaram-session-grid">
+                    {% if rajaaram.breakfastIncluded is same as(true) %}
+                        <div class="rajaaram-session-item rajaaram-session-item--wide">
+                            <span class="rajaaram-session-key">{{ 'app.rajaaram_breakfast_label'|trans }}</span>
+                            <span class="rajaaram-session-value">{{ 'app.rajaaram_breakfast_included'|trans }}</span>
+                        </div>
+                    {% else %}
+                        <div class="rajaaram-session-item rajaaram-session-item--wide">
+                            <span class="rajaaram-session-key">{{ 'app.rajaaram_breakfast_label'|trans }}</span>
+                            <span class="rajaaram-session-value">{{ 'app.rajaaram_breakfast_not_included'|trans }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
         </div>
 
         <div class="rajaaram-recommendations">

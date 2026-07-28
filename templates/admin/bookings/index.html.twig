@@ -2,7 +2,7 @@
 {% import 'admin/_csrf.html.twig' as csrf %}
 {% block title %}Reservas{% endblock %}
 
-{% macro booking_rows(bookings, highlightPending) %}
+{% macro booking_rows(bookings, highlightPending, showActivity) %}
     {% for booking in bookings %}
         {% set showUrl = path('admin_booking_show', {id: booking.id, edit: booking.needsGuestInfo ? 1 : 0}) %}
         <tr class="admin-booking-row{% if highlightPending and booking.needsGuestInfo %} row-pending{% endif %}"
@@ -19,12 +19,24 @@
             <td>{{ booking.checkIn|date('d/m/Y') }}</td>
             <td>{{ booking.checkOut|date('d/m/Y') }}</td>
             <td><code>{{ booking.accessCode }}</code></td>
+            {% if showActivity %}
+                <td>
+                    {% if booking.lastLoginAt %}
+                        {{ booking.lastLoginAt|date('d/m H:i') }}
+                        {% if booking.loginCount > 1 %}
+                            <span class="admin-login-count">×{{ booking.loginCount }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="admin-muted">—</span>
+                    {% endif %}
+                </td>
+            {% endif %}
             <td>{{ booking.source }}</td>
             <td><span class="status-pill status-{{ booking.status == 'confirmed' ? 'confirmed' : (booking.status == 'completed' ? 'paid' : 'cancelled') }}">{{ booking.status == 'confirmed' ? 'confirmada' : (booking.status == 'completed' ? 'concluída' : 'cancelada') }}</span></td>
             <td><a href="{{ showUrl }}">{% if booking.needsGuestInfo %}Completar{% else %}Ver / editar{% endif %}</a></td>
         </tr>
     {% else %}
-        <tr><td colspan="7" style="text-align:center;color:var(--muted-foreground);padding:1.5rem">Nenhuma reserva nesta seção.</td></tr>
+        <tr><td colspan="{{ showActivity ? 8 : 7 }}" style="text-align:center;color:var(--muted-foreground);padding:1.5rem">Nenhuma reserva nesta seção.</td></tr>
     {% endfor %}
 {% endmacro %}
 
@@ -63,7 +75,7 @@
             <div class="admin-table-wrap">
                 <table>
                     <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
-                    <tbody>{{ bookings.booking_rows(pendingSiteBookings, true) }}</tbody>
+                    <tbody>{{ bookings.booking_rows(pendingSiteBookings, true, false) }}</tbody>
                 </table>
             </div>
         </section>
@@ -76,8 +88,8 @@
         </div>
         <div class="admin-table-wrap">
             <table>
-                <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
-                <tbody>{{ bookings.booking_rows(currentBookings, false) }}</tbody>
+                <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Último acesso</th><th>Origem</th><th>Status</th><th></th></tr></thead>
+                <tbody>{{ bookings.booking_rows(currentBookings, false, true) }}</tbody>
             </table>
         </div>
     </section>
@@ -90,7 +102,7 @@
         <div class="admin-table-wrap">
             <table>
                 <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
-                <tbody>{{ bookings.booking_rows(upcomingBookings, false) }}</tbody>
+                <tbody>{{ bookings.booking_rows(upcomingBookings, false, false) }}</tbody>
             </table>
         </div>
     </section>
@@ -103,7 +115,7 @@
         <div class="admin-table-wrap">
             <table>
                 <thead><tr><th>Hóspede</th><th>Check-in</th><th>Check-out</th><th>Código</th><th>Origem</th><th>Status</th><th></th></tr></thead>
-                <tbody>{{ bookings.booking_rows(pastBookings, false) }}</tbody>
+                <tbody>{{ bookings.booking_rows(pastBookings, false, false) }}</tbody>
             </table>
         </div>
     </section>

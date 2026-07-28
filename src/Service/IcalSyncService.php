@@ -168,14 +168,17 @@ class IcalSyncService
         }
 
         if ($event['summary']) {
-            if ($booking->getIcalSummary() !== $event['summary']) {
+            $previousSummary = $booking->getIcalSummary();
+
+            if ($previousSummary !== $event['summary']) {
                 $changed = true;
             }
             $booking->setIcalSummary($event['summary']);
 
             if (!$booking->isFromAirbnbIcalBlock()) {
                 $guestName = $this->extractGuestName($event['summary']);
-                if ($booking->getGuestName() !== $guestName) {
+                if ($this->shouldUpdateGuestNameFromIcal($booking, $previousSummary, $guestName)
+                    && $booking->getGuestName() !== $guestName) {
                     $booking->setGuestName($guestName);
                     $changed = true;
                 }
@@ -319,5 +322,39 @@ class IcalSyncService
         }
 
         return $summary ?: 'Airbnb Guest';
+    }
+
+    private function shouldUpdateGuestNameFromIcal(Booking $booking, ?string $previousSummary, string $newGuestName): bool
+    {
+        $currentName = trim($booking->getGuestName());
+        $newGuestName = trim($newGuestName);
+
+        if ($this->isGenericGuestName($currentName)) {
+            return true;
+        }
+
+        if ($this->isGenericGuestName($newGuestName)) {
+            return false;
+        }
+
+        if (null === $previousSummary || '' === trim($previousSummary)) {
+            return true;
+        }
+
+        return $currentName === $this->extractGuestName($previousSummary);
+    }
+
+    private function isGenericGuestName(string $name): bool
+    {
+        $name = trim($name);
+
+        if ('' === $name
+            || Booking::GUEST_NAME_PENDING === $name
+            || 'Airbnb Guest' === $name
+            || 'reserved' === strtolower($name)) {
+            return true;
+        }
+
+        return Booking::isBlockedIcalSummary($name);
     }
 }

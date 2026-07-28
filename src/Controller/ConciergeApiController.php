@@ -116,6 +116,32 @@ class ConciergeApiController extends AbstractController
         }
     }
 
+    #[Route('/planned-arrival', name: 'api_concierge_planned_arrival', methods: ['POST'])]
+    public function plannedArrival(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true) ?? [];
+        $code = strtoupper(trim((string) ($data['code'] ?? '')));
+        $time = trim((string) ($data['time'] ?? ''));
+
+        if (!$code || '' === $time) {
+            return $this->json(['error' => 'code and time are required'], 400);
+        }
+
+        try {
+            $result = $this->conciergeService->submitPlannedArrival($code, $time, $request->getLocale());
+
+            return $this->json($result, 201);
+        } catch (\Throwable $e) {
+            $status = str_contains($e->getMessage(), 'self check-in') || str_contains($e->getMessage(), 'válido') || str_contains($e->getMessage(), 'valid')
+                ? 403
+                : ($e->getCode() ?: 400);
+            $status = $status >= 100 ? $status : 400;
+            $this->reportIfUnexpected($e, 'api_concierge_planned_arrival', $code, $status);
+
+            return $this->json(['error' => $e->getMessage()], $status);
+        }
+    }
+
     private function reportIfUnexpected(\Throwable $exception, string $route, ?string $code, int $status): void
     {
         if ($exception instanceof HttpExceptionInterface && $status < 500) {

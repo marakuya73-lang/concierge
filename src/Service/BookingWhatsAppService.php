@@ -14,16 +14,6 @@ class BookingWhatsAppService
     ) {
     }
 
-    public function getWelcomeUrl(Booking $booking): ?string
-    {
-        $digits = $booking->getGuestWhatsappDigits();
-        if (!$digits) {
-            return null;
-        }
-
-        return 'https://wa.me/'.$digits.'?text='.rawurlencode($this->buildWelcomeMessage($booking));
-    }
-
     public function buildWelcomeMessage(Booking $booking): string
     {
         $property = $this->propertyRepository->getOrCreate();
@@ -37,8 +27,8 @@ class BookingWhatsAppService
         $greeting = $this->buildGreeting($booking->getGuestName());
         $reservaLine = $plural ? 'Recebemos a reserva de vocês com muita alegria!' : 'Recebemos sua reserva com muita alegria!';
         $receiveLine = $plural
-            ? 'Será um prazer recebê-los no Domo Xangô — garantimos que vai ser incrível. 🤗'
-            : 'Será um prazer recebê-lo(a) no Domo Xangô — garantimos que vai ser incrível. 🤗';
+            ? 'Será um prazer recebê-los no Domo Xangô. Garantimos que vai ser incrível. 🤗'
+            : 'Será um prazer recebê-lo(a) no Domo Xangô. Garantimos que vai ser incrível. 🤗';
         $experienceLine = $plural
             ? 'Para garantir que tenham a melhor experiência, criamos um Welcome Book digital com todas as informações importantes sobre o espaço, café da manhã, atrativos e muito mais:'
             : 'Para garantir que tenha a melhor experiência, criamos um Welcome Book digital com todas as informações importantes sobre o espaço, café da manhã, atrativos e muito mais:';

@@ -14,7 +14,8 @@ export default class extends Controller {
         'foodExtrasBooked', 'foodExtrasAvailable',
         'locationTransfer',
         'selfCheckInModal', 'selfCheckInTitle', 'selfCheckInLead', 'selfCheckInConfirm', 'selfCheckInCancel',
-        'selfCheckInBtn', 'selfCheckInStatus',
+        'selfCheckInBtn', 'selfCheckInStatus', 'selfCheckInHome', 'selfCheckInHomeInstructions',
+        'plannedArrival', 'plannedArrivalForm', 'plannedArrivalSubmit', 'plannedArrivalConfirmed',
         'checkinReception', 'checkinReceptionTitle', 'checkinReceptionBody',
     ];
     static values = {
@@ -46,6 +47,12 @@ export default class extends Controller {
         selfCheckinReceptionTitle: String,
         selfCheckinReceptionBody: String,
         selfCheckinWindowHint: String,
+        plannedArrivalLabel: String,
+        plannedArrivalHint: String,
+        plannedArrivalSubmit: String,
+        plannedArrivalUpdate: String,
+        plannedArrivalConfirmed: String,
+        plannedArrivalDone: String,
     };
 
     connect() {
@@ -158,6 +165,7 @@ export default class extends Controller {
             }
 
             this.applySelfCheckInReceptionCopy();
+            this.showSelfCheckInHomeNotice();
         } catch (err) {
             if (!err.skipReport) {
                 reportClientError(err.message || 'Self check-in failed', 'stay.selfCheckIn', {
@@ -186,6 +194,103 @@ export default class extends Controller {
         }
 
         this.element.querySelector('.checkin-note')?.remove();
+    }
+
+    showSelfCheckInHomeNotice() {
+        if (this.hasSelfCheckInHomeTarget) {
+            this.selfCheckInHomeTarget.hidden = false;
+            this.selfCheckInHomeTarget.removeAttribute('hidden');
+        }
+
+        if (this.hasPlannedArrivalTarget) {
+            this.plannedArrivalTarget.hidden = true;
+            this.plannedArrivalTarget.setAttribute('hidden', '');
+        }
+    }
+
+    async submitPlannedArrival(event) {
+        event.preventDefault();
+
+        const form = event.currentTarget;
+        const input = form.querySelector('input[type="time"]');
+        const btn = form.querySelector('button[type="submit"]');
+        const time = input?.value?.trim();
+
+        if (!time || !btn) {
+            return;
+        }
+
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/concierge/planned-arrival', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: this.codeValue, time }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                if (shouldReportHttpStatus(response.status)) {
+                    reportClientError(data.error || 'Planned arrival failed', 'stay.plannedArrival', {
+                        code: this.codeValue,
+                        httpStatus: response.status,
+                    });
+                }
+                const error = new Error(data.error);
+                error.skipReport = true;
+                throw error;
+            }
+
+            this.applyPlannedArrivalSuccess(data.plannedArrivalTime, data.message);
+        } catch (err) {
+            if (!err.skipReport) {
+                reportClientError(err.message || 'Planned arrival failed', 'stay.plannedArrival', {
+                    code: this.codeValue,
+                });
+            }
+            alert(err.message);
+            btn.disabled = false;
+        }
+    }
+
+    applyPlannedArrivalSuccess(time, message) {
+        if (!this.hasPlannedArrivalTarget) {
+            return;
+        }
+
+        const copy = this.plannedArrivalTarget.querySelector('.stay-planned-arrival-copy');
+        if (!copy) {
+            return;
+        }
+
+        const confirmedText = this.formatPlannedArrivalConfirmed(time);
+        const updateLabel = this.hasPlannedArrivalUpdateValue ? this.plannedArrivalUpdateValue : 'Update';
+
+        copy.innerHTML = `
+            <p class="stay-planned-arrival-label">${this.plannedArrivalLabelValue || ''}</p>
+            <p class="stay-planned-arrival-confirmed" data-stay-target="plannedArrivalConfirmed">${confirmedText}</p>
+            <form class="stay-planned-arrival-form stay-planned-arrival-form--update" data-stay-target="plannedArrivalForm" data-action="submit->stay#submitPlannedArrival">
+                <label class="sr-only" for="planned-arrival-time">${this.plannedArrivalLabelValue || ''}</label>
+                <input id="planned-arrival-time" type="time" name="time" value="${time}" required>
+                <button type="submit" class="btn btn-outline btn-sm" data-stay-target="plannedArrivalSubmit">${updateLabel}</button>
+            </form>
+        `;
+
+        if (message) {
+            const toast = document.createElement('p');
+            toast.className = 'stay-planned-arrival-toast';
+            toast.textContent = message;
+            this.plannedArrivalTarget.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+    }
+
+    formatPlannedArrivalConfirmed(time) {
+        const template = this.hasPlannedArrivalConfirmedValue
+            ? this.plannedArrivalConfirmedValue
+            : 'Expected arrival at %time%';
+
+        return template.replace('%time%', time);
     }
 
     async requestExtra(event) {
