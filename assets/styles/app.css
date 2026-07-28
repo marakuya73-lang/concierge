@@ -3123,6 +3123,23 @@ table { width: 100%; border-collapse: collapse; }
 th, td { padding: .85rem 1.15rem; text-align: left; border-bottom: 1px solid var(--border); font-size: .875rem; }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover { background: rgba(26, 58, 46, 0.02); }
+.admin-extra-row--paused { opacity: .65; }
+.admin-table-actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+.admin-table-actions form { margin: 0; }
+.admin-table-delete {
+    background: none;
+    border: none;
+    color: var(--destructive);
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+    font-size: .875rem;
+}
 .admin-booking-row { cursor: pointer; }
 .admin-booking-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 th {

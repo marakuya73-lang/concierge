@@ -105,9 +105,7 @@ class BookingController extends AbstractAdminController
             'bookingExtras' => $this->bookingExtraRepository->findByBooking($booking),
             'availableExtras' => $this->extraRepository->findActive(),
             'disabledExtraIds' => $this->bookingDisabledExtraRepository->findDisabledExtraIds($booking),
-            'guestWhatsappWelcomeMessage' => $booking->getGuestWhatsappDigits()
-                ? $this->bookingWhatsAppService->buildWelcomeMessage($booking)
-                : null,
+            'guestWelcomeMessage' => $this->bookingWhatsAppService->buildWelcomeMessage($booking),
             'activityLogs' => $this->guestActivityLogRepository->findByBooking($booking),
         ]);
     }

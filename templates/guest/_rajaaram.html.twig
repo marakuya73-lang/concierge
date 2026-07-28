@@ -11,10 +11,16 @@
         <div class="rajaaram-session">
             <p class="rajaaram-session-label">{{ 'app.rajaaram_session_label'|trans }}</p>
             {% for session in rajaaram.sessions %}
-                {% if session.therapy or session.date or session.time %}
+                {% if session.guest or session.therapy or session.date or session.time %}
                     <div class="rajaaram-session-grid{% if rajaaram.isDuo %} rajaaram-session-grid--duo{% endif %}">
                         {% if rajaaram.isDuo %}
-                            <p class="rajaaram-session-duo-label">{{ 'app.rajaaram_therapy_number'|trans({'%number%': loop.index}) }}</p>
+                            <p class="rajaaram-session-duo-label">{{ 'app.rajaaram_guest_number'|trans({'%number%': loop.index}) }}</p>
+                        {% endif %}
+                        {% if session.guest %}
+                            <div class="rajaaram-session-item rajaaram-session-item--wide">
+                                <span class="rajaaram-session-key">{{ 'app.rajaaram_guest_name'|trans }}</span>
+                                <span class="rajaaram-session-value font-serif">{{ session.guest }}</span>
+                            </div>
                         {% endif %}
                         {% if session.therapy %}
                             <div class="rajaaram-session-item">

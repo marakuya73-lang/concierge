@@ -14,7 +14,7 @@
             'data-action': 'change->booking-form#sync',
             'data-booking-form-rajaaram-value': constant('App\\Entity\\Booking::SOURCE_RAJAARAM'),
         }}) }}
-            <div class="form-row-2">
+            <div class="form-row-2" data-booking-form-target="guestNameTopRow">
                 {{ form_row(form.guestName) }}
                 {{ form_row(form.guestWhatsapp) }}
             </div>

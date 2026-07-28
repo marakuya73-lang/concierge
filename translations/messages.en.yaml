@@ -37,6 +37,8 @@ app:
     rajaaram_session_label: "Your session"
     rajaaram_therapy: "Therapy"
     rajaaram_therapy_number: "Therapy %number%"
+    rajaaram_guest_name: "Name"
+    rajaaram_guest_number: "Guest %number%"
     rajaaram_therapy_date: "Date"
     rajaaram_therapy_time: "Time"
     rajaaram_breakfast_label: "Breakfast"

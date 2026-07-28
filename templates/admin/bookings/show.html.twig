@@ -19,9 +19,7 @@
             {% if not isEditing %}
                 <a href="{{ path('admin_booking_show', {id: booking.id, edit: 1}) }}" class="btn btn-outline btn-sm">Editar</a>
             {% endif %}
-            {% if guestWhatsappWelcomeMessage %}
-                <button type="button" class="btn btn-accent btn-sm" data-copy-target="#guest-welcome-message">Copiar mensagem</button>
-            {% endif %}
+            <button type="button" class="btn btn-accent btn-sm" data-copy-target="#guest-welcome-message">Copiar mensagem</button>
             <form method="post" action="{{ path('admin_booking_regenerate_code', {id: booking.id}) }}">
                 {{ csrf.csrf() }}
                 <button type="submit" class="btn btn-outline btn-sm">↻ Novo código</button>
@@ -57,14 +55,16 @@
                         {{ form_widget(form.accessCode) }}
                         {{ form_errors(form.accessCode) }}
                     </div>
+                    <button type="button" class="btn btn-outline-light btn-sm" data-copy-target="#guest-welcome-message">Copiar mensagem</button>
                 </div>
                 <p class="admin-page-desc" style="margin:.5rem 0 0">5 caracteres, partilhe com o hóspede para acesso ao concierge privado.</p>
         {% else %}
             <div class="admin-access-code-row">
                 <span class="admin-access-code-value">{{ booking.accessCode }}</span>
-                <div style="display:flex;gap:.5rem">
+                <div style="display:flex;gap:.5rem;flex-wrap:wrap">
                     <a href="{{ path('admin_booking_show', {id: booking.id, edit: 1}) }}" class="btn btn-outline-light btn-sm">Editar</a>
-                    <button type="button" class="btn btn-outline-light btn-sm" data-copy-code="{{ booking.accessCode }}">Copiar</button>
+                    <button type="button" class="btn btn-outline-light btn-sm" data-copy-code="{{ booking.accessCode }}">Copiar código</button>
+                    <button type="button" class="btn btn-outline-light btn-sm" data-copy-target="#guest-welcome-message">Copiar mensagem</button>
                 </div>
             </div>
             <p class="admin-page-desc" style="margin:.5rem 0 0">Compartilhe com o hóspede para acesso ao concierge privado.</p>
@@ -78,14 +78,11 @@
                     <h3 class="admin-section-title">Editando reserva</h3>
                 </div>
                     <div class="form-grid">
-                    <div class="form-row-2">
+                    <div class="form-row-2" data-booking-form-target="guestNameTopRow">
                         <div class="form-group">{{ form_label(form.guestName) }}{{ form_widget(form.guestName) }}</div>
                         <div class="form-group">
                             {{ form_label(form.guestWhatsapp) }}
                             {{ form_widget(form.guestWhatsapp) }}
-                            {% if guestWhatsappWelcomeMessage and not form.vars.submitted %}
-                                <p class="form-help"><button type="button" class="admin-copy-link" data-copy-target="#guest-welcome-message">Copiar mensagem de boas-vindas</button></p>
-                            {% endif %}
                             {{ form_errors(form.guestWhatsapp) }}
                         </div>
                     </div>
@@ -178,14 +175,20 @@
                     {% if booking.isRajaaram %}
                         <div class="admin-detail-row">
                             <span>Tipo de terapia</span>
-                            <strong>{% if booking.rajaaramDuo %}Duo{% elseif booking.rajaaramIsDuo is same as(false) %}Individual{% else %}-{% endif %}</strong>
+                            <strong>{% if booking.rajaaramDuo %}Duo{% else %}Individual{% endif %}</strong>
                         </div>
                         {% for session in booking.rajaaramSessions('pt') %}
-                            {% if session.therapy or session.date or session.time %}
+                            {% if session.guest or session.therapy or session.date or session.time %}
                                 {% if booking.rajaaramDuo %}
                                     <div class="admin-detail-row admin-detail-row--subsection">
-                                        <span>Terapia {{ loop.index }}</span>
+                                        <span>Hóspede {{ loop.index }}</span>
                                         <strong></strong>
+                                    </div>
+                                {% endif %}
+                                {% if session.guest %}
+                                    <div class="admin-detail-row">
+                                        <span>Nome</span>
+                                        <strong>{{ session.guest }}</strong>
                                     </div>
                                 {% endif %}
                                 {% if session.therapy %}
@@ -418,9 +421,7 @@
     </section>
 </div>
 
-{% if guestWhatsappWelcomeMessage %}
-<textarea id="guest-welcome-message" hidden>{{ guestWhatsappWelcomeMessage }}</textarea>
-{% endif %}
+<textarea id="guest-welcome-message" hidden>{{ guestWelcomeMessage }}</textarea>
 
 <script>
 document.querySelectorAll('[data-copy-code], [data-copy-target]').forEach((btn) => {

@@ -6,8 +6,11 @@
 
     {{ form_row(form.rajaaramIsDuo) }}
 
-    <div class="admin-rajaaram-therapy-block">
-        <p class="admin-subsection-label" data-booking-form-target="rajaaramTherapy1Label">Terapia</p>
+    <div class="admin-rajaaram-therapy-block" data-booking-form-target="rajaaramGuest1Block">
+        <p class="admin-subsection-label" data-booking-form-target="rajaaramGuest1Label">Terapia</p>
+        <div data-booking-form-target="rajaaramGuest1NameRow rajaaramDuoField"{% if not form.rajaaramIsDuo.vars.data %} hidden{% endif %}>
+            {{ form_row(form.rajaaramGuest1Name) }}
+        </div>
         <div class="form-row-2">
             {{ form_row(form.rajaaramTherapy) }}
             {{ form_row(form.rajaaramTherapyDate) }}
@@ -16,7 +19,8 @@
     </div>
 
     <div class="admin-rajaaram-therapy-block admin-rajaaram-duo-block" data-booking-form-target="rajaaramDuoSection"{% if not form.rajaaramIsDuo.vars.data %} hidden{% endif %}>
-        <p class="admin-subsection-label">Terapia 2</p>
+        <p class="admin-subsection-label">Hóspede 2</p>
+        {{ form_row(form.rajaaramGuest2Name) }}
         <div class="form-row-2">
             {{ form_row(form.rajaaramTherapy2) }}
             {{ form_row(form.rajaaramTherapy2Date) }}

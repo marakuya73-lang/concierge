@@ -131,6 +131,12 @@ class Booking
     #[ORM\Column(nullable: true)]
     private ?bool $rajaaramIsDuo = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $rajaaramGuest1Name = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $rajaaramGuest2Name = null;
+
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $rajaaramTherapy2 = null;
 
@@ -223,8 +229,13 @@ class Booking
     public function getRajaaramTherapyTime(): ?string { return $this->rajaaramTherapyTime; }
     public function setRajaaramTherapyTime(?string $v): static { $this->rajaaramTherapyTime = $v; return $this; }
     public function isRajaaramDuo(): bool { return true === $this->rajaaramIsDuo; }
+    public function isRajaaramIndividual(): bool { return !$this->isRajaaramDuo(); }
     public function getRajaaramIsDuo(): ?bool { return $this->rajaaramIsDuo; }
     public function setRajaaramIsDuo(?bool $v): static { $this->rajaaramIsDuo = $v; return $this; }
+    public function getRajaaramGuest1Name(): ?string { return $this->rajaaramGuest1Name; }
+    public function setRajaaramGuest1Name(?string $v): static { $this->rajaaramGuest1Name = $v; return $this; }
+    public function getRajaaramGuest2Name(): ?string { return $this->rajaaramGuest2Name; }
+    public function setRajaaramGuest2Name(?string $v): static { $this->rajaaramGuest2Name = $v; return $this; }
     public function getRajaaramTherapy2(): ?string { return $this->rajaaramTherapy2; }
     public function setRajaaramTherapy2(?string $v): static { $this->rajaaramTherapy2 = $v; return $this; }
     public function getRajaaramTherapy2Date(): ?\DateTimeImmutable { return $this->rajaaramTherapy2Date; }
@@ -262,6 +273,8 @@ class Booking
             || null !== $this->rajaaramTherapy
             || null !== $this->rajaaramTherapyDate
             || null !== $this->rajaaramTherapyTime
+            || null !== $this->rajaaramGuest1Name
+            || null !== $this->rajaaramGuest2Name
             || null !== $this->rajaaramTherapy2
             || null !== $this->rajaaramTherapy2Date
             || null !== $this->rajaaramTherapy2Time;
@@ -296,10 +309,15 @@ class Booking
         return $therapy;
     }
 
-    /** @return list<array{therapy: ?string, date: ?string, time: ?string}> */
+    /** @return list<array{guest: ?string, therapy: ?string, date: ?string, time: ?string}> */
     public function getRajaaramSessions(string $locale = 'pt'): array
     {
+        $guest1 = $this->isRajaaramDuo()
+            ? ($this->rajaaramGuest1Name ?: $this->guestName)
+            : null;
+
         $sessions = [[
+            'guest' => $guest1,
             'therapy' => $this->getRajaaramTherapyLabel($locale),
             'date' => $this->rajaaramTherapyDate?->format('d/m/Y'),
             'time' => $this->rajaaramTherapyTime,
@@ -307,6 +325,7 @@ class Booking
 
         if ($this->isRajaaramDuo()) {
             $sessions[] = [
+                'guest' => $this->rajaaramGuest2Name,
                 'therapy' => $this->getRajaaramTherapy2Label($locale),
                 'date' => $this->rajaaramTherapy2Date?->format('d/m/Y'),
                 'time' => $this->rajaaramTherapy2Time,
@@ -322,6 +341,8 @@ class Booking
         $this->rajaaramTherapyDate = null;
         $this->rajaaramTherapyTime = null;
         $this->rajaaramIsDuo = null;
+        $this->rajaaramGuest1Name = null;
+        $this->rajaaramGuest2Name = null;
         $this->rajaaramTherapy2 = null;
         $this->rajaaramTherapy2Date = null;
         $this->rajaaramTherapy2Time = null;

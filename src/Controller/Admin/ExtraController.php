@@ -67,6 +67,23 @@ class ExtraController extends AbstractAdminController
         ]);
     }
 
+    #[Route('/{id}/toggle', name: 'admin_extra_toggle', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function toggle(Extra $extra, Request $request): Response
+    {
+        $this->validateAdminCsrf($request);
+        $extra->setActive(!$extra->isActive());
+        $this->em->flush();
+
+        $this->addFlash(
+            'success',
+            $extra->isActive()
+                ? 'Extra activado: '.$extra->getNamePt().'.'
+                : 'Extra pausado: '.$extra->getNamePt().'.',
+        );
+
+        return $this->redirectToRoute('admin_extras');
+    }
+
     #[Route('/{id}/delete', name: 'admin_extra_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(Extra $extra, Request $request): Response
     {

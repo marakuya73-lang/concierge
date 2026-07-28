@@ -103,6 +103,16 @@ class BookingType extends AbstractType
                 'help' => 'Formato 24h (ex.: 09:00, 14:30).',
                 'row_attr' => ['data-booking-form-target' => 'rajaaramField'],
             ])
+            ->add('rajaaramGuest1Name', TextType::class, [
+                'label' => 'Nome do hóspede 1',
+                'required' => false,
+                'row_attr' => ['data-booking-form-target' => 'rajaaramField rajaaramDuoField'],
+            ])
+            ->add('rajaaramGuest2Name', TextType::class, [
+                'label' => 'Nome do hóspede 2',
+                'required' => false,
+                'row_attr' => ['data-booking-form-target' => 'rajaaramField rajaaramDuoField'],
+            ])
             ->add('rajaaramTherapy2', ChoiceType::class, [
                 'label' => 'Terapia 2',
                 'choices' => Booking::rajaaramTherapyChoices(),
@@ -147,6 +157,21 @@ class BookingType extends AbstractType
             ]);
         }
 
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, static function (FormEvent $event): void {
+            $booking = $event->getData();
+            if (!$booking instanceof Booking || !$booking->hasRajaaramSession()) {
+                return;
+            }
+
+            if (null === $booking->getRajaaramIsDuo()) {
+                $booking->setRajaaramIsDuo(false);
+            }
+
+            if ($booking->isRajaaramDuo() && !$booking->getRajaaramGuest1Name()) {
+                $booking->setRajaaramGuest1Name($booking->getGuestName());
+            }
+        });
+
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event): void {
             $data = $event->getData();
             if (isset($data['accessCode']) && \is_string($data['accessCode'])) {
@@ -169,11 +194,15 @@ class BookingType extends AbstractType
                 $data['rajaaramTherapyDate'] = null;
                 $data['rajaaramTherapyTime'] = null;
                 $data['rajaaramIsDuo'] = null;
+                $data['rajaaramGuest1Name'] = null;
+                $data['rajaaramGuest2Name'] = null;
                 $data['rajaaramTherapy2'] = null;
                 $data['rajaaramTherapy2Date'] = null;
                 $data['rajaaramTherapy2Time'] = null;
                 $data['rajaaramBreakfastIncluded'] = null;
             } elseif (empty($data['rajaaramIsDuo'])) {
+                $data['rajaaramGuest1Name'] = null;
+                $data['rajaaramGuest2Name'] = null;
                 $data['rajaaramTherapy2'] = null;
                 $data['rajaaramTherapy2Date'] = null;
                 $data['rajaaramTherapy2Time'] = null;
@@ -194,9 +223,21 @@ class BookingType extends AbstractType
             }
 
             if (!$booking->isRajaaramDuo()) {
+                $booking->setRajaaramGuest1Name(null);
+                $booking->setRajaaramGuest2Name(null);
                 $booking->setRajaaramTherapy2(null);
                 $booking->setRajaaramTherapy2Date(null);
                 $booking->setRajaaramTherapy2Time(null);
+
+                return;
+            }
+
+            if ($booking->getRajaaramGuest1Name()) {
+                $booking->setGuestName($booking->getRajaaramGuest1Name());
+            }
+
+            if ($booking->getGuests() < 2) {
+                $booking->setGuests(2);
             }
         });
     }

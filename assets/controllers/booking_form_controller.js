@@ -6,9 +6,10 @@ export default class extends Controller {
         'rajaaramField',
         'rajaaramSection',
         'rajaaramDuoSection',
-        'rajaaramIsDuo',
+        'rajaaramGuest1NameRow',
         'rajaaramDuoField',
-        'rajaaramTherapy1Label',
+        'rajaaramGuest1Label',
+        'guestNameTopRow',
     ];
 
     static values = {
@@ -17,6 +18,9 @@ export default class extends Controller {
 
     connect() {
         this.sync();
+        this.element.querySelectorAll('input[name*="[rajaaramIsDuo]"]').forEach((radio) => {
+            radio.addEventListener('change', () => this.sync());
+        });
     }
 
     sync() {
@@ -45,27 +49,34 @@ export default class extends Controller {
             this.rajaaramDuoSectionTarget.hidden = !isDuo;
         }
 
+        if (this.hasRajaaramGuest1NameRowTarget) {
+            this.rajaaramGuest1NameRowTarget.hidden = !isDuo;
+        }
+
         this.rajaaramDuoFieldTargets.forEach((field) => {
+            if (field === this.rajaaramGuest1NameRowTarget) {
+                return;
+            }
+
             field.hidden = !isDuo;
         });
 
-        if (this.hasRajaaramTherapy1LabelTarget) {
-            this.rajaaramTherapy1LabelTarget.textContent = isDuo ? 'Terapia 1' : 'Terapia';
+        if (this.hasRajaaramGuest1LabelTarget) {
+            this.rajaaramGuest1LabelTarget.textContent = isDuo ? 'Hóspede 1' : 'Terapia';
+        }
+
+        if (this.hasGuestNameTopRowTarget) {
+            this.guestNameTopRowTarget.hidden = isDuo;
         }
     }
 
     isDuoSelected() {
         const checked = this.element.querySelector('input[name*="[rajaaramIsDuo]"]:checked');
-        if (checked) {
-            return checked.value === '1';
+        if (!checked) {
+            return false;
         }
 
-        const select = this.element.querySelector('select[name*="[rajaaramIsDuo]"]');
-        if (select) {
-            return select.value === '1';
-        }
-
-        return false;
+        return checked.value === '1';
     }
 
     sourceElement() {

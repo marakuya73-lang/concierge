@@ -12,19 +12,31 @@
     </div>
     <div class="admin-table-wrap">
         <table>
-            <thead><tr><th>Nome (PT)</th><th>Categoria</th><th>Preço</th><th>Ativo</th><th></th></tr></thead>
+            <thead><tr><th>Nome (PT)</th><th>Categoria</th><th>Preço</th><th>Estado</th><th></th></tr></thead>
             <tbody>
             {% for extra in extras %}
-                <tr>
+                <tr class="{% if not extra.active %}admin-extra-row--paused{% endif %}">
                     <td>{{ extra.namePt }}</td>
                     <td>{{ extra.category }}</td>
                     <td>R$ {{ extra.price|number_format(2, ',', '.') }}</td>
-                    <td>{{ extra.active ? '✓' : '-' }}</td>
                     <td>
-                        <a href="{{ path('admin_extra_edit', {id: extra.id}) }}">Editar</a>
-                        <form method="post" action="{{ path('admin_extra_delete', {id: extra.id}) }}" style="display:inline" onsubmit="return confirm('Remover?')">
+                        {% if extra.active %}
+                            <span class="status-pill status-confirmed">Activo</span>
+                        {% else %}
+                            <span class="status-pill status-cancelled">Pausado</span>
+                        {% endif %}
+                    </td>
+                    <td class="admin-table-actions">
+                        <form method="post" action="{{ path('admin_extra_toggle', {id: extra.id}) }}">
                             {{ csrf.csrf() }}
-                            <button type="submit" style="background:none;border:none;color:var(--destructive);cursor:pointer;margin-left:.5rem">Remover</button>
+                            <button type="submit" class="btn btn-sm {% if extra.active %}btn-outline{% else %}btn-accent{% endif %}">
+                                {% if extra.active %}Pausar{% else %}Activar{% endif %}
+                            </button>
+                        </form>
+                        <a href="{{ path('admin_extra_edit', {id: extra.id}) }}">Editar</a>
+                        <form method="post" action="{{ path('admin_extra_delete', {id: extra.id}) }}" onsubmit="return confirm('Remover?')">
+                            {{ csrf.csrf() }}
+                            <button type="submit" class="admin-table-delete">Remover</button>
                         </form>
                     </td>
                 </tr>
