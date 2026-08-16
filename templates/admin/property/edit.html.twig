@@ -94,12 +94,16 @@
                 <section class="admin-section admin-subsection">
                     <div class="admin-section-header">
                         <h3 class="admin-section-title">Operacional</h3>
-                        <p class="admin-section-desc">Wi‑Fi, horários, políticas da casa e dados do imóvel.</p>
+                        <p class="admin-section-desc">Wi‑Fi, horários de check-in/out, políticas da casa e dados do imóvel.</p>
                     </div>
                     <div class="form-row-2">{{ form_row(form.wifiName) }}{{ form_row(form.wifiPassword) }}</div>
                     <div class="form-row-2">{{ form_row(form.wifiSecondaryName) }}{{ form_row(form.wifiSecondaryPassword) }}</div>
-                    <div class="form-row-2">{{ form_row(form.checkInTime) }}{{ form_row(form.checkInTimeEnd) }}</div>
-                    <div class="form-row-2">{{ form_row(form.checkOutTime) }}{{ form_row(form.domeEntranceCode) }}</div>
+                    <div class="form-row-3">
+                        {{ form_row(form.checkInTime) }}
+                        {{ form_row(form.checkInTimeEnd) }}
+                        {{ form_row(form.checkOutTime) }}
+                    </div>
+                    {{ form_row(form.domeEntranceCode) }}
                     <div class="form-row-2">{{ form_row(form.petsPolicy) }}{{ form_row(form.smokingPolicy) }}</div>
                     <div class="form-row-2">{{ form_row(form.silencePolicy) }}{{ form_row(form.visitsPolicy) }}</div>
                     <div class="form-row-2">{{ form_row(form.rating) }}{{ form_row(form.pixKey) }}</div>

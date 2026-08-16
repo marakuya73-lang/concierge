@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 
 use App\Service\BookingLifecycleService;
 use App\Service\DashboardService;
+use App\Service\GoogleCalendarSyncService;
 use App\Service\IcalSyncService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,8 +13,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/admin')]
 class DashboardController extends AbstractAdminController
 {
-    public function __construct(private IcalSyncService $icalSyncService)
-    {
+    public function __construct(
+        private IcalSyncService $icalSyncService,
+        private GoogleCalendarSyncService $googleCalendarSyncService,
+    ) {
     }
 
     #[Route('', name: 'admin_dashboard')]
@@ -50,6 +53,52 @@ class DashboardController extends AbstractAdminController
             $this->addFlash('success', 'Airbnb sincronizado: '.implode(', ', $parts).'.');
         }
 
+        $redirect = $request->request->get('_redirect', 'admin_dashboard');
+        if (!\in_array($redirect, ['admin_dashboard', 'admin_bookings'], true)) {
+            $redirect = 'admin_dashboard';
+        }
+
+        $calendarYear = (int) $request->request->get('_calendar_year', 0);
+        $calendarMonth = (int) $request->request->get('_calendar_month', 0);
+        $calendarParams = ($calendarYear >= 2020 && $calendarMonth >= 1 && $calendarMonth <= 12)
+            ? ['year' => $calendarYear, 'month' => $calendarMonth]
+            : [];
+
+        return $this->redirectToRoute($redirect, $calendarParams);
+    }
+
+    #[Route('/sync-google-calendar', name: 'admin_sync_google_calendar', methods: ['POST'])]
+    public function syncGoogleCalendar(Request $request): Response
+    {
+        $this->validateAdminCsrf($request);
+
+        try {
+            $result = $this->googleCalendarSyncService->sync();
+        } catch (\Throwable $exception) {
+            $this->addFlash('error', 'Falha ao sincronizar Google Calendar: '.$exception->getMessage());
+
+            return $this->redirectAfterCalendarSync($request);
+        }
+
+        if (isset($result['message'])) {
+            $this->addFlash('error', $result['message']);
+        } else {
+            $parts = [
+                sprintf('%d actualizadas do Google', $result['updatedFromGoogle'] ?? 0),
+                sprintf('%d estadias enviadas', $result['pushed'] ?? 0),
+                sprintf('%d terapias enviadas', $result['therapyPushed'] ?? 0),
+            ];
+            if (($result['therapyConflicts'] ?? 0) > 0) {
+                $parts[] = sprintf('%d conflitos de terapia', $result['therapyConflicts']);
+            }
+            $this->addFlash('success', 'Google Calendar sincronizado: '.implode(', ', $parts).'.');
+        }
+
+        return $this->redirectAfterCalendarSync($request);
+    }
+
+    private function redirectAfterCalendarSync(Request $request): Response
+    {
         $redirect = $request->request->get('_redirect', 'admin_dashboard');
         if (!\in_array($redirect, ['admin_dashboard', 'admin_bookings'], true)) {
             $redirect = 'admin_dashboard';

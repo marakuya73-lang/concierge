@@ -1,0 +1,8 @@
+<p class="admin-sync-status">
+    {% if lastGoogleCalendarSyncAt %}
+        Google Calendar: última sincronização {{ lastGoogleCalendarSyncAt|date('d/m/Y H:i') }} (Brasília).
+    {% else %}
+        Google Calendar: ainda não sincronizado.
+    {% endif %}
+    Sincronização automática a cada 15 minutos. Estadias → calendário Domo (com categoria/origem). Terapias → calendário Rajaaram (apenas slots livres; conflitos aparecem na reserva). Eventos existentes nunca são sobrescritos.
+</p>

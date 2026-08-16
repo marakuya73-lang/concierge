@@ -34,6 +34,11 @@ class BookingType extends AbstractType
                 ],
                 'help' => 'Com DDI. Gera link directo para conversa no WhatsApp.',
             ])
+            ->add('guestLocale', ChoiceType::class, [
+                'label' => 'Idioma do hóspede',
+                'choices' => Booking::guestLocaleChoices(),
+                'help' => 'Define o idioma da mensagem de boas-vindas e do concierge privado.',
+            ])
             ->add('checkIn', DateType::class, ['label' => 'Check-in', 'widget' => 'single_text'])
             ->add('checkOut', DateType::class, ['label' => 'Check-out', 'widget' => 'single_text'])
             ->add('guests', IntegerType::class, ['label' => 'Hóspedes'])

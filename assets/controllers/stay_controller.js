@@ -16,6 +16,7 @@ export default class extends Controller {
         'selfCheckInModal', 'selfCheckInTitle', 'selfCheckInLead', 'selfCheckInConfirm', 'selfCheckInCancel',
         'selfCheckInBtn', 'selfCheckInStatus', 'selfCheckInHome', 'selfCheckInHomeInstructions',
         'plannedArrival', 'plannedArrivalForm', 'plannedArrivalSubmit', 'plannedArrivalConfirmed',
+        'arrivalWindowModal', 'arrivalWindowTitle', 'arrivalWindowLead', 'arrivalWindowOk',
         'checkinReception', 'checkinReceptionTitle', 'checkinReceptionBody',
     ];
     static values = {
@@ -53,6 +54,10 @@ export default class extends Controller {
         plannedArrivalUpdate: String,
         plannedArrivalConfirmed: String,
         plannedArrivalDone: String,
+        checkInTime: String,
+        plannedArrivalTooEarlyTitle: String,
+        plannedArrivalTooEarlyLead: String,
+        plannedArrivalTooEarlyOk: String,
     };
 
     connect() {
@@ -220,6 +225,10 @@ export default class extends Controller {
             return;
         }
 
+        if (this.rejectEarlyArrival(input)) {
+            return;
+        }
+
         btn.disabled = true;
 
         try {
@@ -230,6 +239,12 @@ export default class extends Controller {
             });
             const data = await response.json();
             if (!response.ok) {
+                if (data.code === 'arrival_before_checkin') {
+                    this.openArrivalWindowModal();
+                    input.value = '';
+                    btn.disabled = false;
+                    return;
+                }
                 if (shouldReportHttpStatus(response.status)) {
                     reportClientError(data.error || 'Planned arrival failed', 'stay.plannedArrival', {
                         code: this.codeValue,
@@ -253,6 +268,80 @@ export default class extends Controller {
         }
     }
 
+    onPlannedArrivalChange(event) {
+        this.rejectEarlyArrival(event.currentTarget);
+    }
+
+    rejectEarlyArrival(input) {
+        const time = input?.value?.trim();
+        if (!time || !this.isArrivalBeforeCheckIn(time)) {
+            return false;
+        }
+
+        this.openArrivalWindowModal();
+        input.value = '';
+        return true;
+    }
+
+    isArrivalBeforeCheckIn(time) {
+        const arrival = this.clockTimeToMinutes(time);
+        const start = this.clockTimeToMinutes(this.hasCheckInTimeValue ? this.checkInTimeValue : '');
+
+        return arrival !== null && start !== null && arrival < start;
+    }
+
+    clockTimeToMinutes(value) {
+        const match = String(value || '').trim().match(/^(\d{1,2}):(\d{2})/);
+        if (!match) {
+            return null;
+        }
+
+        const hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+        if (hours > 23 || minutes > 59) {
+            return null;
+        }
+
+        return hours * 60 + minutes;
+    }
+
+    openArrivalWindowModal() {
+        if (!this.hasArrivalWindowModalTarget) {
+            return;
+        }
+
+        if (this.hasArrivalWindowTitleTarget && this.hasPlannedArrivalTooEarlyTitleValue) {
+            this.arrivalWindowTitleTarget.textContent = this.plannedArrivalTooEarlyTitleValue;
+        }
+        if (this.hasArrivalWindowLeadTarget && this.hasPlannedArrivalTooEarlyLeadValue) {
+            this.arrivalWindowLeadTarget.textContent = this.plannedArrivalTooEarlyLeadValue;
+        }
+        if (this.hasArrivalWindowOkTarget && this.hasPlannedArrivalTooEarlyOkValue) {
+            this.arrivalWindowOkTarget.textContent = this.plannedArrivalTooEarlyOkValue;
+        }
+
+        this.arrivalWindowModalTarget.hidden = false;
+        this.arrivalWindowModalTarget.removeAttribute('hidden');
+        document.body.classList.add('stay-dialog-open');
+        this.arrivalWindowOkTarget?.focus();
+    }
+
+    closeArrivalWindowModal() {
+        if (!this.hasArrivalWindowModalTarget) {
+            return;
+        }
+
+        this.arrivalWindowModalTarget.hidden = true;
+        this.arrivalWindowModalTarget.setAttribute('hidden', '');
+        document.body.classList.remove('stay-dialog-open');
+    }
+
+    closeArrivalWindowModalOnBackdrop(event) {
+        if (event.target === event.currentTarget) {
+            this.closeArrivalWindowModal();
+        }
+    }
+
     applyPlannedArrivalSuccess(time, message) {
         if (!this.hasPlannedArrivalTarget) {
             return;
@@ -271,7 +360,7 @@ export default class extends Controller {
             <p class="stay-planned-arrival-confirmed" data-stay-target="plannedArrivalConfirmed">${confirmedText}</p>
             <form class="stay-planned-arrival-form stay-planned-arrival-form--update" data-stay-target="plannedArrivalForm" data-action="submit->stay#submitPlannedArrival">
                 <label class="sr-only" for="planned-arrival-time">${this.plannedArrivalLabelValue || ''}</label>
-                <input id="planned-arrival-time" type="time" name="time" value="${time}" required>
+                <input id="planned-arrival-time" type="time" name="time" value="${time}" required data-action="change->stay#onPlannedArrivalChange">
                 <button type="submit" class="btn btn-outline btn-sm" data-stay-target="plannedArrivalSubmit">${updateLabel}</button>
             </form>
         `;
@@ -400,10 +489,17 @@ export default class extends Controller {
 
         this.updateLocationTransferCard(data);
 
-        if (data.isBreakfast && this.hasFoodExtrasAvailableTarget) {
-            this.foodExtrasAvailableTarget.querySelectorAll('.food-service-card[data-is-breakfast="1"]').forEach((card) => {
-                card.remove();
-            });
+        if (data.isBreakfast) {
+            if (this.hasFoodExtrasAvailableTarget) {
+                this.foodExtrasAvailableTarget.querySelectorAll('.food-service-card[data-is-breakfast="1"]').forEach((card) => {
+                    card.remove();
+                });
+            }
+            if (this.hasExtrasAvailableListTarget) {
+                this.extrasAvailableListTarget.querySelectorAll('.extras-item-card[data-is-breakfast="1"]').forEach((card) => {
+                    card.remove();
+                });
+            }
         }
 
         this.updateAvailableEmptyState();

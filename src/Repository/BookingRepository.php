@@ -25,6 +25,37 @@ class BookingRepository extends ServiceEntityRepository
     }
 
     /** @return Booking[] */
+    public function findByExactDates(\DateTimeImmutable $checkIn, \DateTimeImmutable $checkOut): array
+    {
+        return $this->createQueryBuilder('b')
+            ->andWhere('b.checkIn = :checkIn')
+            ->andWhere('b.checkOut = :checkOut')
+            ->andWhere('b.status != :cancelled')
+            ->setParameter('checkIn', $checkIn)
+            ->setParameter('checkOut', $checkOut)
+            ->setParameter('cancelled', Booking::STATUS_CANCELLED)
+            ->orderBy('b.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findUnlinkedOverlapping(\DateTimeImmutable $checkIn, \DateTimeImmutable $checkOut): ?Booking
+    {
+        return $this->createQueryBuilder('b')
+            ->andWhere('b.status = :status')
+            ->andWhere('b.externalUid IS NULL')
+            ->andWhere('b.checkIn < :checkOut')
+            ->andWhere('b.checkOut > :checkIn')
+            ->setParameter('status', Booking::STATUS_CONFIRMED)
+            ->setParameter('checkIn', $checkIn)
+            ->setParameter('checkOut', $checkOut)
+            ->orderBy('b.id', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /** @return Booking[] */
     public function findAllOrdered(): array
     {
         return $this->createQueryBuilder('b')
@@ -112,6 +143,20 @@ class BookingRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('b')
             ->andWhere('b.externalUid IS NOT NULL')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findByGoogleCalendarEventId(string $eventId): ?Booking
+    {
+        return $this->findOneBy(['googleCalendarEventId' => $eventId]);
+    }
+
+    /** @return Booking[] */
+    public function findForGoogleCalendarSync(): array
+    {
+        return $this->createQueryBuilder('b')
+            ->orderBy('b.checkIn', 'ASC')
             ->getQuery()
             ->getResult();
     }

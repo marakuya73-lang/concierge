@@ -157,6 +157,15 @@ class Property
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $airbnbIcalLastSyncAt = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $googleCalendarId = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $googleCalendarSyncToken = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $googleCalendarLastSyncAt = null;
+
     #[ORM\Column]
     private \DateTimeImmutable $updatedAt;
 
@@ -303,11 +312,49 @@ class Property
     public function getWifiSecondaryPassword(): string { return $this->wifiSecondaryPassword; }
     public function setWifiSecondaryPassword(string $v): static { $this->wifiSecondaryPassword = $v; return $this; }
     public function getCheckInTime(): string { return $this->checkInTime; }
-    public function setCheckInTime(string $v): static { $this->checkInTime = $v; return $this; }
+    public function setCheckInTime(string $v): static
+    {
+        $this->checkInTime = self::normalizeClockTime($v) ?? $v;
+
+        return $this;
+    }
     public function getCheckInTimeEnd(): string { return $this->checkInTimeEnd; }
-    public function setCheckInTimeEnd(string $v): static { $this->checkInTimeEnd = $v; return $this; }
+    public function setCheckInTimeEnd(string $v): static
+    {
+        $this->checkInTimeEnd = self::normalizeClockTime($v) ?? $v;
+
+        return $this;
+    }
     public function getCheckOutTime(): string { return $this->checkOutTime; }
-    public function setCheckOutTime(string $v): static { $this->checkOutTime = $v; return $this; }
+    public function setCheckOutTime(string $v): static
+    {
+        $this->checkOutTime = self::normalizeClockTime($v) ?? $v;
+
+        return $this;
+    }
+
+    public function allowsArrivalAt(string $time): bool
+    {
+        $arrival = self::normalizeClockTime($time);
+        $start = self::normalizeClockTime($this->checkInTime);
+
+        return null !== $arrival && null !== $start && $arrival >= $start;
+    }
+
+    public static function normalizeClockTime(string $time): ?string
+    {
+        $time = trim($time);
+        if (preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $time, $matches)) {
+            $hours = (int) $matches[1];
+            $minutes = (int) $matches[2];
+            if ($hours >= 0 && $hours <= 23 && $minutes >= 0 && $minutes <= 59) {
+                return sprintf('%02d:%02d', $hours, $minutes);
+            }
+        }
+
+        return null;
+    }
+
     public function getDomeEntranceCode(): string { return $this->domeEntranceCode; }
     public function setDomeEntranceCode(string $v): static { $this->domeEntranceCode = trim($v); return $this; }
     public function getPetsPolicy(): string { return $this->petsPolicy; }
@@ -348,6 +395,12 @@ class Property
     public function setAirbnbIcalUrl(?string $v): static { $this->airbnbIcalUrl = $v; return $this; }
     public function getAirbnbIcalLastSyncAt(): ?\DateTimeImmutable { return $this->airbnbIcalLastSyncAt; }
     public function setAirbnbIcalLastSyncAt(?\DateTimeImmutable $v): static { $this->airbnbIcalLastSyncAt = $v; return $this; }
+    public function getGoogleCalendarId(): ?string { return $this->googleCalendarId; }
+    public function setGoogleCalendarId(?string $v): static { $this->googleCalendarId = $v; return $this; }
+    public function getGoogleCalendarSyncToken(): ?string { return $this->googleCalendarSyncToken; }
+    public function setGoogleCalendarSyncToken(?string $v): static { $this->googleCalendarSyncToken = $v; return $this; }
+    public function getGoogleCalendarLastSyncAt(): ?\DateTimeImmutable { return $this->googleCalendarLastSyncAt; }
+    public function setGoogleCalendarLastSyncAt(?\DateTimeImmutable $v): static { $this->googleCalendarLastSyncAt = $v; return $this; }
     public function getUpdatedAt(): \DateTimeImmutable { return $this->updatedAt; }
     public function touch(): static { $this->updatedAt = new \DateTimeImmutable(); return $this; }
 

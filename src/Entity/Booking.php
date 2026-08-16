@@ -38,6 +38,18 @@ class Booking
 
     public const GUEST_NAME_PENDING = 'Reserva directa';
 
+    public const LOCALE_PT = 'pt';
+    public const LOCALE_EN = 'en';
+
+    /** @return array<string, string> */
+    public static function guestLocaleChoices(): array
+    {
+        return [
+            'Português' => self::LOCALE_PT,
+            'English' => self::LOCALE_EN,
+        ];
+    }
+
     public const RAJAARAM_THERAPY_RESET_EXPRESS = 'reset_express';
     public const RAJAARAM_THERAPY_RESET_CEREMONY = 'reset_ceremony';
     public const RAJAARAM_THERAPY_DEEP_DIVE = 'deep_dive';
@@ -176,6 +188,26 @@ class Booking
     #[ORM\Column(options: ['default' => 0])]
     private int $loginCount = 0;
 
+    #[ORM\Column(length: 2, options: ['default' => 'pt'])]
+    private string $guestLocale = self::LOCALE_PT;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $googleCalendarEventId = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $googleCalendarSyncedAt = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $googleCalendarEtag = null;
+
+    /** @var array<string, string>|null */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $googleCalendarTherapyEventIds = null;
+
+    /** @var list<array<string, string>>|null */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $googleCalendarTherapyConflicts = null;
+
     /** @var Collection<int, BookingExtra> */
     #[ORM\OneToMany(targetEntity: BookingExtra::class, mappedBy: 'booking', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $bookingExtras;
@@ -261,6 +293,22 @@ class Booking
     public function setLastLoginAt(?\DateTimeImmutable $v): static { $this->lastLoginAt = $v; return $this; }
     public function getLoginCount(): int { return $this->loginCount; }
     public function setLoginCount(int $v): static { $this->loginCount = $v; return $this; }
+    public function getGuestLocale(): string { return $this->guestLocale; }
+    public function setGuestLocale(string $v): static { $this->guestLocale = $v; return $this; }
+    public function getGoogleCalendarEventId(): ?string { return $this->googleCalendarEventId; }
+    public function setGoogleCalendarEventId(?string $v): static { $this->googleCalendarEventId = $v; return $this; }
+    public function getGoogleCalendarSyncedAt(): ?\DateTimeImmutable { return $this->googleCalendarSyncedAt; }
+    public function setGoogleCalendarSyncedAt(?\DateTimeImmutable $v): static { $this->googleCalendarSyncedAt = $v; return $this; }
+    public function getGoogleCalendarEtag(): ?string { return $this->googleCalendarEtag; }
+    public function setGoogleCalendarEtag(?string $v): static { $this->googleCalendarEtag = $v; return $this; }
+    /** @return array<string, string>|null */
+    public function getGoogleCalendarTherapyEventIds(): ?array { return $this->googleCalendarTherapyEventIds; }
+    /** @param array<string, string>|null $v */
+    public function setGoogleCalendarTherapyEventIds(?array $v): static { $this->googleCalendarTherapyEventIds = $v; return $this; }
+    /** @return list<array<string, string>>|null */
+    public function getGoogleCalendarTherapyConflicts(): ?array { return $this->googleCalendarTherapyConflicts; }
+    /** @param list<array<string, string>>|null $v */
+    public function setGoogleCalendarTherapyConflicts(?array $v): static { $this->googleCalendarTherapyConflicts = $v; return $this; }
 
     public function isRajaaram(): bool
     {
@@ -398,6 +446,27 @@ class Booking
     public function isIcalSynced(): bool
     {
         return null !== $this->externalUid && ($this->isImportedFromAirbnb() || $this->isFromAirbnbIcalBlock());
+    }
+
+    /**
+     * Bookings edited in admin (Rajaaram, Tucanto, filled site stays, locked dates)
+     * must not be rewritten or cancelled by Airbnb iCal sync.
+     */
+    public function isLocallyManaged(): bool
+    {
+        if ($this->isManualDates() || $this->hasRajaaramSession() || $this->isRajaaram()) {
+            return true;
+        }
+
+        if (self::SOURCE_TUCANTO === $this->source) {
+            return true;
+        }
+
+        if (self::SOURCE_AIRBNB === $this->source) {
+            return false;
+        }
+
+        return !($this->isFromAirbnbIcalBlock() && $this->needsGuestInfo());
     }
 
     public function needsGuestInfo(): bool

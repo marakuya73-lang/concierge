@@ -2,6 +2,9 @@ parameters:
     env(VAPID_PUBLIC_KEY): ''
     env(VAPID_PRIVATE_KEY): ''
     env(VAPID_SUBJECT): ''
+    env(GOOGLE_SERVICE_ACCOUNT_JSON_PATH): ''
+    env(GOOGLE_CALENDAR_DOMO_ID): ''
+    env(GOOGLE_CALENDAR_RAJAARAM_ID): ''
 
 services:
     _defaults:
@@ -28,3 +31,12 @@ services:
             $vapidPublicKey: '%env(VAPID_PUBLIC_KEY)%'
             $vapidPrivateKey: '%env(VAPID_PRIVATE_KEY)%'
             $vapidSubject: '%env(VAPID_SUBJECT)%'
+
+    App\Service\GoogleCalendarApiClient:
+        arguments:
+            $serviceAccountJsonPath: '%env(GOOGLE_SERVICE_ACCOUNT_JSON_PATH)%'
+
+    App\Service\GoogleCalendarSyncService:
+        arguments:
+            $defaultDomoCalendarId: '%env(GOOGLE_CALENDAR_DOMO_ID)%'
+            $defaultRajaaramCalendarId: '%env(GOOGLE_CALENDAR_RAJAARAM_ID)%'

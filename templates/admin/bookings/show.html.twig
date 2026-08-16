@@ -95,6 +95,13 @@
                         <div class="form-group">{{ form_label(form.stayPrice) }}{{ form_widget(form.stayPrice) }}</div>
                     </div>
                     <div class="form-row-2">
+                        <div class="form-group">
+                            {{ form_label(form.guestLocale) }}
+                            {{ form_widget(form.guestLocale) }}
+                            {{ form_errors(form.guestLocale) }}
+                        </div>
+                    </div>
+                    <div class="form-row-2">
                         <div class="form-group">{{ form_label(form.source) }}{{ form_widget(form.source) }}</div>
                         <div class="form-group">{{ form_label(form.status) }}{{ form_widget(form.status) }}</div>
                     </div>
@@ -129,7 +136,7 @@
                             {% endif %}
                             <form method="post" action="{{ path('admin_booking_planned_arrival', {id: booking.id}) }}" class="admin-planned-arrival-form">
                                 {{ csrf.csrf() }}
-                                <input type="time" name="time" value="{{ booking.plannedArrivalTime ?? '' }}" required>
+                                <input type="time" name="time" value="{{ booking.plannedArrivalTime ?? '' }}" min="{{ property.checkInTime }}" required>
                                 <button type="submit" class="btn btn-sm btn-accent">Guardar</button>
                                 {% if booking.plannedArrivalTime %}
                                     <button type="submit" name="action" value="clear" class="btn btn-sm btn-outline">Limpar</button>
@@ -167,6 +174,10 @@
                     <div class="admin-detail-row">
                         <span>Valor da estadia</span>
                         <strong>{% if booking.stayPrice %}R$ {{ booking.stayPrice|number_format(2, ',', '.') }}{% else %}-{% endif %}</strong>
+                    </div>
+                    <div class="admin-detail-row">
+                        <span>Idioma do hóspede</span>
+                        <strong>{{ booking.guestLocale == 'en' ? 'English' : 'Português' }}</strong>
                     </div>
                     <div class="admin-detail-row">
                         <span>Origem</span>
@@ -238,10 +249,21 @@
                         <span>Entradas com código</span>
                         <strong>{{ booking.loginCount }}</strong>
                     </div>
-                    {% if booking.lastSyncedAt %}
+                    {% if booking.googleCalendarSyncedAt %}
                         <div class="admin-detail-row">
-                            <span>Última verificação Airbnb</span>
-                            <strong>{{ booking.lastSyncedAt|date('d/m/Y H:i') }}</strong>
+                            <span>Google Calendar (estadia)</span>
+                            <strong>{{ booking.googleCalendarSyncedAt|date('d/m/Y H:i') }}</strong>
+                        </div>
+                    {% endif %}
+                    {% if booking.googleCalendarTherapyConflicts|length > 0 %}
+                        <div class="admin-detail-row admin-detail-row--stack">
+                            <span>Terapias · calendário Rajaaram</span>
+                            <div class="admin-notice admin-notice--error" style="margin-top:.5rem">
+                                {% for conflict in booking.googleCalendarTherapyConflicts %}
+                                    <p style="margin:0 0 .35rem">{{ conflict.message }}</p>
+                                {% endfor %}
+                                <p style="margin:.5rem 0 0;font-size:.9rem">Edite a reserva para escolher outro horário. Eventos existentes no calendário Rajaaram nunca são alterados automaticamente.</p>
+                            </div>
                         </div>
                     {% endif %}
                     {% if booking.icalSummary %}

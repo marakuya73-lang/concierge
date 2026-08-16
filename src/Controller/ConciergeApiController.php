@@ -132,6 +132,15 @@ class ConciergeApiController extends AbstractController
 
             return $this->json($result, 201);
         } catch (\Throwable $e) {
+            if ($e instanceof HttpExceptionInterface && 422 === $e->getStatusCode()) {
+                $this->reportIfUnexpected($e, 'api_concierge_planned_arrival', $code, 422);
+
+                return $this->json([
+                    'error' => $e->getMessage(),
+                    'code' => 'arrival_before_checkin',
+                ], 422);
+            }
+
             $status = str_contains($e->getMessage(), 'self check-in') || str_contains($e->getMessage(), 'válido') || str_contains($e->getMessage(), 'valid')
                 ? 403
                 : ($e->getCode() ?: 400);

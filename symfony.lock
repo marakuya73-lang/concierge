@@ -35,6 +35,9 @@
             "migrations/.gitignore"
         ]
     },
+    "google/apiclient": {
+        "version": "v2.19.4"
+    },
     "phpunit/phpunit": {
         "version": "13.2",
         "recipe": {

@@ -7,6 +7,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -36,9 +37,32 @@ class PropertyType extends AbstractType
             ->add('wifiPassword', TextType::class, ['label' => 'Senha Wi-Fi'])
             ->add('wifiSecondaryName', TextType::class, ['label' => 'Wi-Fi alternativo', 'required' => false])
             ->add('wifiSecondaryPassword', TextType::class, ['label' => 'Senha Wi-Fi alternativo', 'required' => false])
-            ->add('checkInTime', TextType::class, ['label' => 'Horário check-in (início)'])
-            ->add('checkInTimeEnd', TextType::class, ['label' => 'Horário check-in (fim)'])
-            ->add('checkOutTime', TextType::class, ['label' => 'Horário check-out'])
+            ->add('checkInTime', TimeType::class, [
+                'label' => 'Horário check-in (início)',
+                'input' => 'string',
+                'input_format' => 'H:i',
+                'widget' => 'single_text',
+                'with_seconds' => false,
+                'html5' => true,
+                'help' => 'Início da recepção pessoal. Hóspedes não podem indicar chegada antes deste horário.',
+            ])
+            ->add('checkInTimeEnd', TimeType::class, [
+                'label' => 'Horário check-in (fim)',
+                'input' => 'string',
+                'input_format' => 'H:i',
+                'widget' => 'single_text',
+                'with_seconds' => false,
+                'html5' => true,
+                'help' => 'Fim da janela de check-in. Aparece na concierge e no aviso ao hóspede.',
+            ])
+            ->add('checkOutTime', TimeType::class, [
+                'label' => 'Horário check-out',
+                'input' => 'string',
+                'input_format' => 'H:i',
+                'widget' => 'single_text',
+                'with_seconds' => false,
+                'html5' => true,
+            ])
             ->add('domeEntranceCode', TextType::class, [
                 'label' => 'Código da porta do domo',
                 'attr' => ['inputmode' => 'numeric', 'autocomplete' => 'off'],
@@ -59,7 +83,12 @@ class PropertyType extends AbstractType
             ->add('contactPhone', TextType::class, ['label' => 'WhatsApp'])
             ->add('contactEmail', TextType::class, ['label' => 'E-mail'])
             ->add('instagramHandle', TextType::class, ['label' => 'Instagram'])
-            ->add('airbnbIcalUrl', UrlType::class, ['label' => 'URL iCal Airbnb', 'required' => false, 'default_protocol' => 'https']);
+            ->add('airbnbIcalUrl', UrlType::class, ['label' => 'URL iCal Airbnb', 'required' => false, 'default_protocol' => 'https'])
+            ->add('googleCalendarId', TextType::class, [
+                'label' => 'ID Google Calendar (Domo)',
+                'required' => false,
+                'help' => 'Opcional se GOOGLE_CALENDAR_DOMO_ID estiver definido no .env (mesmo calendário usado no projecto Rajaaram).',
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

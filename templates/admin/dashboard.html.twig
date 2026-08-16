@@ -18,11 +18,18 @@
                 <input type="hidden" name="_calendar_month" value="{{ stats.calendar.month }}">
                 <button type="submit" class="btn btn-outline btn-sm">↻ Sincronizar iCal Airbnb</button>
             </form>
+            <form method="post" action="{{ path('admin_sync_google_calendar') }}">
+                {{ csrf.csrf() }}
+                <input type="hidden" name="_calendar_year" value="{{ stats.calendar.year }}">
+                <input type="hidden" name="_calendar_month" value="{{ stats.calendar.month }}">
+                <button type="submit" class="btn btn-outline btn-sm">↻ Sincronizar Google Calendar</button>
+            </form>
             <a href="{{ path('admin_booking_new') }}" class="btn btn-primary btn-sm">+ Nova reserva</a>
         </div>
     </div>
 
     {% include 'admin/_ical_sync_status.html.twig' with { lastIcalSyncAt: stats.lastIcalSyncAt } %}
+    {% include 'admin/_google_calendar_sync_status.html.twig' with { lastGoogleCalendarSyncAt: stats.lastGoogleCalendarSyncAt } %}
 
     {% if stats.clientErrorCount24h > 0 %}
         <div class="admin-notice admin-notice--error">

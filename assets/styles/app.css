@@ -1935,6 +1935,16 @@ button, input, select, textarea { font: inherit; }
     background: hsl(0 72% 51% / .12);
     color: var(--destructive);
 }
+.stay-dialog--info .stay-dialog-icon {
+    background: rgba(200, 134, 42, 0.14);
+    color: var(--accent);
+}
+.form-group .help-text {
+    margin: 0;
+    font-size: .78rem;
+    line-height: 1.45;
+    color: var(--muted-foreground);
+}
 .stay-dialog-title {
     margin: 0 0 .65rem; font-size: 1.55rem; font-weight: 500; line-height: 1.15;
 }

@@ -69,6 +69,7 @@ class DashboardService
 
         return [
             'lastIcalSyncAt' => $property->getAirbnbIcalLastSyncAt(),
+            'lastGoogleCalendarSyncAt' => $property->getGoogleCalendarLastSyncAt(),
             'totalBookings' => count($allBookings),
             'currentGuests' => array_sum(array_map(fn (Booking $b) => $b->getGuests(), $currentBookings)),
             'upcomingBookings' => count($upcomingBookings),

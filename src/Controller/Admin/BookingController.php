@@ -6,6 +6,7 @@ use App\Entity\Booking;
 use App\Entity\BookingDisabledExtra;
 use App\Entity\BookingExtra;
 use App\Entity\Extra;
+use App\Entity\Property;
 use App\Form\BookingType;
 use App\Repository\BookingDisabledExtraRepository;
 use App\Repository\BookingExtraRepository;
@@ -14,6 +15,7 @@ use App\Repository\ExtraRepository;
 use App\Repository\GuestActivityLogRepository;
 use App\Repository\PropertyRepository;
 use App\Service\AccessCodeGenerator;
+use App\Service\BookingCalendarSyncDispatcher;
 use App\Service\BookingLifecycleService;
 use App\Service\BookingWhatsAppService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -33,6 +35,7 @@ class BookingController extends AbstractAdminController
         private AccessCodeGenerator $accessCodeGenerator,
         private BookingLifecycleService $bookingLifecycleService,
         private BookingWhatsAppService $bookingWhatsAppService,
+        private BookingCalendarSyncDispatcher $bookingCalendarSyncDispatcher,
         private PropertyRepository $propertyRepository,
         private EntityManagerInterface $em,
     ) {
@@ -50,6 +53,7 @@ class BookingController extends AbstractAdminController
             'pendingSiteBookings' => $this->bookingRepository->findPendingSiteBookings($today),
             'pastBookings' => $this->bookingRepository->findPast($today),
             'lastIcalSyncAt' => $this->propertyRepository->getOrCreate()->getAirbnbIcalLastSyncAt(),
+            'lastGoogleCalendarSyncAt' => $this->propertyRepository->getOrCreate()->getGoogleCalendarLastSyncAt(),
             'today' => $today,
         ]);
     }
@@ -66,6 +70,7 @@ class BookingController extends AbstractAdminController
             $this->bookingLifecycleService->refreshStatus($booking);
             $this->em->persist($booking);
             $this->em->flush();
+            $this->bookingCalendarSyncDispatcher->afterBookingSaved($booking);
 
             $this->addFlash('success', 'Reserva criada. Código de acesso: '.$booking->getAccessCode());
 
@@ -89,6 +94,7 @@ class BookingController extends AbstractAdminController
             $this->lockDatesIfManuallyChanged($booking);
             $this->bookingLifecycleService->refreshStatus($booking);
             $this->em->flush();
+            $this->bookingCalendarSyncDispatcher->afterBookingSaved($booking);
             $this->addFlash('success', 'Reserva atualizada.');
 
             return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
@@ -107,6 +113,7 @@ class BookingController extends AbstractAdminController
             'disabledExtraIds' => $this->bookingDisabledExtraRepository->findDisabledExtraIds($booking),
             'guestWelcomeMessage' => $this->bookingWhatsAppService->buildWelcomeMessage($booking),
             'activityLogs' => $this->guestActivityLogRepository->findByBooking($booking),
+            'property' => $this->propertyRepository->getOrCreate(),
         ]);
     }
 
@@ -125,6 +132,7 @@ class BookingController extends AbstractAdminController
     public function delete(Booking $booking, Request $request): Response
     {
         $this->validateAdminCsrf($request);
+        $this->bookingCalendarSyncDispatcher->afterBookingDeleted($booking);
         $this->em->remove($booking);
         $this->em->flush();
         $this->addFlash('success', 'Reserva removida.');
@@ -166,9 +174,20 @@ class BookingController extends AbstractAdminController
             return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
         }
 
-        $normalized = $this->normalizePlannedArrivalTime(trim((string) $request->request->get('time', '')));
+        $normalized = Property::normalizeClockTime(trim((string) $request->request->get('time', '')));
         if (null === $normalized) {
             $this->addFlash('error', 'Indique um horário válido (HH:MM).');
+
+            return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+        }
+
+        $property = $this->propertyRepository->getOrCreate();
+        if (!$property->allowsArrivalAt($normalized)) {
+            $this->addFlash('error', sprintf(
+                'A chegada não pode ser antes do check-in. A janela é das %s às %s.',
+                $property->getCheckInTime(),
+                $property->getCheckInTimeEnd(),
+            ));
 
             return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
         }
@@ -176,6 +195,7 @@ class BookingController extends AbstractAdminController
         $booking->setPlannedArrivalTime($normalized);
         $booking->setPlannedArrivalSubmittedAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
         $this->em->flush();
+        $this->bookingCalendarSyncDispatcher->afterBookingSaved($booking);
         $this->addFlash('success', 'Horário de chegada actualizado: '.$normalized.'.');
 
         return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
@@ -316,22 +336,5 @@ class BookingController extends AbstractAdminController
             || $booking->getCheckOut()->format('Y-m-d') !== $origCheckOut->format('Y-m-d')) {
             $booking->setManualDates(true);
         }
-    }
-
-    private function normalizePlannedArrivalTime(string $time): ?string
-    {
-        if ('' === $time) {
-            return null;
-        }
-
-        if (preg_match('/^(\d{1,2}):(\d{2})$/', $time, $matches)) {
-            $hours = (int) $matches[1];
-            $minutes = (int) $matches[2];
-            if ($hours >= 0 && $hours <= 23 && $minutes >= 0 && $minutes <= 59) {
-                return sprintf('%02d:%02d', $hours, $minutes);
-            }
-        }
-
-        return null;
     }
 }

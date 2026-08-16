@@ -15,6 +15,7 @@ class IcalSyncService
         private AccessCodeGenerator $accessCodeGenerator,
         private BookingLifecycleService $bookingLifecycleService,
         private HttpClientInterface $httpClient,
+        private BookingCalendarSyncDispatcher $bookingCalendarSyncDispatcher,
     ) {
     }
 
@@ -48,11 +49,14 @@ class IcalSyncService
             }
 
             $seenBookingUids[] = $event['uid'];
-            $existing = $this->bookingRepository->findByExternalUid($event['uid']);
+            $existing = $this->findExistingForEvent($event);
             $isSiteImport = $this->isBlockedEvent($event['summary']);
 
             if ($existing) {
-                if ($isSiteImport) {
+                if ($existing->isLocallyManaged()) {
+                    $this->linkIcalEvent($existing, $event, $syncedAt);
+                    ++$updated;
+                } elseif ($isSiteImport) {
                     if ($this->applySiteBookingEvent($existing, $event, $syncedAt, $today)) {
                         ++$siteBookings;
                     }
@@ -87,6 +91,8 @@ class IcalSyncService
         $property->setAirbnbIcalLastSyncAt($syncedAt);
         $em->flush();
 
+        $this->bookingCalendarSyncDispatcher->afterIcalSync();
+
         return compact('created', 'updated', 'skipped', 'siteBookings', 'completed')
             + $reconciled
             + ['syncedAt' => $syncedAt->format(\DateTimeInterface::ATOM)];
@@ -114,20 +120,81 @@ class IcalSyncService
     /**
      * @param array{uid: string, start: \DateTimeImmutable, end: \DateTimeImmutable, summary: ?string} $event
      */
-    private function applySiteBookingEvent(Booking $booking, array $event, \DateTimeImmutable $syncedAt, \DateTimeImmutable $today): bool
+    private function findExistingForEvent(array $event): ?Booking
     {
-        if (!$booking->isFromAirbnbIcalBlock() && !$booking->isImportedFromAirbnb()) {
-            $booking->setSource(Booking::SOURCE_SITE);
+        $existing = $this->bookingRepository->findByExternalUid($event['uid']);
+        if ($existing) {
+            return $existing;
         }
 
+        $sameDates = $this->bookingRepository->findByExactDates($event['start'], $event['end']);
+        if ($sameDates) {
+            return $this->preferPreservedBooking($sameDates);
+        }
+
+        $unlinked = $this->bookingRepository->findUnlinkedOverlapping($event['start'], $event['end']);
+        if ($unlinked && $unlinked->isLocallyManaged()) {
+            return $unlinked;
+        }
+
+        return null;
+    }
+
+    /** @param Booking[] $bookings */
+    private function preferPreservedBooking(array $bookings): Booking
+    {
+        usort($bookings, function (Booking $left, Booking $right): int {
+            return $this->preservationScore($right) <=> $this->preservationScore($left)
+                ?: ($left->getId() ?? 0) <=> ($right->getId() ?? 0);
+        });
+
+        return $bookings[0];
+    }
+
+    private function preservationScore(Booking $booking): int
+    {
+        return ($booking->hasRajaaramSession() ? 16 : 0)
+            + ($booking->isRajaaram() || Booking::SOURCE_TUCANTO === $booking->getSource() ? 8 : 0)
+            + ($booking->isLocallyManaged() ? 4 : 0)
+            + (null === $booking->getExternalUid() ? 2 : 0)
+            + ($this->isGenericGuestName($booking->getGuestName()) ? 0 : 1);
+    }
+
+    /**
+     * Attach the Airbnb event to an admin-managed stay without touching source,
+     * Rajaaram details, guest data, notes, extras, or dates.
+     *
+     * @param array{uid: string, start: \DateTimeImmutable, end: \DateTimeImmutable, summary: ?string} $event
+     */
+    private function linkIcalEvent(Booking $booking, array $event, \DateTimeImmutable $syncedAt): void
+    {
+        $booking->setExternalUid($event['uid']);
+
+        if ($event['summary'] && !$booking->getIcalSummary()) {
+            $booking->setIcalSummary($event['summary']);
+        }
+
+        $booking->setLastSyncedAt($syncedAt);
+    }
+
+    /**
+     * @param array{uid: string, start: \DateTimeImmutable, end: \DateTimeImmutable, summary: ?string} $event
+     */
+    private function applySiteBookingEvent(Booking $booking, array $event, \DateTimeImmutable $syncedAt, \DateTimeImmutable $today): bool
+    {
         $changed = false;
 
+        if ($this->syncExternalUid($booking, $event['uid'])) {
+            $changed = true;
+        }
+
         if (!$booking->isManualDates()) {
-            $changed = $booking->getCheckIn()->format('Y-m-d') !== $event['start']->format('Y-m-d')
+            $datesChanged = $booking->getCheckIn()->format('Y-m-d') !== $event['start']->format('Y-m-d')
                 || $booking->getCheckOut()->format('Y-m-d') !== $event['end']->format('Y-m-d');
 
             $booking->setCheckIn($event['start']);
             $booking->setCheckOut($event['end']);
+            $changed = $changed || $datesChanged;
         }
 
         $summary = $event['summary'] ?? 'Not available';
@@ -159,12 +226,17 @@ class IcalSyncService
     {
         $changed = false;
 
+        if ($this->syncExternalUid($booking, $event['uid'])) {
+            $changed = true;
+        }
+
         if (!$booking->isManualDates()) {
-            $changed = $booking->getCheckIn()->format('Y-m-d') !== $event['start']->format('Y-m-d')
+            $datesChanged = $booking->getCheckIn()->format('Y-m-d') !== $event['start']->format('Y-m-d')
                 || $booking->getCheckOut()->format('Y-m-d') !== $event['end']->format('Y-m-d');
 
             $booking->setCheckIn($event['start']);
             $booking->setCheckOut($event['end']);
+            $changed = $changed || $datesChanged;
         }
 
         if ($event['summary']) {
@@ -209,6 +281,11 @@ class IcalSyncService
                 continue;
             }
 
+            if (!$booking->isIcalSynced() || $booking->isLocallyManaged()) {
+                ++$preserved;
+                continue;
+            }
+
             if ($booking->isManualDates()) {
                 ++$preserved;
                 continue;
@@ -238,6 +315,17 @@ class IcalSyncService
         }
 
         return compact('cancelled', 'preserved');
+    }
+
+    private function syncExternalUid(Booking $booking, string $uid): bool
+    {
+        if ($booking->getExternalUid() === $uid) {
+            return false;
+        }
+
+        $booking->setExternalUid($uid);
+
+        return true;
     }
 
     private function isBlockedEvent(?string $summary): bool

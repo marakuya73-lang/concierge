@@ -56,7 +56,11 @@
      data-stay-planned-arrival-submit-value="{{ 'app.planned_arrival_submit'|trans }}"
      data-stay-planned-arrival-update-value="{{ 'app.planned_arrival_update'|trans }}"
      data-stay-planned-arrival-confirmed-value="{{ 'app.planned_arrival_confirmed'|trans }}"
-     data-stay-planned-arrival-done-value="{{ 'app.planned_arrival_done'|trans }}">
+     data-stay-planned-arrival-done-value="{{ 'app.planned_arrival_done'|trans }}"
+     data-stay-check-in-time-value="{{ stay.checkInTime }}"
+     data-stay-planned-arrival-too-early-title-value="{{ 'app.planned_arrival_too_early_title'|trans({'%from%': stay.checkInTime}) }}"
+     data-stay-planned-arrival-too-early-lead-value="{{ 'app.planned_arrival_too_early_lead'|trans({'%from%': stay.checkInTime, '%to%': stay.checkInTimeEnd}) }}"
+     data-stay-planned-arrival-too-early-ok-value="{{ 'app.planned_arrival_too_early_ok'|trans }}">
     <header class="stay-header">
         <div class="stay-header-inner">
             <div class="stay-header-brand">
@@ -124,6 +128,7 @@
                 </div>
             </div>
 
+            {% if stay.rajaaram is not defined %}
             {% if stay.selfCheckInRequested %}
                 <section class="stay-self-checkin-home" data-stay-target="selfCheckInHome">
                     <div class="stay-self-checkin-home-inner">
@@ -162,20 +167,21 @@
                                 </p>
                                 <form class="stay-planned-arrival-form stay-planned-arrival-form--update" data-stay-target="plannedArrivalForm" data-action="submit->stay#submitPlannedArrival">
                                     <label class="sr-only" for="planned-arrival-time">{{ 'app.planned_arrival_label'|trans }}</label>
-                                    <input id="planned-arrival-time" type="time" name="time" value="{{ stay.plannedArrivalTime }}" required>
+                                    <input id="planned-arrival-time" type="time" name="time" value="{{ stay.plannedArrivalTime }}" required data-action="change->stay#onPlannedArrivalChange">
                                     <button type="submit" class="btn btn-outline btn-sm" data-stay-target="plannedArrivalSubmit">{{ 'app.planned_arrival_update'|trans }}</button>
                                 </form>
                             {% else %}
                                 <p class="stay-planned-arrival-hint">{{ 'app.planned_arrival_hint'|trans({'%from%': stay.checkInTime, '%to%': stay.checkInTimeEnd}) }}</p>
                                 <form class="stay-planned-arrival-form" data-stay-target="plannedArrivalForm" data-action="submit->stay#submitPlannedArrival">
                                     <label class="sr-only" for="planned-arrival-time">{{ 'app.planned_arrival_label'|trans }}</label>
-                                    <input id="planned-arrival-time" type="time" name="time" required>
+                                    <input id="planned-arrival-time" type="time" name="time" required data-action="change->stay#onPlannedArrivalChange">
                                     <button type="submit" class="btn btn-accent btn-sm" data-stay-target="plannedArrivalSubmit">{{ 'app.planned_arrival_submit'|trans }}</button>
                                 </form>
                             {% endif %}
                         </div>
                     </div>
                 </section>
+            {% endif %}
             {% endif %}
 
             {% if stay.rajaaram is defined %}
@@ -339,7 +345,7 @@
                         <p class="checkin-time-hint">{% if stay.selfCheckInRequested %}{{ 'app.self_checkin_window_hint'|trans }}{% else %}{{ 'app.checkin_window_hint'|trans }}{% endif %}</p>
                         {% if stay.selfCheckInRequested %}
                             <p class="checkin-self-status" data-stay-target="selfCheckInStatus">{{ 'app.self_checkin_confirmed'|trans }}</p>
-                        {% elseif stay.selfCheckInAvailable %}
+                        {% elseif stay.selfCheckInAvailable and stay.rajaaram is not defined %}
                             <button type="button" class="btn btn-outline btn-sm btn-block checkin-self-btn" data-stay-target="selfCheckInBtn" data-action="click->stay#openSelfCheckInModal">{{ 'app.self_checkin_prefer'|trans }}</button>
                         {% endif %}
                     </div>
@@ -363,7 +369,7 @@
                     </section>
                 {% endif %}
 
-                {% if not stay.selfCheckInRequested %}
+                {% if not stay.selfCheckInRequested and stay.rajaaram is not defined %}
                 <aside class="checkin-note">
                     {{ icon.clock('checkin-note-icon') }}
                     <p>{{ 'app.checkin_arrival_request'|trans({'%from%': stay.checkInTime, '%to%': stay.checkInTimeEnd}) }}</p>
@@ -906,15 +912,16 @@
                     </div>
                 </section>
 
-                {% set availableExtras = extras.available|filter(e => e.id not in requestedIds and e.category not in ['alimentação', 'alimentacao']) %}
+                {% set hasBreakfastBooked = extras.myRequests|filter(r => r.status != 'cancelled' and r.isBreakfast)|length > 0 %}
+                {% set availableExtras = extras.available|filter(e => e.id not in requestedIds and (e.category not in ['alimentação', 'alimentacao'] or (e.isBreakfast and not hasBreakfastBooked))) %}
                 <section class="extras-section">
                     <p class="extras-section-label">{{ 'app.available_extras'|trans }}</p>
                     <div data-stay-target="extrasAvailableList">
                     {% for extra in availableExtras %}
-                        <article class="extras-item-card{% if extra.leadTimeHours and not extra.bookable %} extras-item-card--blocked{% endif %}">
+                        <article class="extras-item-card{% if extra.leadTimeHours and not extra.bookable %} extras-item-card--blocked{% endif %}"{% if extra.isBreakfast %} data-is-breakfast="1"{% endif %}>
                             <div class="extras-item-top">
                                 <div class="extras-item-copy">
-                                    <p class="extras-item-category">{{ extra.category|upper }}</p>
+                                    <p class="extras-item-category">{% if extra.isBreakfast %}{{ 'app.food_service_breakfast'|trans|upper }}{% else %}{{ extra.category|upper }}{% endif %}</p>
                                     <h3 class="extras-item-name font-serif">{{ extra.name }}</h3>
                                     <p class="extras-item-desc">{{ extra.description }}</p>
                                     {% if extra.leadTimeHours %}
@@ -1005,6 +1012,17 @@
                 {{ 'app.extra_confirm_whatsapp'|trans }} ↗
             </a>
             <button type="button" class="btn btn-outline btn-block extras-confirm-back" data-action="click->stay#dismissExtraConfirm" data-stay-target="confirmBack"></button>
+        </div>
+    </div>
+
+    <div class="extras-confirm-overlay stay-cancel-overlay" id="stay-arrival-window-modal" data-stay-target="arrivalWindowModal" data-action="click->stay#closeArrivalWindowModalOnBackdrop" hidden role="dialog" aria-modal="true" aria-labelledby="arrivalWindowModalTitle">
+        <div class="extras-confirm stay-cancel-confirm stay-dialog--info" id="stay-arrival-window-modal-panel">
+            <div class="stay-dialog-icon" aria-hidden="true">🕒</div>
+            <h3 id="arrivalWindowModalTitle" class="extras-confirm-title font-serif" data-stay-target="arrivalWindowTitle">{{ 'app.planned_arrival_too_early_title'|trans({'%from%': stay.checkInTime}) }}</h3>
+            <p class="extras-confirm-lead" data-stay-target="arrivalWindowLead">{{ 'app.planned_arrival_too_early_lead'|trans({'%from%': stay.checkInTime, '%to%': stay.checkInTimeEnd}) }}</p>
+            <div class="stay-cancel-actions">
+                <button type="button" class="btn btn-accent btn-block" data-action="click->stay#closeArrivalWindowModal" data-stay-target="arrivalWindowOk">{{ 'app.planned_arrival_too_early_ok'|trans }}</button>
+            </div>
         </div>
     </div>
 

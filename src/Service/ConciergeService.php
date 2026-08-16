@@ -6,6 +6,7 @@ use App\Exception\StayEndedException;
 use App\Entity\Booking;
 use App\Entity\BookingExtra;
 use App\Entity\Extra;
+use App\Entity\Property;
 use App\Repository\BookingDisabledExtraRepository;
 use App\Repository\BookingExtraRepository;
 use App\Repository\BookingRepository;
@@ -13,6 +14,7 @@ use App\Repository\ExtraRepository;
 use App\Repository\PropertyRepository;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class ConciergeService
 {
@@ -25,6 +27,7 @@ class ConciergeService
         private ExtraRequestNotificationService $extraRequestNotificationService,
         private SelfCheckInNotificationService $selfCheckInNotificationService,
         private PlannedArrivalNotificationService $plannedArrivalNotificationService,
+        private BookingCalendarSyncDispatcher $bookingCalendarSyncDispatcher,
     ) {
     }
 
@@ -93,6 +96,12 @@ class ConciergeService
     {
         $booking = $this->getValidBooking($code, $locale);
 
+        if ($booking->hasRajaaramSession()) {
+            throw new AccessDeniedHttpException('en' === $locale
+                ? 'Self check-in is not available for Rajaaram stays.'
+                : 'Self check-in não está disponível para estadias Rajaaram.');
+        }
+
         if ($booking->isSelfCheckInRequested()) {
             throw new AccessDeniedHttpException('en' === $locale
                 ? 'Self check-in has already been requested for this stay.'
@@ -121,6 +130,10 @@ class ConciergeService
 
     public function canRequestSelfCheckIn(Booking $booking, ?\DateTimeImmutable $now = null): bool
     {
+        if ($booking->hasRajaaramSession()) {
+            return false;
+        }
+
         if ($booking->isSelfCheckInRequested()) {
             return false;
         }
@@ -139,17 +152,32 @@ class ConciergeService
     {
         $booking = $this->getValidBooking($code, $locale);
 
+        if ($booking->hasRajaaramSession()) {
+            throw new AccessDeniedHttpException('en' === $locale
+                ? 'Planned arrival time is not needed for Rajaaram stays.'
+                : 'Horário de chegada não é necessário para estadias Rajaaram.');
+        }
+
         if ($booking->isSelfCheckInRequested()) {
             throw new AccessDeniedHttpException('en' === $locale
                 ? 'Planned arrival time is not needed for self check-in stays.'
                 : 'Horário de chegada não é necessário para estadias com self check-in.');
         }
 
-        $normalized = $this->normalizeArrivalTime($time);
+        $normalized = Property::normalizeClockTime($time);
         if (null === $normalized) {
             throw new AccessDeniedHttpException('en' === $locale
                 ? 'Please enter a valid arrival time.'
                 : 'Indique um horário de chegada válido.');
+        }
+
+        $property = $this->propertyRepository->getOrCreate();
+        if (!$property->allowsArrivalAt($normalized)) {
+            $from = $property->getCheckInTime();
+            $to = $property->getCheckInTimeEnd();
+            throw new UnprocessableEntityHttpException('en' === $locale
+                ? sprintf('Check-in is from %s to %s.', $from, $to)
+                : sprintf('O check-in é das %s às %s.', $from, $to));
         }
 
         $previous = $booking->getPlannedArrivalTime();
@@ -158,6 +186,7 @@ class ConciergeService
         $booking->setPlannedArrivalTime($normalized);
         $booking->setPlannedArrivalSubmittedAt(new \DateTimeImmutable('now', new \DateTimeZone(self::CHECKIN_TIMEZONE)));
         $this->bookingRepository->getEntityManager()->flush();
+        $this->bookingCalendarSyncDispatcher->afterBookingSaved($booking);
 
         if (!$previous || $isUpdate) {
             $this->plannedArrivalNotificationService->notifyAdmin($booking, $isUpdate);
@@ -170,20 +199,6 @@ class ConciergeService
                 ? ($isUpdate ? 'Arrival time updated. Thank you!' : 'Arrival time saved. Thank you!')
                 : ($isUpdate ? 'Horário de chegada actualizado. Obrigado!' : 'Horário de chegada registado. Obrigado!'),
         ];
-    }
-
-    private function normalizeArrivalTime(string $time): ?string
-    {
-        $time = trim($time);
-        if (preg_match('/^(\d{1,2}):(\d{2})$/', $time, $matches)) {
-            $hours = (int) $matches[1];
-            $minutes = (int) $matches[2];
-            if ($hours >= 0 && $hours <= 23 && $minutes >= 0 && $minutes <= 59) {
-                return sprintf('%02d:%02d', $hours, $minutes);
-            }
-        }
-
-        return null;
     }
 
     public function getExtrasForGuest(string $code, string $locale = 'pt'): array

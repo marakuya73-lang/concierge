@@ -54,11 +54,17 @@
                 <input type="hidden" name="_redirect" value="admin_bookings">
                 <button type="submit" class="btn btn-outline btn-sm">↻ Sincronizar Airbnb</button>
             </form>
+            <form method="post" action="{{ path('admin_sync_google_calendar') }}">
+                {{ csrf.csrf() }}
+                <input type="hidden" name="_redirect" value="admin_bookings">
+                <button type="submit" class="btn btn-outline btn-sm">↻ Sincronizar Google Calendar</button>
+            </form>
             <a href="{{ path('admin_booking_new') }}" class="btn btn-primary btn-sm">+ Nova reserva</a>
         </div>
     </div>
 
-    {% include 'admin/_ical_sync_status.html.twig' %}
+    {% include 'admin/_ical_sync_status.html.twig' with { lastIcalSyncAt: lastIcalSyncAt } %}
+    {% include 'admin/_google_calendar_sync_status.html.twig' with { lastGoogleCalendarSyncAt: lastGoogleCalendarSyncAt } %}
 
     {% if pendingSiteBookings|length > 0 %}
         <div class="admin-notice">

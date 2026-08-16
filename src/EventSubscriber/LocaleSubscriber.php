@@ -2,6 +2,7 @@
 
 namespace App\EventSubscriber;
 
+use App\Service\GuestLocaleResolver;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -9,6 +10,11 @@ use Symfony\Component\HttpKernel\KernelEvents;
 class LocaleSubscriber implements EventSubscriberInterface
 {
     private const SUPPORTED = ['pt', 'en'];
+
+    public function __construct(
+        private GuestLocaleResolver $guestLocaleResolver,
+    ) {
+    }
 
     public function onKernelRequest(RequestEvent $event): void
     {
@@ -27,6 +33,14 @@ class LocaleSubscriber implements EventSubscriberInterface
             $requested = $request->query->get('_locale');
             if (in_array($requested, self::SUPPORTED, true)) {
                 $locale = $requested;
+                if ($request->hasSession()) {
+                    $request->getSession()->set('_locale', $locale);
+                }
+            }
+        } else {
+            $bookingLocale = $this->guestLocaleResolver->resolveFromRequest($request);
+            if ($bookingLocale && in_array($bookingLocale, self::SUPPORTED, true)) {
+                $locale = $bookingLocale;
                 if ($request->hasSession()) {
                     $request->getSession()->set('_locale', $locale);
                 }

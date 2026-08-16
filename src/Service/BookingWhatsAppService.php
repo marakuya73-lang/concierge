@@ -16,6 +16,13 @@ class BookingWhatsAppService
 
     public function buildWelcomeMessage(Booking $booking): string
     {
+        return Booking::LOCALE_EN === $booking->getGuestLocale()
+            ? $this->buildEnglishWelcomeMessage($booking)
+            : $this->buildPortugueseWelcomeMessage($booking);
+    }
+
+    private function buildPortugueseWelcomeMessage(Booking $booking): string
+    {
         $property = $this->propertyRepository->getOrCreate();
         $conciergeUrl = $this->urlGenerator->generate('guest_home', [], UrlGeneratorInterface::ABSOLUTE_URL);
         $code = $booking->getAccessCode();
@@ -24,7 +31,7 @@ class BookingWhatsAppService
         $contactPhone = $property->getContactPhone();
         $plural = $booking->getGuests() > 1;
 
-        $greeting = $this->buildGreeting($booking->getGuestName());
+        $greeting = $this->buildGreeting($booking->getGuestName(), 'pt');
         $reservaLine = $plural ? 'Recebemos a reserva de vocês com muita alegria!' : 'Recebemos sua reserva com muita alegria!';
         $receiveLine = $plural
             ? 'Será um prazer recebê-los no Domo Xangô. Garantimos que vai ser incrível. 🤗'
@@ -53,9 +60,54 @@ class BookingWhatsAppService
         ]);
     }
 
-    private function buildGreeting(string $guestName): string
+    private function buildEnglishWelcomeMessage(Booking $booking): string
+    {
+        $property = $this->propertyRepository->getOrCreate();
+        $conciergeUrl = $this->urlGenerator->generate('guest_home', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        $code = $booking->getAccessCode();
+        $checkIn = $booking->getCheckIn()->format('d/m/Y');
+        $checkOut = $booking->getCheckOut()->format('d/m/Y');
+        $contactPhone = $property->getContactPhone();
+        $plural = $booking->getGuests() > 1;
+
+        $greeting = $this->buildGreeting($booking->getGuestName(), 'en');
+        $reservaLine = $plural
+            ? 'We were delighted to receive your reservation!'
+            : 'We were delighted to receive your reservation!';
+        $receiveLine = $plural
+            ? 'It will be our pleasure to welcome you to Domo Xangô. We guarantee it will be incredible. 🤗'
+            : 'It will be our pleasure to welcome you to Domo Xangô. We guarantee it will be incredible. 🤗';
+        $experienceLine = $plural
+            ? 'To ensure you have the best experience, we created a digital Welcome Book with all the important information about the space, breakfast, attractions and much more:'
+            : 'To ensure you have the best experience, we created a digital Welcome Book with all the important information about the space, breakfast, attractions and much more:';
+        $codeLine = 'Your access code';
+        $helpLine = $plural
+            ? 'If you need anything or have questions about the tips, I will be available on WhatsApp'
+            : 'If you need anything or have questions about the tips, I will be available on WhatsApp';
+        $closingLine = $plural
+            ? 'We are preparing everything with care to welcome you. See you soon!'
+            : 'We are preparing everything with care to welcome you. See you soon!';
+
+        return implode("\n\n", [
+            $greeting,
+            $reservaLine,
+            $receiveLine,
+            "Stay: {$checkIn} to {$checkOut}",
+            $experienceLine,
+            $conciergeUrl,
+            "{$codeLine}: {$code}",
+            "{$helpLine}: {$contactPhone}.",
+            $closingLine,
+        ]);
+    }
+
+    private function buildGreeting(string $guestName, string $locale): string
     {
         $firstName = $this->guestFirstName($guestName);
+
+        if ('en' === $locale) {
+            return '' !== $firstName ? "Hello, {$firstName}!" : 'Hello!';
+        }
 
         return '' !== $firstName ? "Olá, {$firstName}!" : 'Olá!';
     }
