@@ -4,7 +4,7 @@ namespace App\Form;
 
 use App\Entity\Booking;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
@@ -166,11 +166,36 @@ class BookingType extends AbstractType
                 'help' => 'Formato 24h (ex.: 09:00, 14:30).',
                 'row_attr' => ['data-booking-form-target' => 'rajaaramField rajaaramDuoField'],
             ])
-            ->add('rajaaramBreakfastIncluded', CheckboxType::class, [
-                'label' => 'Café da manhã incluído',
+            ->add('rajaaramBreakfastIncluded', ChoiceType::class, [
+                'label' => 'Café da manhã',
+                'choices' => [
+                    'Incluído' => '1',
+                    'Não incluído' => '0',
+                ],
+                'expanded' => true,
+                'multiple' => false,
                 'required' => false,
+                'placeholder' => false,
                 'row_attr' => ['data-booking-form-target' => 'rajaaramField'],
+                'help' => 'Fica gravado nesta reserva. Não muda sozinho depois de salvar.',
             ]);
+
+        $builder->get('rajaaramBreakfastIncluded')->addModelTransformer(new CallbackTransformer(
+            static function (mixed $value): ?string {
+                return match ($value) {
+                    true, 1, '1' => '1',
+                    false, 0, '0' => '0',
+                    default => null,
+                };
+            },
+            static function (mixed $value): ?bool {
+                return match ($value) {
+                    '1', 1, true => true,
+                    '0', 0, false => false,
+                    default => null,
+                };
+            },
+        ));
 
         if ($options['include_access_code']) {
             $builder->add('accessCode', TextType::class, [
@@ -217,7 +242,10 @@ class BookingType extends AbstractType
             if (!isset($data['extraGuestNames']) || !\is_array($data['extraGuestNames'])) {
                 $data['extraGuestNames'] = [];
             }
-            if (($data['source'] ?? null) !== Booking::SOURCE_RAJAARAM) {
+            $source = $data['source'] ?? null;
+            $isDuo = ($data['rajaaramIsDuo'] ?? null) === '1' || ($data['rajaaramIsDuo'] ?? null) === true;
+
+            if ($source !== Booking::SOURCE_RAJAARAM) {
                 $data['rajaaramTherapy'] = null;
                 $data['rajaaramTherapyDate'] = null;
                 $data['rajaaramTherapyTime'] = null;
@@ -228,11 +256,24 @@ class BookingType extends AbstractType
                 $data['rajaaramTherapy2Date'] = null;
                 $data['rajaaramTherapy2Time'] = null;
                 $data['rajaaramBreakfastIncluded'] = null;
-            } elseif (empty($data['rajaaramIsDuo'])) {
-                $data['rajaaramGuest2Name'] = null;
-                $data['rajaaramTherapy2'] = null;
-                $data['rajaaramTherapy2Date'] = null;
-                $data['rajaaramTherapy2Time'] = null;
+            } else {
+                if (!$isDuo) {
+                    $data['rajaaramGuest2Name'] = null;
+                    $data['rajaaramTherapy2'] = null;
+                    $data['rajaaramTherapy2Date'] = null;
+                    $data['rajaaramTherapy2Time'] = null;
+                }
+
+                if (!array_key_exists('rajaaramBreakfastIncluded', $data) || '' === $data['rajaaramBreakfastIncluded']) {
+                    $booking = $event->getForm()->getData();
+                    if ($booking instanceof Booking) {
+                        $data['rajaaramBreakfastIncluded'] = match ($booking->getRajaaramBreakfastIncluded()) {
+                            true => '1',
+                            false => '0',
+                            default => null,
+                        };
+                    }
+                }
             }
             $event->setData($data);
         });

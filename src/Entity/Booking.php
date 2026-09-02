@@ -323,6 +323,7 @@ class Booking
     public function setRajaaramTherapy2Date(?\DateTimeImmutable $v): static { $this->rajaaramTherapy2Date = $v; return $this; }
     public function getRajaaramTherapy2Time(): ?string { return $this->rajaaramTherapy2Time; }
     public function setRajaaramTherapy2Time(?string $v): static { $this->rajaaramTherapy2Time = $v; return $this; }
+    public function getRajaaramBreakfastIncluded(): ?bool { return $this->rajaaramBreakfastIncluded; }
     public function isRajaaramBreakfastIncluded(): ?bool { return $this->rajaaramBreakfastIncluded; }
     public function setRajaaramBreakfastIncluded(?bool $v): static { $this->rajaaramBreakfastIncluded = $v; return $this; }
     public function isManualDates(): bool { return $this->manualDates; }
