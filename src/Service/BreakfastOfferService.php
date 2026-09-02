@@ -150,14 +150,15 @@ class BreakfastOfferService
             && $this->isBookable($single, $singlesNeeded, $checkInAt);
         $composition = $this->compositionLabel($couplesNeeded, $singlesNeeded, $locale);
         $name = $primary->getBreakfastBaseName($locale).' ('.$composition.')';
-        $covers = $this->translator->trans('app.breakfast_covers', ['%count%' => $servings['guests']], locale: $locale);
+        $covers = $this->coversLabel($servings['guests'], $locale);
+        $description = trim($covers.' '.$this->withoutCatalogGuestCount($primary->getDescription($locale)));
 
         return [
             'id' => $primary->getId(),
             'name' => $name,
             'namePt' => $primary->getBreakfastBaseName('pt').' ('.$this->compositionLabel($couplesNeeded, $singlesNeeded, 'pt').')',
             'nameEn' => $primary->getBreakfastBaseName('en').' ('.$this->compositionLabel($couplesNeeded, $singlesNeeded, 'en').')',
-            'description' => $covers.' '.$primary->getDescription($locale),
+            'description' => $description,
             'price' => $unitPrice,
             'currency' => $primary->getCurrency(),
             'category' => $primary->getCategory(),
@@ -184,6 +185,26 @@ class BreakfastOfferService
         }
 
         return implode(' + ', $parts);
+    }
+
+    private function coversLabel(int $guests, string $locale): string
+    {
+        if (1 === $guests) {
+            return $this->translator->trans('app.breakfast_covers_one', locale: $locale);
+        }
+
+        return $this->translator->trans('app.breakfast_covers', ['%count%' => $guests], locale: $locale);
+    }
+
+    private function withoutCatalogGuestCount(string $description): string
+    {
+        $cleaned = preg_replace(
+            '/\s*(Para 1 hóspede|Para 2 ou mais hóspedes|For 1 guest|For 2 or more guests)\.?\s*/iu',
+            ' ',
+            $description,
+        ) ?? $description;
+
+        return trim(preg_replace('/\s+/u', ' ', $cleaned) ?? $cleaned);
     }
 
     /** @param int[] $disabledIds */
