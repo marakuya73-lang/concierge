@@ -71,13 +71,18 @@ class BookingExtra
     public function isCustom(): bool { return null === $this->extra; }
     public function getDisplayName(string $locale = 'pt'): string
     {
+        $custom = 'en' === $locale
+            ? ($this->customNameEn ?: $this->customNamePt)
+            : ($this->customNamePt ?: $this->customNameEn);
+        if ($custom) {
+            return $custom;
+        }
+
         if ($this->extra) {
             return $this->extra->getName($locale);
         }
 
-        $name = 'en' === $locale ? ($this->customNameEn ?: $this->customNamePt) : ($this->customNamePt ?: $this->customNameEn);
-
-        return $name ?? 'Extra personalizado';
+        return 'Extra personalizado';
     }
     public function getQuantity(): int { return $this->quantity; }
     public function setQuantity(int $v): static { $this->quantity = $v; return $this; }

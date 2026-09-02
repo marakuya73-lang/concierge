@@ -112,4 +112,48 @@ class Extra
     {
         return (bool) preg_match('/rajaaram/i', $this->namePt.' '.$this->nameEn);
     }
+
+    public function isBreakfast(): bool
+    {
+        $haystack = $this->namePt.' '.$this->nameEn;
+        if (preg_match('/chef/i', $haystack)) {
+            return false;
+        }
+
+        return 'coffee' === $this->icon || (bool) preg_match('/café da manhã|breakfast/i', $haystack);
+    }
+
+    public function isBreakfastCouple(): bool
+    {
+        return $this->isBreakfast() && (bool) preg_match('/\b(casal|couple)s?\b/i', $this->namePt.' '.$this->nameEn);
+    }
+
+    public function isBreakfastSingle(): bool
+    {
+        return $this->isBreakfast() && (bool) preg_match('/individual|\bsingle\b/i', $this->namePt.' '.$this->nameEn);
+    }
+
+    public function getBreakfastStyle(): ?string
+    {
+        if (!$this->isBreakfast()) {
+            return null;
+        }
+
+        $haystack = mb_strtolower($this->namePt.' '.$this->nameEn);
+        if (str_contains($haystack, 'gourmet')) {
+            return 'gourmet';
+        }
+        if (str_contains($haystack, 'simples') || preg_match('/\bsimple\b/', $haystack)) {
+            return 'simple';
+        }
+
+        return 'other';
+    }
+
+    public function getBreakfastBaseName(string $locale = 'pt'): string
+    {
+        $name = $this->getName($locale);
+
+        return trim((string) preg_replace('/\s*\((?:individual|casal|single|couple)s?\)\s*$/i', '', $name));
+    }
 }

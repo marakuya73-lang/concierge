@@ -28,6 +28,7 @@ class ConciergeService
         private SelfCheckInNotificationService $selfCheckInNotificationService,
         private PlannedArrivalNotificationService $plannedArrivalNotificationService,
         private BookingCalendarSyncDispatcher $bookingCalendarSyncDispatcher,
+        private BreakfastOfferService $breakfastOfferService,
     ) {
     }
 
@@ -205,27 +206,43 @@ class ConciergeService
     public function getExtrasForGuest(string $code, string $locale = 'pt'): array
     {
         $booking = $this->getValidBooking($code, $locale);
-        $available = $this->extraRepository->findActiveForGuestCount($booking->getGuests());
+        $partySize = $booking->getPartySize();
+        $availableExtras = $this->extraRepository->findActive();
 
         if ($booking->hasRajaaramSession()) {
-            $available = array_values(array_filter(
-                $available,
+            $availableExtras = array_values(array_filter(
+                $availableExtras,
                 static fn (Extra $extra): bool => !$extra->isRajaaramExtra(),
             ));
         }
 
         $disabledIds = $this->bookingDisabledExtraRepository->findDisabledExtraIds($booking);
-        if ($disabledIds) {
-            $available = array_values(array_filter(
-                $available,
-                static fn (Extra $extra): bool => !\in_array($extra->getId(), $disabledIds, true),
-            ));
+        $checkInAt = $this->getCheckInDateTime($booking);
+
+        $available = [];
+        foreach ($availableExtras as $extra) {
+            if ($extra->isBreakfast()) {
+                continue;
+            }
+            if (\in_array($extra->getId(), $disabledIds, true)) {
+                continue;
+            }
+            if (!$extra->isAvailableForGuestCount($partySize)) {
+                continue;
+            }
+
+            $available[] = $this->serializeExtra($extra, $locale, $booking);
         }
+
+        $available = array_merge(
+            $this->breakfastOfferService->buildOffers($availableExtras, $partySize, $disabledIds, $locale, $checkInAt),
+            $available,
+        );
 
         $requests = $this->bookingExtraRepository->findByBooking($booking);
 
         return [
-            'available' => array_map(fn (Extra $e) => $this->serializeExtra($e, $locale, $booking), $available),
+            'available' => $available,
             'myRequests' => array_map(fn (BookingExtra $be) => $this->serializeBookingExtra($be, $locale), $requests),
         ];
     }
@@ -288,7 +305,32 @@ class ConciergeService
             throw new NotFoundHttpException('Extra não disponível');
         }
 
-        if (!$extra->isAvailableForGuestCount($booking->getGuests())) {
+        $partySize = $booking->getPartySize();
+        $disabledIds = $this->bookingDisabledExtraRepository->findDisabledExtraIds($booking);
+        $checkInAt = $this->getCheckInDateTime($booking);
+        $breakfastOffer = $extra->isBreakfast()
+            ? $this->breakfastOfferService->offerForRequestedExtra(
+                $extra,
+                $this->extraRepository->findActive(),
+                $partySize,
+                $disabledIds,
+                $locale,
+                $checkInAt,
+            )
+            : null;
+
+        if ($extra->isBreakfast()) {
+            if (null === $breakfastOffer) {
+                throw new AccessDeniedHttpException('en' === $locale
+                    ? 'This breakfast is not available for the number of guests in your stay.'
+                    : 'Este café da manhã não está disponível para o número de hóspedes da sua estadia.');
+            }
+            if ($this->bookingHasBreakfastRequest($booking)) {
+                throw new AccessDeniedHttpException('en' === $locale
+                    ? 'Breakfast is already requested for this stay.'
+                    : 'O café da manhã já foi solicitado para esta estadia.');
+            }
+        } elseif (!$extra->isAvailableForGuestCount($partySize)) {
             throw new AccessDeniedHttpException('Este extra não está disponível para o número de hóspedes da sua reserva.');
         }
 
@@ -298,33 +340,42 @@ class ConciergeService
                 : 'As terapias Rajaaram já fazem parte da sua estadia Rajaaram.');
         }
 
-        $disabledIds = $this->bookingDisabledExtraRepository->findDisabledExtraIds($booking);
-        if (\in_array($extraId, $disabledIds, true)) {
+        if (\in_array($extraId, $disabledIds, true) || ($breakfastOffer && \in_array((int) $breakfastOffer['id'], $disabledIds, true))) {
             throw new AccessDeniedHttpException('en' === $locale
                 ? 'This extra is not available for your stay.'
                 : 'Este extra não está disponível para a sua estadia.');
         }
 
-        if (!$extra->canBeBookedBefore($this->getCheckInDateTime($booking))) {
-            $hours = $extra->getLeadTimeHours();
+        $leadHours = $breakfastOffer['leadTimeHours'] ?? $extra->getLeadTimeHours();
+        $bookable = $breakfastOffer['bookable'] ?? $extra->canBeBookedBefore($checkInAt);
+        if (!$bookable) {
             $message = 'en' === $locale
-                ? sprintf('This extra requires booking at least %dh before check-in.', $hours)
-                : sprintf('Este extra requer reserva com pelo menos %dh de antecedência ao check-in.', $hours);
+                ? sprintf('This extra requires booking at least %dh before check-in.', $leadHours)
+                : sprintf('Este extra requer reserva com pelo menos %dh de antecedência ao check-in.', $leadHours);
             throw new AccessDeniedHttpException($message);
         }
 
-        if ($this->bookingExtraRepository->guestAlreadyRequested($booking, $extraId)) {
+        $catalogExtra = $breakfastOffer ? $this->extraRepository->find((int) $breakfastOffer['id']) : $extra;
+        if (!$catalogExtra) {
+            throw new NotFoundHttpException('Extra não disponível');
+        }
+
+        if ($this->bookingExtraRepository->guestAlreadyRequested($booking, (int) $catalogExtra->getId())) {
             throw new AccessDeniedHttpException('Você já solicitou este extra.');
         }
 
         $bookingExtra = new BookingExtra();
         $bookingExtra->setBooking($booking);
-        $bookingExtra->setExtra($extra);
+        $bookingExtra->setExtra($catalogExtra);
         $bookingExtra->setQuantity(max(1, $quantity));
         $bookingExtra->setNotes($notes);
         $bookingExtra->setRequestedBy(BookingExtra::REQUESTED_BY_GUEST);
-        $bookingExtra->setPriceAtBooking($extra->getPrice());
+        $bookingExtra->setPriceAtBooking($breakfastOffer['price'] ?? $catalogExtra->getPrice());
         $bookingExtra->setStatus(BookingExtra::STATUS_REQUESTED);
+        if ($breakfastOffer) {
+            $bookingExtra->setCustomNamePt((string) $breakfastOffer['namePt']);
+            $bookingExtra->setCustomNameEn((string) $breakfastOffer['nameEn']);
+        }
 
         $this->bookingExtraRepository->getEntityManager()->persist($bookingExtra);
         $this->bookingExtraRepository->getEntityManager()->flush();
@@ -416,7 +467,7 @@ class ConciergeService
             'currency' => $extra->getCurrency(),
             'category' => $extra->getCategory(),
             'icon' => $extra->getIcon(),
-            'isBreakfast' => $this->isBreakfastExtra($extra),
+            'isBreakfast' => $extra->isBreakfast(),
             'leadTimeHours' => $extra->getLeadTimeHours(),
             'bookable' => $extra->canBeBookedBefore($checkInAt),
             'isRajaaram' => $extra->isRajaaramExtra(),
@@ -447,20 +498,26 @@ class ConciergeService
             'priceAtBooking' => $be->getPriceAtBooking(),
             'requestedBy' => $be->getRequestedBy(),
             'category' => $extra?->getCategory(),
-            'isBreakfast' => $extra ? $this->isBreakfastExtra($extra) : false,
+            'isBreakfast' => $extra?->isBreakfast() ?? false,
             'isCustom' => $be->isCustom(),
             'createdAt' => $be->getCreatedAt()->format(\DateTimeInterface::ATOM),
             'canCancel' => $be->canBeCancelledByGuest(),
         ];
     }
 
-    private function isBreakfastExtra(Extra $extra): bool
+    private function bookingHasBreakfastRequest(Booking $booking): bool
     {
-        if (preg_match('/chef/i', $extra->getNamePt()) || preg_match('/chef/i', $extra->getNameEn())) {
-            return false;
+        foreach ($this->bookingExtraRepository->findByBooking($booking) as $request) {
+            if (BookingExtra::STATUS_CANCELLED === $request->getStatus()) {
+                continue;
+            }
+
+            if ($request->getExtra()?->isBreakfast()) {
+                return true;
+            }
         }
 
-        return 'coffee' === $extra->getIcon();
+        return false;
     }
 
     private function buildExtraConfirmationWhatsAppUrl(

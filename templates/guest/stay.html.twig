@@ -733,10 +733,14 @@
                                 </div>
                                 {% if extra.bookable %}
                                     <div class="food-service-form">
-                                        <label class="food-service-field">
-                                            <span class="food-service-field-label">{{ 'app.extras_qty'|trans }}</span>
-                                            <input type="number" id="food-qty-{{ extra.id }}" value="1" min="1" max="10" class="food-service-qty">
-                                        </label>
+                                        {% if extra.breakfastPackage|default(false) %}
+                                            <input type="hidden" id="food-qty-{{ extra.id }}" value="1">
+                                        {% else %}
+                                            <label class="food-service-field">
+                                                <span class="food-service-field-label">{{ 'app.extras_qty'|trans }}</span>
+                                                <input type="number" id="food-qty-{{ extra.id }}" value="1" min="1" max="10" class="food-service-qty">
+                                            </label>
+                                        {% endif %}
                                         <label class="food-service-field food-service-field--grow">
                                             <span class="food-service-field-label">{{ 'app.notes_optional'|trans }}</span>
                                             <input type="text" id="food-notes-{{ extra.id }}" placeholder="{{ 'app.notes_optional'|trans }}" class="food-service-notes">
@@ -943,10 +947,14 @@
 
                             {% if extra.bookable %}
                                 <div class="extras-item-form">
-                                    <label class="extras-field">
-                                        <span class="extras-field-label">{{ 'app.extras_qty'|trans }}</span>
-                                        <input type="number" id="qty-{{ extra.id }}" value="1" min="1" max="10" class="extras-qty-input">
-                                    </label>
+                                    {% if extra.breakfastPackage|default(false) %}
+                                        <input type="hidden" id="qty-{{ extra.id }}" value="1">
+                                    {% else %}
+                                        <label class="extras-field">
+                                            <span class="extras-field-label">{{ 'app.extras_qty'|trans }}</span>
+                                            <input type="number" id="qty-{{ extra.id }}" value="1" min="1" max="10" class="extras-qty-input">
+                                        </label>
+                                    {% endif %}
                                     <label class="extras-field extras-field--grow">
                                         <span class="extras-field-label">{{ 'app.notes_optional'|trans }}</span>
                                         <input type="text" id="notes-{{ extra.id }}" placeholder="{{ 'app.notes_optional'|trans }}" class="extras-notes-input">
