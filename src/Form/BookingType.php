@@ -6,6 +6,7 @@ use App\Entity\Booking;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
@@ -23,7 +24,10 @@ class BookingType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('guestName', TextType::class, ['label' => 'Nome do hóspede'])
+            ->add('guestName', TextType::class, [
+                'label' => 'Quem reservou (acesso)',
+                'help' => 'Pessoa que reservou e recebe o código do concierge. Pode não ser quem faz a terapia.',
+            ])
             ->add('guestWhatsapp', TextType::class, [
                 'label' => 'WhatsApp do hóspede',
                 'required' => false,
@@ -41,7 +45,26 @@ class BookingType extends AbstractType
             ])
             ->add('checkIn', DateType::class, ['label' => 'Check-in', 'widget' => 'single_text'])
             ->add('checkOut', DateType::class, ['label' => 'Check-out', 'widget' => 'single_text'])
-            ->add('guests', IntegerType::class, ['label' => 'Hóspedes'])
+            ->add('guests', IntegerType::class, [
+                'label' => 'N.º de hóspedes',
+                'help' => 'Total na estadia, incluindo quem reservou e hóspedes extra.',
+            ])
+            ->add('extraGuestNames', CollectionType::class, [
+                'label' => 'Hóspedes extra',
+                'entry_type' => TextType::class,
+                'entry_options' => [
+                    'label' => false,
+                    'required' => false,
+                    'attr' => ['placeholder' => 'Nome do hóspede extra'],
+                ],
+                'allow_add' => true,
+                'allow_delete' => true,
+                'delete_empty' => true,
+                'required' => false,
+                'by_reference' => false,
+                'empty_data' => [],
+                'help' => 'Pessoas na estadia além de quem reservou. Não precisam ser as mesmas da terapia.',
+            ])
             ->add('stayPrice', NumberType::class, [
                 'label' => 'Valor da estadia (R$)',
                 'required' => false,
@@ -109,12 +132,13 @@ class BookingType extends AbstractType
                 'row_attr' => ['data-booking-form-target' => 'rajaaramField'],
             ])
             ->add('rajaaramGuest1Name', TextType::class, [
-                'label' => 'Nome do hóspede 1',
+                'label' => 'Nome na terapia',
                 'required' => false,
-                'row_attr' => ['data-booking-form-target' => 'rajaaramField rajaaramDuoField'],
+                'help' => 'Quem recebe esta sessão. Pode ser diferente de quem reservou.',
+                'row_attr' => ['data-booking-form-target' => 'rajaaramField'],
             ])
             ->add('rajaaramGuest2Name', TextType::class, [
-                'label' => 'Nome do hóspede 2',
+                'label' => 'Nome na terapia 2',
                 'required' => false,
                 'row_attr' => ['data-booking-form-target' => 'rajaaramField rajaaramDuoField'],
             ])
@@ -171,10 +195,6 @@ class BookingType extends AbstractType
             if (null === $booking->getRajaaramIsDuo()) {
                 $booking->setRajaaramIsDuo(false);
             }
-
-            if ($booking->isRajaaramDuo() && !$booking->getRajaaramGuest1Name()) {
-                $booking->setRajaaramGuest1Name($booking->getGuestName());
-            }
         });
 
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event): void {
@@ -194,6 +214,9 @@ class BookingType extends AbstractType
             if (isset($data['guestWhatsapp']) && \is_string($data['guestWhatsapp'])) {
                 $data['guestWhatsapp'] = trim($data['guestWhatsapp']) ?: null;
             }
+            if (!isset($data['extraGuestNames']) || !\is_array($data['extraGuestNames'])) {
+                $data['extraGuestNames'] = [];
+            }
             if (($data['source'] ?? null) !== Booking::SOURCE_RAJAARAM) {
                 $data['rajaaramTherapy'] = null;
                 $data['rajaaramTherapyDate'] = null;
@@ -206,7 +229,6 @@ class BookingType extends AbstractType
                 $data['rajaaramTherapy2Time'] = null;
                 $data['rajaaramBreakfastIncluded'] = null;
             } elseif (empty($data['rajaaramIsDuo'])) {
-                $data['rajaaramGuest1Name'] = null;
                 $data['rajaaramGuest2Name'] = null;
                 $data['rajaaramTherapy2'] = null;
                 $data['rajaaramTherapy2Date'] = null;
@@ -223,26 +245,16 @@ class BookingType extends AbstractType
 
             if (!$booking->isRajaaram()) {
                 $booking->clearRajaaramDetails();
-
-                return;
-            }
-
-            if (!$booking->isRajaaramDuo()) {
-                $booking->setRajaaramGuest1Name(null);
+            } elseif (!$booking->isRajaaramDuo()) {
                 $booking->setRajaaramGuest2Name(null);
                 $booking->setRajaaramTherapy2(null);
                 $booking->setRajaaramTherapy2Date(null);
                 $booking->setRajaaramTherapy2Time(null);
-
-                return;
             }
 
-            if ($booking->getRajaaramGuest1Name()) {
-                $booking->setGuestName($booking->getRajaaramGuest1Name());
-            }
-
-            if ($booking->getGuests() < 2) {
-                $booking->setGuests(2);
+            $minGuests = 1 + \count($booking->getExtraGuestNames());
+            if ($booking->getGuests() < $minGuests) {
+                $booking->setGuests($minGuests);
             }
         });
     }

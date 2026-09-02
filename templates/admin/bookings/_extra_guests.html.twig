@@ -1,0 +1,28 @@
+{% set extraGuestPrototype %}
+<div class="extra-guest-row">
+    <div class="form-group extra-guest-field">{{ form_widget(form.extraGuestNames.vars.prototype) }}</div>
+    <button type="button" class="btn btn-outline btn-sm extra-guest-remove" data-action="booking-form#removeExtraGuest">Remover</button>
+</div>
+{% endset %}
+<div class="form-group extra-guest-group">
+    <span class="extra-guest-label">Hóspedes extra</span>
+    <p class="help-text">Pessoas na estadia além de quem reservou. Não precisam ser as mesmas da terapia.</p>
+    <div
+        class="extra-guest-list"
+        data-booking-form-target="extraGuestList"
+        data-index="{{ form.extraGuestNames|length }}"
+        data-prototype="{{ extraGuestPrototype|e('html_attr') }}"
+    >
+        {% for guestField in form.extraGuestNames %}
+            <div class="extra-guest-row">
+                <div class="form-group extra-guest-field">
+                    {{ form_widget(guestField) }}
+                    {{ form_errors(guestField) }}
+                </div>
+                <button type="button" class="btn btn-outline btn-sm extra-guest-remove" data-action="booking-form#removeExtraGuest">Remover</button>
+            </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-outline btn-sm extra-guest-add" data-action="booking-form#addExtraGuest">+ Hóspede extra</button>
+    {% do form.extraGuestNames.setRendered %}
+</div>

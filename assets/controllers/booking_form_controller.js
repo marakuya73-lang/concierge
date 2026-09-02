@@ -6,10 +6,9 @@ export default class extends Controller {
         'rajaaramField',
         'rajaaramSection',
         'rajaaramDuoSection',
-        'rajaaramGuest1NameRow',
         'rajaaramDuoField',
         'rajaaramGuest1Label',
-        'guestNameTopRow',
+        'extraGuestList',
     ];
 
     static values = {
@@ -49,25 +48,33 @@ export default class extends Controller {
             this.rajaaramDuoSectionTarget.hidden = !isDuo;
         }
 
-        if (this.hasRajaaramGuest1NameRowTarget) {
-            this.rajaaramGuest1NameRowTarget.hidden = !isDuo;
-        }
-
         this.rajaaramDuoFieldTargets.forEach((field) => {
-            if (field === this.rajaaramGuest1NameRowTarget) {
-                return;
-            }
-
             field.hidden = !isDuo;
         });
 
         if (this.hasRajaaramGuest1LabelTarget) {
-            this.rajaaramGuest1LabelTarget.textContent = isDuo ? 'Hóspede 1' : 'Terapia';
+            this.rajaaramGuest1LabelTarget.textContent = isDuo ? 'Terapia 1' : 'Terapia';
+        }
+    }
+
+    addExtraGuest() {
+        if (!this.hasExtraGuestListTarget) {
+            return;
         }
 
-        if (this.hasGuestNameTopRowTarget) {
-            this.guestNameTopRowTarget.hidden = isDuo;
+        const list = this.extraGuestListTarget;
+        const prototype = list.dataset.prototype;
+        if (!prototype) {
+            return;
         }
+
+        const index = list.dataset.index || String(list.querySelectorAll('.extra-guest-row').length);
+        list.insertAdjacentHTML('beforeend', prototype.replace(/__name__/g, index));
+        list.dataset.index = String(Number(index) + 1);
+    }
+
+    removeExtraGuest(event) {
+        event.currentTarget.closest('.extra-guest-row')?.remove();
     }
 
     isDuoSelected() {

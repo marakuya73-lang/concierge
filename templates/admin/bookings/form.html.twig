@@ -14,7 +14,7 @@
             'data-action': 'change->booking-form#sync',
             'data-booking-form-rajaaram-value': constant('App\\Entity\\Booking::SOURCE_RAJAARAM'),
         }}) }}
-            <div class="form-row-2" data-booking-form-target="guestNameTopRow">
+            <div class="form-row-2">
                 {{ form_row(form.guestName) }}
                 {{ form_row(form.guestWhatsapp) }}
             </div>
@@ -26,6 +26,7 @@
                 {{ form_row(form.guests) }}
                 {{ form_row(form.stayPrice) }}
             </div>
+            {% include 'admin/bookings/_extra_guests.html.twig' %}
             <div class="form-row-2">
                 {{ form_row(form.guestLocale) }}
             </div>

@@ -431,6 +431,22 @@ button, input, select, textarea { font: inherit; }
     color: #f5f0e8;
     word-break: break-word;
 }
+.stay-card-name:has(+ .stay-card-party) { margin-bottom: .55rem; }
+.stay-card-party { margin: 0 0 1.15rem; }
+.stay-card-party-label {
+    margin: 0 0 .2rem;
+    font-size: .65rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #e0aa55;
+}
+.stay-card-party-names {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.35;
+    color: #f5f0e8;
+}
 .stay-card-dates {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -880,64 +896,78 @@ button, input, select, textarea { font: inherit; }
     color: rgba(245, 240, 232, 0.78);
 }
 .rajaaram-session {
-    padding: 1.1rem 1.15rem;
-    border-radius: calc(var(--radius) + 6px);
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: 0 10px 28px rgba(26, 58, 46, 0.05);
+    padding: 1.2rem 1.15rem 1.3rem;
+    border-radius: calc(var(--radius) + 10px);
+    background:
+        linear-gradient(180deg, rgba(250, 246, 239, 0.98), rgba(245, 240, 232, 0.92));
+    border: 1px solid rgba(200, 134, 42, 0.18);
+    box-shadow: 0 14px 36px rgba(26, 58, 46, 0.06);
 }
 .rajaaram-session-label {
-    margin: 0 0 .85rem;
+    margin: 0 0 1rem;
     font-size: .65rem;
-    letter-spacing: .2em;
-    text-transform: uppercase;
-    color: var(--muted-foreground);
-    font-weight: 600;
-}
-.rajaaram-session-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .75rem;
-}
-.rajaaram-session-grid--duo {
-    margin-bottom: .85rem;
-    padding-bottom: .85rem;
-    border-bottom: 1px solid var(--border);
-}
-.rajaaram-session-grid--duo:last-of-type {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: 0;
-}
-.rajaaram-session-duo-label {
-    grid-column: 1 / -1;
-    margin: 0;
-    font-size: .72rem;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--muted-foreground);
-    font-weight: 600;
-}
-.rajaaram-session-item {
-    display: grid;
-    gap: .25rem;
-    padding: .85rem .9rem;
-    border-radius: calc(var(--radius) + 2px);
-    background: rgba(26, 58, 46, 0.04);
-    border: 1px solid rgba(26, 58, 46, 0.06);
-}
-.rajaaram-session-item--wide { grid-column: 1 / -1; }
-.rajaaram-session-key {
-    font-size: .62rem;
-    letter-spacing: .14em;
+    letter-spacing: .22em;
     text-transform: uppercase;
     color: var(--accent);
     font-weight: 600;
 }
-.rajaaram-session-value {
-    font-size: 1rem;
-    line-height: 1.35;
+.rajaaram-journey-card {
+    padding: 1.1rem 1.15rem 1.2rem;
+    border-radius: calc(var(--radius) + 8px);
+    background: rgba(255, 252, 247, 0.9);
+    border: 1px solid rgba(200, 134, 42, 0.16);
+    box-shadow: 0 8px 22px rgba(26, 58, 46, 0.04);
+}
+.rajaaram-journey-card + .rajaaram-journey-card {
+    margin-top: .85rem;
+}
+.rajaaram-journey-kicker {
+    margin: 0 0 .35rem;
+    font-size: .62rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+}
+.rajaaram-journey-name {
+    margin: 0 0 .85rem;
+    font-size: 1.55rem;
+    font-weight: 500;
+    line-height: 1.15;
     color: var(--foreground);
+}
+.rajaaram-journey-ceremony-label {
+    margin: 0 0 .2rem;
+    font-size: .62rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    font-weight: 600;
+}
+.rajaaram-journey-ceremony {
+    margin: 0 0 .7rem;
+    font-size: 1.12rem;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--foreground);
+}
+.rajaaram-journey-when {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+    font-size: .92rem;
+    color: var(--muted-foreground);
+}
+.rajaaram-journey-dot {
+    color: var(--accent);
+}
+.rajaaram-journey-breakfast {
+    margin: 1rem 0 0;
+    font-size: .88rem;
+    line-height: 1.5;
+    color: var(--muted-foreground);
 }
 .rajaaram-recommendations {
     padding: 1.25rem 1.15rem 1.35rem;
@@ -3163,14 +3193,14 @@ th {
     display: block; font-size: .72rem; font-weight: 600;
     text-transform: uppercase; letter-spacing: .07em; color: var(--muted-foreground);
 }
-.form-group input:not([type="checkbox"]):not([type="file"]),
+.form-group input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 .form-group select,
 .form-group textarea {
     width: 100%; padding: .7rem .9rem; border: 1px solid var(--border);
     border-radius: var(--radius); background: white; color: var(--foreground);
     transition: border-color .15s, box-shadow .15s;
 }
-.form-group input:not([type="checkbox"]):not([type="file"]):focus,
+.form-group input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none; border-color: var(--accent);
@@ -3186,6 +3216,59 @@ th {
 }
 .form-group--checkbox label { margin: 0; text-transform: none; letter-spacing: normal; font-size: .875rem; font-weight: 500; color: var(--foreground); }
 .form-group--checkbox input[type="checkbox"] { width: 1rem; height: 1rem; accent-color: var(--primary); }
+.extra-guest-label {
+    display: block;
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--muted-foreground);
+}
+.extra-guest-list { display: grid; gap: .65rem; }
+.extra-guest-row {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+}
+.extra-guest-field { flex: 1; min-width: 0; margin: 0; }
+.extra-guest-remove { flex-shrink: 0; }
+.extra-guest-add { margin-top: .35rem; justify-self: start; }
+.form-radios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .65rem;
+}
+.form-group .form-radio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 8rem;
+    gap: .55rem;
+    margin: 0;
+    padding: .65rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: white;
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: .875rem;
+    font-weight: 500;
+    color: var(--foreground);
+    line-height: 1.2;
+}
+.form-group .form-radio span { pointer-events: none; }
+.form-group .form-radio input[type="radio"] {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: var(--primary);
+}
+.form-group .form-radio:has(input:checked) {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200, 134, 42, 0.15);
+}
 .form-errors {
     list-style: none; margin: 0; padding: 0;
     font-size: .8rem; color: var(--destructive);

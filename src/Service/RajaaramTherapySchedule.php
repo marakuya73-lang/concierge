@@ -33,14 +33,13 @@ class RajaaramTherapySchedule
     public function buildSlots(Booking $booking): array
     {
         $slots = [];
-        $guestName = $booking->getGuestName();
 
         $first = $this->buildSlot(
             '1',
             $booking->getRajaaramTherapy(),
             $booking->getRajaaramTherapyDate(),
             $booking->getRajaaramTherapyTime(),
-            $booking->isRajaaramDuo() ? ($booking->getRajaaramGuest1Name() ?: $guestName) : $guestName,
+            $booking->getRajaaramGuest1Name(),
         );
         if (null !== $first) {
             $slots[] = $first;

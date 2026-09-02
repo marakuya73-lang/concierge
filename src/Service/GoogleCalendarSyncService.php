@@ -617,11 +617,16 @@ class GoogleCalendarSyncService
             'Categoria: '.$category,
             'Código: '.$booking->getAccessCode(),
             'Hóspedes: '.$booking->getGuests(),
+            'Quem reservou: '.$booking->getGuestName(),
             'Check-in: '.$booking->getCheckIn()->format('d/m/Y'),
             'Check-out: '.$booking->getCheckOut()->format('d/m/Y'),
             'Origem: '.$booking->getSource(),
             'Status: '.$booking->getStatus(),
         ];
+
+        if ($booking->getExtraGuestNames()) {
+            $lines[] = 'Hóspedes extra: '.implode(', ', $booking->getExtraGuestNames());
+        }
 
         if ($booking->getGuestWhatsapp()) {
             $lines[] = 'WhatsApp: '.$booking->getGuestWhatsapp();
@@ -788,7 +793,7 @@ class GoogleCalendarSyncService
 
     private function shouldUpdateGuestNameFromGoogle(Booking $booking, string $summary): bool
     {
-        if ($booking->isFromAirbnbIcalBlock()) {
+        if ($booking->isFromAirbnbIcalBlock() || $booking->hasRajaaramSession()) {
             return false;
         }
 

@@ -100,6 +100,10 @@ class Booking
     #[ORM\Column]
     private int $guests = 1;
 
+    /** @var list<string>|null */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $extraGuestNames = null;
+
     #[ORM\Column(length: 5, unique: true)]
     #[Assert\NotBlank(message: 'Informe o código de acesso.', groups: ['with_access_code'])]
     #[Assert\Length(exactly: 5, exactMessage: 'O código deve ter exactamente 5 caracteres.', groups: ['with_access_code'])]
@@ -238,6 +242,51 @@ class Booking
     public function setCheckOut(\DateTimeImmutable $v): static { $this->checkOut = $v; return $this; }
     public function getGuests(): int { return $this->guests; }
     public function setGuests(int $v): static { $this->guests = $v; return $this; }
+    /** @return list<string> */
+    public function getExtraGuestNames(): array
+    {
+        $names = [];
+        foreach ($this->extraGuestNames ?? [] as $name) {
+            if (!\is_string($name)) {
+                continue;
+            }
+
+            $name = trim($name);
+            if ('' !== $name) {
+                $names[] = $name;
+            }
+        }
+
+        return $names;
+    }
+    /** @param list<string>|null $v */
+    public function setExtraGuestNames(?array $v): static
+    {
+        $this->extraGuestNames = [] !== ($names = $this->normalizeExtraGuestNames($v)) ? $names : null;
+
+        return $this;
+    }
+    /** @param list<string>|null $names */
+    private function normalizeExtraGuestNames(?array $names): array
+    {
+        $normalized = [];
+        foreach ($names ?? [] as $name) {
+            if (!\is_string($name)) {
+                continue;
+            }
+
+            $name = trim($name);
+            if ('' !== $name) {
+                $normalized[] = $name;
+            }
+        }
+
+        return $normalized;
+    }
+    public function getPartySize(): int
+    {
+        return max($this->guests, 1 + \count($this->getExtraGuestNames()));
+    }
     public function getAccessCode(): string { return $this->accessCode; }
     public function setAccessCode(string $v): static { $this->accessCode = strtoupper($v); return $this; }
     public function getSource(): string { return $this->source; }
@@ -360,12 +409,8 @@ class Booking
     /** @return list<array{guest: ?string, therapy: ?string, date: ?string, time: ?string}> */
     public function getRajaaramSessions(string $locale = 'pt'): array
     {
-        $guest1 = $this->isRajaaramDuo()
-            ? ($this->rajaaramGuest1Name ?: $this->guestName)
-            : null;
-
         $sessions = [[
-            'guest' => $guest1,
+            'guest' => $this->rajaaramGuest1Name,
             'therapy' => $this->getRajaaramTherapyLabel($locale),
             'date' => $this->rajaaramTherapyDate?->format('d/m/Y'),
             'time' => $this->rajaaramTherapyTime,

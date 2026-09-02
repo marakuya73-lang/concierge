@@ -1,16 +1,14 @@
 <section class="admin-rajaaram-section" data-booking-form-target="rajaaramSection"{% if form.source.vars.data != constant('App\\Entity\\Booking::SOURCE_RAJAARAM') %} hidden{% endif %}>
     <div class="admin-section-header" style="margin-top:1.5rem">
         <h3 class="admin-section-title">Jornada Rajaaram</h3>
-        <p class="admin-section-desc">Terapia e café da manhã incluídos na estadia.</p>
+        <p class="admin-section-desc">Terapia e café da manhã incluídos na estadia. Quem faz a terapia pode ser diferente de quem reservou.</p>
     </div>
 
     {{ form_row(form.rajaaramIsDuo) }}
 
     <div class="admin-rajaaram-therapy-block" data-booking-form-target="rajaaramGuest1Block">
         <p class="admin-subsection-label" data-booking-form-target="rajaaramGuest1Label">Terapia</p>
-        <div data-booking-form-target="rajaaramGuest1NameRow rajaaramDuoField"{% if not form.rajaaramIsDuo.vars.data %} hidden{% endif %}>
-            {{ form_row(form.rajaaramGuest1Name) }}
-        </div>
+        {{ form_row(form.rajaaramGuest1Name) }}
         <div class="form-row-2">
             {{ form_row(form.rajaaramTherapy) }}
             {{ form_row(form.rajaaramTherapyDate) }}
@@ -19,7 +17,7 @@
     </div>
 
     <div class="admin-rajaaram-therapy-block admin-rajaaram-duo-block" data-booking-form-target="rajaaramDuoSection"{% if not form.rajaaramIsDuo.vars.data %} hidden{% endif %}>
-        <p class="admin-subsection-label">Hóspede 2</p>
+        <p class="admin-subsection-label">Terapia 2</p>
         {{ form_row(form.rajaaramGuest2Name) }}
         <div class="form-row-2">
             {{ form_row(form.rajaaramTherapy2) }}

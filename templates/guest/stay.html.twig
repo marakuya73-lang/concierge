@@ -86,6 +86,12 @@
             <div class="stay-card">
                 <p class="stay-card-label">{{ 'app.your_stay'|trans }}</p>
                 <h2 class="stay-card-name font-serif">{{ stay.guestName }}</h2>
+                {% if stay.extraGuestNames is defined and stay.extraGuestNames|length %}
+                    <div class="stay-card-party">
+                        <p class="stay-card-party-label">{{ 'app.extra_guests'|trans }}</p>
+                        <p class="stay-card-party-names font-serif">{{ stay.extraGuestNames|join(' · ') }}</p>
+                    </div>
+                {% endif %}
                 <div class="stay-card-dates">
                     <div class="stay-card-date-col">
                         <p class="stay-card-date-label">{{ 'app.checkin_label'|trans }}</p>
