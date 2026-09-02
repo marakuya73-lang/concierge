@@ -101,6 +101,22 @@ export default class extends Controller {
         }
 
         document.dispatchEvent(new CustomEvent('stay:section', { detail: { section } }));
+        this.scrollPageToTop();
+    }
+
+    scrollPageToTop() {
+        const jump = () => {
+            const html = document.documentElement;
+            const previous = html.style.scrollBehavior;
+            html.style.scrollBehavior = 'auto';
+            window.scrollTo(0, 0);
+            html.scrollTop = 0;
+            document.body.scrollTop = 0;
+            html.style.scrollBehavior = previous;
+        };
+
+        jump();
+        requestAnimationFrame(jump);
     }
 
     goHome() {
@@ -514,6 +530,8 @@ export default class extends Controller {
         if (this.hasExtraConfirmTarget) {
             this.extraConfirmTarget.hidden = false;
         }
+
+        this.scrollPageToTop();
     }
 
     dismissExtraConfirm() {
@@ -523,6 +541,8 @@ export default class extends Controller {
         if (this.hasExtrasContentTarget) {
             this.extrasContentTarget.hidden = false;
         }
+
+        this.scrollPageToTop();
     }
 
     updateLocationTransferCard(data) {
