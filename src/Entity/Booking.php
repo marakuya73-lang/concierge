@@ -54,6 +54,7 @@ class Booking
     public const RAJAARAM_THERAPY_RESET_CEREMONY = 'reset_ceremony';
     public const RAJAARAM_THERAPY_DEEP_DIVE = 'deep_dive';
     public const RAJAARAM_THERAPY_CHAKRA_ALIGNMENT_EXPRESS = 'chakra_alignment_express';
+    public const RAJAARAM_THERAPY_COMPLETE_CHAKRA = 'complete_chakra';
 
     /** @return array<string, string> */
     public static function rajaaramTherapyChoices(): array
@@ -63,6 +64,7 @@ class Booking
             'Cerimônia Reset (3h)' => self::RAJAARAM_THERAPY_RESET_CEREMONY,
             'Mergulho Profundo (3h)' => self::RAJAARAM_THERAPY_DEEP_DIVE,
             'Alinhamento dos Chakras Express (5h)' => self::RAJAARAM_THERAPY_CHAKRA_ALIGNMENT_EXPRESS,
+            'Chakras Completos (4h)' => self::RAJAARAM_THERAPY_COMPLETE_CHAKRA,
         ];
     }
 
@@ -74,6 +76,7 @@ class Booking
             self::RAJAARAM_THERAPY_RESET_CEREMONY => 'Reset Ceremony (3h)',
             self::RAJAARAM_THERAPY_DEEP_DIVE => 'Deep Dive (3h)',
             self::RAJAARAM_THERAPY_CHAKRA_ALIGNMENT_EXPRESS => 'Chakra Alignment Express (5h)',
+            self::RAJAARAM_THERAPY_COMPLETE_CHAKRA => 'Complete Chakras (4h)',
         ];
     }
 
@@ -150,8 +153,14 @@ class Booking
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $rajaaramGuest1Name = null;
 
+    #[ORM\Column(length: 30, nullable: true)]
+    private ?string $rajaaramGuest1Whatsapp = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $rajaaramGuest2Name = null;
+
+    #[ORM\Column(length: 30, nullable: true)]
+    private ?string $rajaaramGuest2Whatsapp = null;
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $rajaaramTherapy2 = null;
@@ -211,6 +220,10 @@ class Booking
     /** @var list<array<string, string>>|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $googleCalendarTherapyConflicts = null;
+
+    /** @var list<string>|null */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $rajaaramDismissedTherapyEventIds = null;
 
     /** @var Collection<int, BookingExtra> */
     #[ORM\OneToMany(targetEntity: BookingExtra::class, mappedBy: 'booking', cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -315,8 +328,24 @@ class Booking
     public function setRajaaramIsDuo(?bool $v): static { $this->rajaaramIsDuo = $v; return $this; }
     public function getRajaaramGuest1Name(): ?string { return $this->rajaaramGuest1Name; }
     public function setRajaaramGuest1Name(?string $v): static { $this->rajaaramGuest1Name = $v; return $this; }
+    public function getRajaaramGuest1Whatsapp(): ?string { return $this->rajaaramGuest1Whatsapp; }
+    public function setRajaaramGuest1Whatsapp(?string $v): static
+    {
+        $trimmed = null !== $v ? trim($v) : '';
+        $this->rajaaramGuest1Whatsapp = '' !== $trimmed ? $trimmed : null;
+
+        return $this;
+    }
     public function getRajaaramGuest2Name(): ?string { return $this->rajaaramGuest2Name; }
     public function setRajaaramGuest2Name(?string $v): static { $this->rajaaramGuest2Name = $v; return $this; }
+    public function getRajaaramGuest2Whatsapp(): ?string { return $this->rajaaramGuest2Whatsapp; }
+    public function setRajaaramGuest2Whatsapp(?string $v): static
+    {
+        $trimmed = null !== $v ? trim($v) : '';
+        $this->rajaaramGuest2Whatsapp = '' !== $trimmed ? $trimmed : null;
+
+        return $this;
+    }
     public function getRajaaramTherapy2(): ?string { return $this->rajaaramTherapy2; }
     public function setRajaaramTherapy2(?string $v): static { $this->rajaaramTherapy2 = $v; return $this; }
     public function getRajaaramTherapy2Date(): ?\DateTimeImmutable { return $this->rajaaramTherapy2Date; }
@@ -355,10 +384,50 @@ class Booking
     public function getGoogleCalendarTherapyEventIds(): ?array { return $this->googleCalendarTherapyEventIds; }
     /** @param array<string, string>|null $v */
     public function setGoogleCalendarTherapyEventIds(?array $v): static { $this->googleCalendarTherapyEventIds = $v; return $this; }
-    /** @return list<array<string, string>>|null */
+    /** @return list<array<string, mixed>>|null */
     public function getGoogleCalendarTherapyConflicts(): ?array { return $this->googleCalendarTherapyConflicts; }
-    /** @param list<array<string, string>>|null $v */
+    /** @param list<array<string, mixed>>|null $v */
     public function setGoogleCalendarTherapyConflicts(?array $v): static { $this->googleCalendarTherapyConflicts = $v; return $this; }
+
+    /** @return list<array<string, mixed>> */
+    public function rajaaramCalendarConflictsOf(string $kind): array
+    {
+        $matched = [];
+        foreach ($this->googleCalendarTherapyConflicts ?? [] as $conflict) {
+            if (($conflict['kind'] ?? 'busy') === $kind) {
+                $matched[] = $conflict;
+            }
+        }
+
+        return $matched;
+    }
+
+    /** @return list<string> */
+    public function getRajaaramDismissedTherapyEventIds(): array
+    {
+        $ids = [];
+        foreach ($this->rajaaramDismissedTherapyEventIds ?? [] as $id) {
+            if (\is_string($id) && '' !== $id) {
+                $ids[] = $id;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+    /** @param list<string>|null $v */
+    public function setRajaaramDismissedTherapyEventIds(?array $v): static
+    {
+        $ids = [];
+        foreach ($v ?? [] as $id) {
+            if (\is_string($id) && '' !== $id) {
+                $ids[] = $id;
+            }
+        }
+
+        $this->rajaaramDismissedTherapyEventIds = [] !== $ids ? array_values(array_unique($ids)) : null;
+
+        return $this;
+    }
 
     public function isRajaaram(): bool
     {
@@ -372,7 +441,9 @@ class Booking
             || null !== $this->rajaaramTherapyDate
             || null !== $this->rajaaramTherapyTime
             || null !== $this->rajaaramGuest1Name
+            || null !== $this->rajaaramGuest1Whatsapp
             || null !== $this->rajaaramGuest2Name
+            || null !== $this->rajaaramGuest2Whatsapp
             || null !== $this->rajaaramTherapy2
             || null !== $this->rajaaramTherapy2Date
             || null !== $this->rajaaramTherapy2Time;
@@ -407,11 +478,13 @@ class Booking
         return $therapy;
     }
 
-    /** @return list<array{guest: ?string, therapy: ?string, date: ?string, time: ?string}> */
+    /** @return list<array{guest: ?string, whatsapp: ?string, whatsappUrl: ?string, therapy: ?string, date: ?string, time: ?string}> */
     public function getRajaaramSessions(string $locale = 'pt'): array
     {
         $sessions = [[
             'guest' => $this->rajaaramGuest1Name,
+            'whatsapp' => $this->rajaaramGuest1Whatsapp,
+            'whatsappUrl' => $this->whatsappUrlFor($this->rajaaramGuest1Whatsapp),
             'therapy' => $this->getRajaaramTherapyLabel($locale),
             'date' => $this->rajaaramTherapyDate?->format('d/m/Y'),
             'time' => $this->rajaaramTherapyTime,
@@ -420,6 +493,8 @@ class Booking
         if ($this->isRajaaramDuo()) {
             $sessions[] = [
                 'guest' => $this->rajaaramGuest2Name,
+                'whatsapp' => $this->rajaaramGuest2Whatsapp,
+                'whatsappUrl' => $this->whatsappUrlFor($this->rajaaramGuest2Whatsapp),
                 'therapy' => $this->getRajaaramTherapy2Label($locale),
                 'date' => $this->rajaaramTherapy2Date?->format('d/m/Y'),
                 'time' => $this->rajaaramTherapy2Time,
@@ -436,7 +511,9 @@ class Booking
         $this->rajaaramTherapyTime = null;
         $this->rajaaramIsDuo = null;
         $this->rajaaramGuest1Name = null;
+        $this->rajaaramGuest1Whatsapp = null;
         $this->rajaaramGuest2Name = null;
+        $this->rajaaramGuest2Whatsapp = null;
         $this->rajaaramTherapy2 = null;
         $this->rajaaramTherapy2Date = null;
         $this->rajaaramTherapy2Time = null;
@@ -447,18 +524,28 @@ class Booking
 
     public function getGuestWhatsappDigits(): ?string
     {
-        if (!$this->guestWhatsapp) {
-            return null;
-        }
-
-        $digits = preg_replace('/\D+/', '', $this->guestWhatsapp) ?? '';
-
-        return '' !== $digits ? $digits : null;
+        return $this->whatsappDigits($this->guestWhatsapp);
     }
 
     public function getGuestWhatsappUrl(): ?string
     {
-        $digits = $this->getGuestWhatsappDigits();
+        return $this->whatsappUrlFor($this->guestWhatsapp);
+    }
+
+    private function whatsappDigits(?string $number): ?string
+    {
+        if (!$number) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $number) ?? '';
+
+        return '' !== $digits ? $digits : null;
+    }
+
+    private function whatsappUrlFor(?string $number): ?string
+    {
+        $digits = $this->whatsappDigits($number);
 
         return $digits ? 'https://wa.me/'.$digits : null;
     }

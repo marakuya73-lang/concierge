@@ -15,6 +15,12 @@ class GoogleCalendarSyncService
     private const DESCRIPTION_MARKER = "\n\n---\nDomo (auto-sync)\n";
     private const TZ = 'America/Sao_Paulo';
 
+    private const THERAPY_WRITE_PULL = 'pull';
+
+    private const THERAPY_WRITE_ASK = 'ask';
+
+    private const THERAPY_WRITE_PUSH = 'push';
+
     public function __construct(
         private GoogleCalendarApiClient $apiClient,
         private PropertyRepository $propertyRepository,
@@ -35,6 +41,64 @@ class GoogleCalendarSyncService
     public function isTherapyCalendarConfigured(): bool
     {
         return $this->apiClient->isConfigured() && '' !== $this->resolveRajaaramCalendarId();
+    }
+
+    /**
+     * @return list<Event>
+     */
+    public function listRajaaramEventsBetween(\DateTimeImmutable $from, \DateTimeImmutable $to): array
+    {
+        if (!$this->isTherapyCalendarConfigured()) {
+            return [];
+        }
+
+        return $this->apiClient->listEventsBetween($this->resolveRajaaramCalendarId(), $from, $to);
+    }
+
+    public function attachBookingToTherapyEvent(Booking $booking, string $eventId, string $sessionKey): bool
+    {
+        if (!$this->isTherapyCalendarConfigured() || '' === trim($eventId)) {
+            return false;
+        }
+
+        $calendarId = $this->resolveRajaaramCalendarId();
+
+        try {
+            $existing = $this->apiClient->getEvent($calendarId, $eventId);
+        } catch (\Throwable $exception) {
+            $this->logger->warning('Could not load Rajaaram therapy event {id}: {message}', [
+                'id' => $eventId,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        $private = $existing->getExtendedProperties()?->getPrivate() ?? [];
+        $private = array_merge($private, $this->therapyPrivateProperties($booking, $sessionKey));
+
+        $payload = new Event();
+        $payload->setExtendedProperties(new EventExtendedProperties(['private' => $private]));
+
+        try {
+            $this->apiClient->patchEvent($calendarId, $eventId, $payload);
+        } catch (\Throwable $exception) {
+            $this->logger->warning('Could not attach booking {booking} to Rajaaram event {id}: {message}', [
+                'booking' => $booking->getId(),
+                'id' => $eventId,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /** @return array{0: ?\DateTimeImmutable, 1: ?\DateTimeImmutable} */
+    public function eventRange(Event $event): array
+    {
+        return $this->parseEventRange($event);
     }
 
     /** @return array<string, int|string|null> */
@@ -59,18 +123,38 @@ class GoogleCalendarSyncService
         return $pulled + $pushed + $therapies + ['syncedAt' => $syncedAt->format(\DateTimeInterface::ATOM)];
     }
 
-    public function pushBooking(Booking $booking): bool
+    public function pushBooking(Booking $booking, bool $forceTherapy = false): bool
     {
-        if (!$this->isConfigured()) {
+        if (!$this->isConfigured() && !$this->isTherapyCalendarConfigured()) {
             return false;
         }
 
         $syncedAt = new \DateTimeImmutable();
-        $domoChanged = $this->upsertStayEvent($this->resolveDomoCalendarId(), $booking, $syncedAt);
-        $therapyChanged = $this->syncBookingTherapies($booking, $syncedAt);
+        $domoChanged = false;
+        if ($this->isConfigured()) {
+            $domoChanged = $this->upsertStayEvent($this->resolveDomoCalendarId(), $booking, $syncedAt);
+        }
+
+        $therapyChanged = $this->syncBookingTherapies(
+            $booking,
+            $syncedAt,
+            $forceTherapy ? self::THERAPY_WRITE_PUSH : self::THERAPY_WRITE_ASK,
+        );
         $this->bookingRepository->getEntityManager()->flush();
 
         return $domoChanged || $therapyChanged['changed'];
+    }
+
+    public function pullTherapiesFromRajaaram(Booking $booking): bool
+    {
+        if (!$this->isTherapyCalendarConfigured()) {
+            return false;
+        }
+
+        $result = $this->syncBookingTherapies($booking, new \DateTimeImmutable(), self::THERAPY_WRITE_PULL);
+        $this->bookingRepository->getEntityManager()->flush();
+
+        return $result['changed'];
     }
 
     public function cancelBookingEvent(Booking $booking): bool
@@ -177,7 +261,7 @@ class GoogleCalendarSyncService
 
         foreach ($this->bookingRepository->findForGoogleCalendarSync() as $booking) {
             $beforeIds = $booking->getGoogleCalendarTherapyEventIds() ?? [];
-            $result = $this->syncBookingTherapies($booking, $syncedAt);
+            $result = $this->syncBookingTherapies($booking, $syncedAt, self::THERAPY_WRITE_PULL);
 
             if ($result['changed']) {
                 ++$therapyPushed;
@@ -196,8 +280,15 @@ class GoogleCalendarSyncService
         return compact('therapyPushed', 'therapyCreated', 'therapyConflicts');
     }
 
-    /** @return array{changed: bool} */
-    private function syncBookingTherapies(Booking $booking, \DateTimeImmutable $syncedAt): array
+    /**
+     * Rajaaram calendar is the source of truth.
+     * pull = copy calendar → booking, never rewrite events
+     * ask  = keep existing events, record drift instead of overwriting
+     * push = admin confirmed writing this booking onto Rajaaram
+     *
+     * @return array{changed: bool}
+     */
+    private function syncBookingTherapies(Booking $booking, \DateTimeImmutable $syncedAt, string $mode = self::THERAPY_WRITE_ASK): array
     {
         if (!$this->isTherapyCalendarConfigured()) {
             return ['changed' => false];
@@ -216,36 +307,83 @@ class GoogleCalendarSyncService
 
         foreach ($desiredSlots as $slot) {
             $sessionKey = $slot['key'];
-            $conflict = $this->findForeignTherapyConflict($calendarId, $booking, $slot, $storedIds[$sessionKey] ?? null);
+            $existing = $this->fetchTherapyEvent($calendarId, $storedIds[$sessionKey] ?? null);
 
-            if (null !== $conflict) {
-                $conflicts[] = [
-                    'session' => $sessionKey,
-                    'therapy' => $slot['therapyLabel'],
-                    'date' => $slot['start']->format('d/m/Y'),
-                    'time' => $slot['start']->format('H:i'),
-                    'message' => sprintf(
-                        'Horário %s %s ocupado no calendário Rajaaram (%s). Actualize a terapia na reserva.',
-                        $slot['start']->format('d/m/Y'),
-                        $slot['start']->format('H:i'),
-                        $conflict,
-                    ),
-                ];
-                if (isset($storedIds[$sessionKey])) {
-                    $nextIds[$sessionKey] = $storedIds[$sessionKey];
+            if ($existing && 'cancelled' !== $existing->getStatus()) {
+                $snapshot = $this->therapySnapshotFromEvent($existing);
+
+                if (self::THERAPY_WRITE_PULL === $mode) {
+                    if ($this->applySnapshotToBooking($booking, $sessionKey, $snapshot)) {
+                        $changed = true;
+                    }
+                    $this->attachPrivatePropsIfNeeded($booking, $existing, $sessionKey);
+                    $nextIds[$sessionKey] = (string) $existing->getId();
+                    continue;
                 }
+
+                if (self::THERAPY_WRITE_ASK === $mode) {
+                    if (!$this->slotMatchesSnapshot($slot, $snapshot)) {
+                        $conflicts[] = $this->driftConflict($sessionKey, $slot, $snapshot);
+                    } else {
+                        $this->attachPrivatePropsIfNeeded($booking, $existing, $sessionKey);
+                    }
+                    $nextIds[$sessionKey] = (string) $existing->getId();
+                    continue;
+                }
+
+                $nextIds[$sessionKey] = $this->upsertTherapyEvent(
+                    $calendarId,
+                    $booking,
+                    $slot,
+                    (string) $existing->getId(),
+                    $syncedAt,
+                );
+                $changed = true;
                 continue;
             }
 
-            $eventId = $storedIds[$sessionKey] ?? null;
-            $nextIds[$sessionKey] = $this->upsertTherapyEvent($calendarId, $booking, $slot, $eventId, $syncedAt);
+            if (self::THERAPY_WRITE_PULL === $mode) {
+                continue;
+            }
+
+            $conflict = self::THERAPY_WRITE_PUSH === $mode
+                ? null
+                : $this->findForeignTherapyConflict($calendarId, $booking, $slot, null);
+
+            if (null !== $conflict) {
+                $conflicts[] = $this->busyConflict($sessionKey, $slot, $conflict);
+                continue;
+            }
+
+            $nextIds[$sessionKey] = $this->upsertTherapyEvent($calendarId, $booking, $slot, null, $syncedAt);
             $changed = true;
         }
 
         foreach ($storedIds as $sessionKey => $eventId) {
-            if (isset($nextIds[$sessionKey]) || !isset($eventId) || '' === $eventId) {
+            if (isset($nextIds[$sessionKey]) || !\is_string($eventId) || '' === $eventId) {
                 continue;
             }
+
+            $existing = $this->fetchTherapyEvent($calendarId, $eventId);
+            if (!$existing || 'cancelled' === $existing->getStatus()) {
+                $changed = true;
+                continue;
+            }
+
+            if (self::THERAPY_WRITE_PULL === $mode) {
+                if ($this->applySnapshotToBooking($booking, (string) $sessionKey, $this->therapySnapshotFromEvent($existing))) {
+                    $changed = true;
+                }
+                $nextIds[(string) $sessionKey] = (string) $existing->getId();
+                continue;
+            }
+
+            if (self::THERAPY_WRITE_ASK === $mode && $this->isRajaaramAuthored($existing)) {
+                $conflicts[] = $this->leftoverDriftConflict((string) $sessionKey, $this->therapySnapshotFromEvent($existing));
+                $nextIds[(string) $sessionKey] = (string) $existing->getId();
+                continue;
+            }
+
             if ($this->cancelTherapyEvent($calendarId, $eventId)) {
                 $changed = true;
             }
@@ -254,7 +392,7 @@ class GoogleCalendarSyncService
         $booking->setGoogleCalendarTherapyEventIds([] !== $nextIds ? $nextIds : null);
         $booking->setGoogleCalendarTherapyConflicts([] !== $conflicts ? $conflicts : null);
 
-        return ['changed' => $changed];
+        return ['changed' => $changed || [] !== $conflicts];
     }
 
     /**
@@ -356,6 +494,10 @@ class GoogleCalendarSyncService
         $changed = false;
 
         foreach ($booking->getGoogleCalendarTherapyEventIds() ?? [] as $eventId) {
+            $existing = $this->fetchTherapyEvent($calendarId, $eventId);
+            if ($existing && $this->isRajaaramAuthored($existing)) {
+                continue;
+            }
             if ($this->cancelTherapyEvent($calendarId, $eventId)) {
                 $changed = true;
             }
@@ -379,7 +521,7 @@ class GoogleCalendarSyncService
             return false;
         }
 
-        if (!$this->isDomoManagedTherapyEvent($existing)) {
+        if (!$this->isDomoManagedTherapyEvent($existing) || $this->isRajaaramAuthored($existing)) {
             return false;
         }
 
@@ -566,13 +708,7 @@ class GoogleCalendarSyncService
             'timeZone' => self::TZ,
         ]));
         $event->setExtendedProperties(new EventExtendedProperties([
-            'private' => [
-                'domoBookingId' => (string) $booking->getId(),
-                'domoTherapySession' => $slot['key'],
-                'domoManaged' => 'therapy',
-                'domoAccessCode' => $booking->getAccessCode(),
-                'domoLastSync' => $syncedAt->format(\DateTimeInterface::ATOM),
-            ],
+            'private' => $this->therapyPrivateProperties($booking, $slot['key'], $syncedAt, $slot),
         ]));
 
         return $event;
@@ -664,10 +800,59 @@ class GoogleCalendarSyncService
             'Domo booking #'.$booking->getId(),
             'Código: '.$booking->getAccessCode(),
             'Terapia: '.$slot['therapyLabel'],
-            'Hóspede: '.($slot['guest'] ?: $booking->getGuestName()),
+            'Hóspede: '.($slot['guest'] ?: $booking->getRajaaramGuest1Name() ?: $booking->getGuestName()),
             'Início: '.$slot['start']->format('d/m/Y H:i'),
             'Fim: '.$slot['end']->format('H:i'),
         ]);
+    }
+
+    /**
+     * Private Google Calendar keys written on Rajaaram therapy events.
+     * Rajaaram should keep the same names if it wants Domo to recognize a linked session.
+     *
+     * @param array{
+     *     key?: string,
+     *     therapyCode?: string,
+     *     guest?: ?string
+     * }|null $slot
+     *
+     * @return array<string, string>
+     */
+    private function therapyPrivateProperties(
+        Booking $booking,
+        string $sessionKey,
+        ?\DateTimeImmutable $syncedAt = null,
+        ?array $slot = null,
+    ): array {
+        $properties = [
+            'domoBookingId' => (string) $booking->getId(),
+            'domoTherapySession' => $sessionKey,
+            'domoManaged' => 'therapy',
+            'domoAccessCode' => $booking->getAccessCode(),
+        ];
+
+        if ($syncedAt) {
+            $properties['domoLastSync'] = $syncedAt->format(\DateTimeInterface::ATOM);
+        }
+
+        if (isset($slot['therapyCode']) && '' !== (string) $slot['therapyCode']) {
+            $properties['domoTherapyCode'] = (string) $slot['therapyCode'];
+        }
+
+        $guest = trim((string) ($slot['guest'] ?? ''));
+        if ('' === $guest) {
+            $guest = trim((string) (
+                '2' === $sessionKey
+                    ? $booking->getRajaaramGuest2Name()
+                    : $booking->getRajaaramGuest1Name()
+            ));
+        }
+        if ('' !== $guest) {
+            $properties['domoTherapyGuest'] = $guest;
+            $properties['rajaaramGuestName'] = $guest;
+        }
+
+        return $properties;
     }
 
     private function mergeDescription(?string $existingDescription, string $managedDescription): string
@@ -720,6 +905,336 @@ class GoogleCalendarSyncService
         }
 
         return (int) $bookingId;
+    }
+
+    private function fetchTherapyEvent(string $calendarId, ?string $eventId): ?Event
+    {
+        if (null === $eventId || '' === trim($eventId)) {
+            return null;
+        }
+
+        try {
+            return $this->apiClient->getEvent($calendarId, $eventId);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * @return array{
+     *     therapyCode: ?string,
+     *     therapyLabel: ?string,
+     *     guest: ?string,
+     *     start: ?\DateTimeImmutable,
+     *     summary: string
+     * }
+     */
+    private function therapySnapshotFromEvent(Event $event): array
+    {
+        [$start] = $this->eventRange($event);
+        if ($start) {
+            $start = $start->setTimezone(new \DateTimeZone(self::TZ));
+        }
+
+        $properties = $event->getExtendedProperties()?->getPrivate() ?? [];
+        $guest = trim((string) ($properties['rajaaramGuestName'] ?? $properties['domoTherapyGuest'] ?? ''));
+        if ('' === $guest) {
+            $guest = RajaaramTherapySchedule::extractGuestNameFromDescription($event->getDescription()) ?? '';
+        }
+        if ('' === $guest) {
+            $guest = RajaaramTherapySchedule::extractGuestName((string) $event->getSummary()) ?? '';
+        }
+
+        $text = trim((string) $event->getSummary().' '.(string) $event->getDescription());
+        $code = trim((string) ($properties['domoTherapyCode'] ?? ''));
+        if ('' === $code) {
+            $code = (string) (RajaaramTherapySchedule::detectTherapyCode($text) ?? '');
+        }
+
+        return [
+            'therapyCode' => '' !== $code ? $code : null,
+            'therapyLabel' => '' !== $code ? (Booking::rajaaramTherapyLabelFor($code) ?? $code) : null,
+            'guest' => '' !== $guest ? $guest : null,
+            'start' => $start,
+            'summary' => trim((string) $event->getSummary()),
+        ];
+    }
+
+    /**
+     * @param array{
+     *     key: string,
+     *     therapyCode: string,
+     *     therapyLabel: string,
+     *     guest: ?string,
+     *     start: \DateTimeImmutable,
+     *     end: \DateTimeImmutable,
+     *     summary: string
+     * } $slot
+     * @param array{
+     *     therapyCode: ?string,
+     *     therapyLabel: ?string,
+     *     guest: ?string,
+     *     start: ?\DateTimeImmutable,
+     *     summary: string
+     * } $snapshot
+     */
+    private function slotMatchesSnapshot(array $slot, array $snapshot): bool
+    {
+        if (!$snapshot['start'] instanceof \DateTimeImmutable) {
+            return false;
+        }
+
+        if ($slot['start']->format('Y-m-d H:i') !== $snapshot['start']->format('Y-m-d H:i')) {
+            return false;
+        }
+
+        if (null !== $snapshot['therapyCode'] && $snapshot['therapyCode'] !== $slot['therapyCode']) {
+            return false;
+        }
+
+        return RajaaramTherapySchedule::fold(trim((string) $slot['guest']))
+            === RajaaramTherapySchedule::fold(trim((string) $snapshot['guest']));
+    }
+
+    /**
+     * @param array{
+     *     therapyCode: ?string,
+     *     therapyLabel: ?string,
+     *     guest: ?string,
+     *     start: ?\DateTimeImmutable,
+     *     summary: string
+     * } $snapshot
+     */
+    private function applySnapshotToBooking(Booking $booking, string $sessionKey, array $snapshot): bool
+    {
+        if (!$snapshot['start'] instanceof \DateTimeImmutable) {
+            return false;
+        }
+
+        $date = $snapshot['start']->setTime(0, 0);
+        $time = $snapshot['start']->format('H:i');
+        $guest = $snapshot['guest'];
+        $code = $snapshot['therapyCode'];
+        $changed = false;
+
+        if ('2' === $sessionKey) {
+            if (!$booking->isRajaaramDuo()) {
+                $booking->setRajaaramIsDuo(true);
+                $changed = true;
+            }
+            if (null !== $code && $booking->getRajaaramTherapy2() !== $code) {
+                $booking->setRajaaramTherapy2($code);
+                $changed = true;
+            }
+            if ($booking->getRajaaramTherapy2Date()?->format('Y-m-d') !== $date->format('Y-m-d')) {
+                $booking->setRajaaramTherapy2Date($date);
+                $changed = true;
+            }
+            if ($booking->getRajaaramTherapy2Time() !== $time) {
+                $booking->setRajaaramTherapy2Time($time);
+                $changed = true;
+            }
+            if (trim((string) $booking->getRajaaramGuest2Name()) !== trim((string) $guest)) {
+                $booking->setRajaaramGuest2Name($guest);
+                $changed = true;
+            }
+
+            return $changed;
+        }
+
+        if (null !== $code && $booking->getRajaaramTherapy() !== $code) {
+            $booking->setRajaaramTherapy($code);
+            $changed = true;
+        }
+        if ($booking->getRajaaramTherapyDate()?->format('Y-m-d') !== $date->format('Y-m-d')) {
+            $booking->setRajaaramTherapyDate($date);
+            $changed = true;
+        }
+        if ($booking->getRajaaramTherapyTime() !== $time) {
+            $booking->setRajaaramTherapyTime($time);
+            $changed = true;
+        }
+        if (trim((string) $booking->getRajaaramGuest1Name()) !== trim((string) $guest)) {
+            $booking->setRajaaramGuest1Name($guest);
+            $changed = true;
+        }
+
+        return $changed;
+    }
+
+    private function attachPrivatePropsIfNeeded(Booking $booking, Event $event, string $sessionKey): void
+    {
+        $properties = $event->getExtendedProperties()?->getPrivate() ?? [];
+        if (($properties['domoBookingId'] ?? '') === (string) $booking->getId()
+            && ($properties['domoTherapySession'] ?? '') === $sessionKey) {
+            return;
+        }
+
+        $this->attachBookingToTherapyEvent($booking, (string) $event->getId(), $sessionKey);
+    }
+
+    /**
+     * @param array{
+     *     key?: string,
+     *     therapyCode?: string,
+     *     therapyLabel?: string,
+     *     guest?: ?string,
+     *     start?: \DateTimeImmutable,
+     *     summary?: string
+     * } $slot
+     * @param array{
+     *     therapyCode: ?string,
+     *     therapyLabel: ?string,
+     *     guest: ?string,
+     *     start: ?\DateTimeImmutable,
+     *     summary: string
+     * } $snapshot
+     *
+     * @return array<string, mixed>
+     */
+    private function driftConflict(string $sessionKey, array $slot, array $snapshot): array
+    {
+        return [
+            'kind' => 'drift',
+            'session' => $sessionKey,
+            'therapy' => $slot['therapyLabel'] ?? '',
+            'date' => isset($slot['start']) ? $slot['start']->format('d/m/Y') : '',
+            'time' => isset($slot['start']) ? $slot['start']->format('H:i') : '',
+            'message' => sprintf(
+                'Sessão %s: o calendário Rajaaram tem «%s», a reserva tem «%s».',
+                $sessionKey,
+                $this->formatTherapySnapshot($snapshot),
+                $this->formatTherapySlot($slot),
+            ),
+            'calendarSummary' => $snapshot['summary'],
+            'calendarGuest' => $snapshot['guest'],
+            'calendarDate' => $snapshot['start']?->format('d/m/Y'),
+            'calendarTime' => $snapshot['start']?->format('H:i'),
+            'savedTherapy' => $slot['therapyLabel'] ?? null,
+            'savedGuest' => $slot['guest'] ?? null,
+            'savedDate' => isset($slot['start']) ? $slot['start']->format('d/m/Y') : null,
+            'savedTime' => isset($slot['start']) ? $slot['start']->format('H:i') : null,
+        ];
+    }
+
+    /**
+     * @param array{
+     *     therapyCode: ?string,
+     *     therapyLabel: ?string,
+     *     guest: ?string,
+     *     start: ?\DateTimeImmutable,
+     *     summary: string
+     * } $snapshot
+     *
+     * @return array<string, mixed>
+     */
+    private function leftoverDriftConflict(string $sessionKey, array $snapshot): array
+    {
+        return [
+            'kind' => 'drift',
+            'session' => $sessionKey,
+            'therapy' => $snapshot['therapyLabel'] ?? $snapshot['summary'],
+            'date' => $snapshot['start']?->format('d/m/Y'),
+            'time' => $snapshot['start']?->format('H:i'),
+            'message' => sprintf(
+                'Sessão %s continua no calendário Rajaaram (%s) e já não está nesta reserva.',
+                $sessionKey,
+                $this->formatTherapySnapshot($snapshot),
+            ),
+            'calendarSummary' => $snapshot['summary'],
+            'calendarGuest' => $snapshot['guest'],
+            'calendarDate' => $snapshot['start']?->format('d/m/Y'),
+            'calendarTime' => $snapshot['start']?->format('H:i'),
+            'savedTherapy' => null,
+            'savedGuest' => null,
+            'savedDate' => null,
+            'savedTime' => null,
+        ];
+    }
+
+    /**
+     * @param array{
+     *     key: string,
+     *     therapyCode: string,
+     *     therapyLabel: string,
+     *     guest: ?string,
+     *     start: \DateTimeImmutable,
+     *     end: \DateTimeImmutable,
+     *     summary: string
+     * } $slot
+     *
+     * @return array<string, mixed>
+     */
+    private function busyConflict(string $sessionKey, array $slot, string $busyTitle): array
+    {
+        return [
+            'kind' => 'busy',
+            'session' => $sessionKey,
+            'therapy' => $slot['therapyLabel'],
+            'date' => $slot['start']->format('d/m/Y'),
+            'time' => $slot['start']->format('H:i'),
+            'busyTitle' => $busyTitle,
+            'message' => sprintf(
+                'Este horário parece ocupado no calendário Rajaaram: %s %s (%s).',
+                $slot['start']->format('d/m/Y'),
+                $slot['start']->format('H:i'),
+                $busyTitle,
+            ),
+        ];
+    }
+
+    /**
+     * @param array{
+     *     therapyCode: ?string,
+     *     therapyLabel: ?string,
+     *     guest: ?string,
+     *     start: ?\DateTimeImmutable,
+     *     summary: string
+     * } $snapshot
+     */
+    private function formatTherapySnapshot(array $snapshot): string
+    {
+        $parts = array_filter([
+            $snapshot['summary'] ?: $snapshot['therapyLabel'],
+            $snapshot['guest'],
+            $snapshot['start']?->format('d/m/Y H:i'),
+        ], static fn (mixed $value): bool => null !== $value && '' !== $value);
+
+        return implode(' · ', $parts) ?: 'evento Rajaaram';
+    }
+
+    /**
+     * @param array{
+     *     key?: string,
+     *     therapyCode?: string,
+     *     therapyLabel?: string,
+     *     guest?: ?string,
+     *     start?: \DateTimeImmutable,
+     *     summary?: string
+     * } $slot
+     */
+    private function formatTherapySlot(array $slot): string
+    {
+        $parts = array_filter([
+            $slot['summary'] ?? $slot['therapyLabel'] ?? null,
+            $slot['guest'] ?? null,
+            isset($slot['start']) ? $slot['start']->format('d/m/Y H:i') : null,
+        ], static fn (mixed $value): bool => null !== $value && '' !== $value);
+
+        return implode(' · ', $parts) ?: 'terapia na reserva';
+    }
+
+    private function isRajaaramAuthored(Event $event): bool
+    {
+        $properties = $event->getExtendedProperties()?->getPrivate() ?? [];
+        if ('' !== trim((string) ($properties['rajaaramBookingId'] ?? ''))) {
+            return true;
+        }
+        if ('' !== trim((string) ($properties['rajaaramProductKind'] ?? ''))) {
+            return true;
+        }
+
+        return ($properties['domoManaged'] ?? '') !== 'therapy';
     }
 
     private function isOwnedTherapyEvent(Event $event, Booking $booking, string $sessionKey): bool

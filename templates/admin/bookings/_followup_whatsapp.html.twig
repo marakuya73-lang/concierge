@@ -1,0 +1,51 @@
+<section class="admin-section admin-followups" id="follow-ups" data-followups data-followup-locale="{{ followUps.defaultLocale|default('pt') }}">
+    <div class="admin-followups__head">
+        <div>
+            <h3 class="admin-section-title">Mensagens WhatsApp</h3>
+            <p class="admin-section-desc">Abre o WhatsApp com o texto pronto — nome, sessão e links já preenchidos. Troque o idioma se o cliente não falar português.</p>
+        </div>
+        <div class="admin-followups__langs" role="group" aria-label="Idioma da mensagem">
+            <button type="button" class="admin-followups__lang{% if followUps.defaultLocale|default('pt') == 'pt' %} is-active{% endif %}" data-followup-lang="pt">Português</button>
+            <button type="button" class="admin-followups__lang{% if followUps.defaultLocale|default('pt') == 'en' %} is-active{% endif %}" data-followup-lang="en">English</button>
+        </div>
+    </div>
+
+    {% for recipient in followUps.recipients %}
+        <div class="admin-followups__person">
+            <p class="admin-followups__meta">
+                <strong>{{ recipient.displayName }}</strong>
+                <span>{{ recipient.whatsappDisplay }}</span>
+                {% if recipient.experience %}
+                    <span>{{ recipient.experience }}</span>
+                {% endif %}
+                {% if recipient.sessionWhen %}
+                    <span>{{ recipient.sessionWhen }}</span>
+                {% endif %}
+                {% if recipient.hasTransfer|default(false) %}
+                    <span>Transfer combinado — sem caminho</span>
+                {% else %}
+                    <span>Sem transfer — inclui como chegar</span>
+                {% endif %}
+            </p>
+
+            {% if not recipient.hasWhatsapp %}
+                <p class="admin-followups__warn">Adicione um WhatsApp para este cliente antes de enviar.</p>
+            {% endif %}
+
+            {% for locale, messages in recipient.locales %}
+                <div class="admin-followups__grid" data-followup-panel="{{ locale }}"{% if locale != followUps.defaultLocale|default('pt') %} hidden{% endif %}>
+                    {% for message in messages %}
+                        <div class="admin-followups__item">
+                            {% if message.url %}
+                                <a class="btn btn-accent btn-sm admin-followups__send" href="{{ message.url }}" target="_blank" rel="noopener noreferrer">{{ message.label }}</a>
+                            {% else %}
+                                <span class="btn btn-outline btn-sm admin-followups__send is-disabled">{{ message.label }}</span>
+                            {% endif %}
+                            <button type="button" class="btn btn-outline btn-sm" data-copy-text="{{ message.text|e('html_attr') }}">Copiar</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</section>

@@ -33,7 +33,10 @@
             {% endif %}
             <td>{{ booking.source }}</td>
             <td><span class="status-pill status-{{ booking.status == 'confirmed' ? 'confirmed' : (booking.status == 'completed' ? 'paid' : 'cancelled') }}">{{ booking.status == 'confirmed' ? 'confirmada' : (booking.status == 'completed' ? 'concluída' : 'cancelada') }}</span></td>
-            <td><a href="{{ showUrl }}">{% if booking.needsGuestInfo %}Completar{% else %}Ver / editar{% endif %}</a></td>
+            <td>
+                <a href="{{ showUrl }}">{% if booking.needsGuestInfo %}Completar{% else %}Ver / editar{% endif %}</a>
+                <a href="{{ path('admin_booking_show', {id: booking.id}) }}#follow-ups">WhatsApp</a>
+            </td>
         </tr>
     {% else %}
         <tr><td colspan="{{ showActivity ? 8 : 7 }}" style="text-align:center;color:var(--muted-foreground);padding:1.5rem">Nenhuma reserva nesta seção.</td></tr>

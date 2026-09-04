@@ -29,14 +29,14 @@ class BookingType extends AbstractType
                 'help' => 'Pessoa que reservou e recebe o código do concierge. Pode não ser quem faz a terapia.',
             ])
             ->add('guestWhatsapp', TextType::class, [
-                'label' => 'WhatsApp do hóspede',
+                'label' => 'WhatsApp de quem reservou',
                 'required' => false,
                 'attr' => [
                     'placeholder' => '+55 (61) 99999-9999',
                     'inputmode' => 'tel',
                     'autocomplete' => 'tel',
                 ],
-                'help' => 'Com DDI. Gera link directo para conversa no WhatsApp.',
+                'help' => 'Número da reserva / Airbnb. Pode ser diferente do WhatsApp de quem faz a terapia.',
             ])
             ->add('guestLocale', ChoiceType::class, [
                 'label' => 'Idioma do hóspede',
@@ -137,9 +137,30 @@ class BookingType extends AbstractType
                 'help' => 'Quem recebe esta sessão. Pode ser diferente de quem reservou.',
                 'row_attr' => ['data-booking-form-target' => 'rajaaramField'],
             ])
+            ->add('rajaaramGuest1Whatsapp', TextType::class, [
+                'label' => 'WhatsApp na terapia',
+                'required' => false,
+                'attr' => [
+                    'placeholder' => '+55 (61) 99999-9999',
+                    'inputmode' => 'tel',
+                    'autocomplete' => 'tel',
+                ],
+                'help' => 'Número de quem faz a sessão. Pode ser diferente do WhatsApp de quem reservou.',
+                'row_attr' => ['data-booking-form-target' => 'rajaaramField'],
+            ])
             ->add('rajaaramGuest2Name', TextType::class, [
                 'label' => 'Nome na terapia 2',
                 'required' => false,
+                'row_attr' => ['data-booking-form-target' => 'rajaaramField rajaaramDuoField'],
+            ])
+            ->add('rajaaramGuest2Whatsapp', TextType::class, [
+                'label' => 'WhatsApp na terapia 2',
+                'required' => false,
+                'attr' => [
+                    'placeholder' => '+55 (61) 99999-9999',
+                    'inputmode' => 'tel',
+                    'autocomplete' => 'tel',
+                ],
                 'row_attr' => ['data-booking-form-target' => 'rajaaramField rajaaramDuoField'],
             ])
             ->add('rajaaramTherapy2', ChoiceType::class, [
@@ -239,6 +260,12 @@ class BookingType extends AbstractType
             if (isset($data['guestWhatsapp']) && \is_string($data['guestWhatsapp'])) {
                 $data['guestWhatsapp'] = trim($data['guestWhatsapp']) ?: null;
             }
+            if (isset($data['rajaaramGuest1Whatsapp']) && \is_string($data['rajaaramGuest1Whatsapp'])) {
+                $data['rajaaramGuest1Whatsapp'] = trim($data['rajaaramGuest1Whatsapp']) ?: null;
+            }
+            if (isset($data['rajaaramGuest2Whatsapp']) && \is_string($data['rajaaramGuest2Whatsapp'])) {
+                $data['rajaaramGuest2Whatsapp'] = trim($data['rajaaramGuest2Whatsapp']) ?: null;
+            }
             if (!isset($data['extraGuestNames']) || !\is_array($data['extraGuestNames'])) {
                 $data['extraGuestNames'] = [];
             }
@@ -251,7 +278,9 @@ class BookingType extends AbstractType
                 $data['rajaaramTherapyTime'] = null;
                 $data['rajaaramIsDuo'] = null;
                 $data['rajaaramGuest1Name'] = null;
+                $data['rajaaramGuest1Whatsapp'] = null;
                 $data['rajaaramGuest2Name'] = null;
+                $data['rajaaramGuest2Whatsapp'] = null;
                 $data['rajaaramTherapy2'] = null;
                 $data['rajaaramTherapy2Date'] = null;
                 $data['rajaaramTherapy2Time'] = null;
@@ -259,6 +288,7 @@ class BookingType extends AbstractType
             } else {
                 if (!$isDuo) {
                     $data['rajaaramGuest2Name'] = null;
+                    $data['rajaaramGuest2Whatsapp'] = null;
                     $data['rajaaramTherapy2'] = null;
                     $data['rajaaramTherapy2Date'] = null;
                     $data['rajaaramTherapy2Time'] = null;
@@ -288,6 +318,7 @@ class BookingType extends AbstractType
                 $booking->clearRajaaramDetails();
             } elseif (!$booking->isRajaaramDuo()) {
                 $booking->setRajaaramGuest2Name(null);
+                $booking->setRajaaramGuest2Whatsapp(null);
                 $booking->setRajaaramTherapy2(null);
                 $booking->setRajaaramTherapy2Date(null);
                 $booking->setRajaaramTherapy2Time(null);

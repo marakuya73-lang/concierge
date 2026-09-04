@@ -13,16 +13,33 @@ class BookingCalendarSyncDispatcher
     ) {
     }
 
-    public function afterBookingSaved(Booking $booking): void
+    public function afterBookingSaved(Booking $booking, bool $forceTherapy = false): void
     {
-        if (!$this->googleCalendarSyncService->isConfigured()) {
+        if (!$this->googleCalendarSyncService->isConfigured()
+            && !$this->googleCalendarSyncService->isTherapyCalendarConfigured()) {
             return;
         }
 
         try {
-            $this->googleCalendarSyncService->pushBooking($booking);
+            $this->googleCalendarSyncService->pushBooking($booking, $forceTherapy);
         } catch (\Throwable $exception) {
             $this->logger->error('Google Calendar push failed for booking {id}: {message}', [
+                'id' => $booking->getId(),
+                'message' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    public function pullTherapiesFromRajaaram(Booking $booking): void
+    {
+        if (!$this->googleCalendarSyncService->isTherapyCalendarConfigured()) {
+            return;
+        }
+
+        try {
+            $this->googleCalendarSyncService->pullTherapiesFromRajaaram($booking);
+        } catch (\Throwable $exception) {
+            $this->logger->error('Rajaaram calendar pull failed for booking {id}: {message}', [
                 'id' => $booking->getId(),
                 'message' => $exception->getMessage(),
             ]);

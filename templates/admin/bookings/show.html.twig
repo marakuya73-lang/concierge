@@ -19,6 +19,7 @@
             {% if not isEditing %}
                 <a href="{{ path('admin_booking_show', {id: booking.id, edit: 1}) }}" class="btn btn-outline btn-sm">Editar</a>
             {% endif %}
+            <a href="#follow-ups" class="btn btn-accent btn-sm">WhatsApp follow-up</a>
             <button type="button" class="btn btn-accent btn-sm" data-copy-target="#guest-welcome-message">Copiar mensagem</button>
             <form method="post" action="{{ path('admin_booking_regenerate_code', {id: booking.id}) }}">
                 {{ csrf.csrf() }}
@@ -34,6 +35,114 @@
     {% if booking.needsGuestInfo %}
         <div class="admin-notice">
             Reserva Site importada do calendário Airbnb. Preencha o nome e o valor da estadia, o código <strong>{{ booking.accessCode }}</strong> já pode ser enviado ao hóspede.
+        </div>
+    {% endif %}
+
+    {% set rajaaramBusy = booking.rajaaramCalendarConflictsOf('busy') %}
+    {% set rajaaramDrift = booking.rajaaramCalendarConflictsOf('drift') %}
+
+    {% if rajaaramDrift|length > 0 %}
+        <div class="admin-notice">
+            <p class="admin-notice-title">O calendário Rajaaram é a fonte de verdade</p>
+            <p>
+                A reserva tem conteúdo diferente do calendário Rajaaram.
+                O calendário não foi alterado. Actualize a reserva com o que está lá, ou confirme que quer escrever esta alteração no calendário Rajaaram.
+            </p>
+            <ul class="admin-notice-compare">
+                {% for conflict in rajaaramDrift %}
+                    <li>
+                        <p>{{ conflict.message }}</p>
+                        <p>
+                            <strong>Calendário:</strong>
+                            {{ conflict.calendarSummary|default('—') }}
+                            {% if conflict.calendarGuest %} · {{ conflict.calendarGuest }}{% endif %}
+                            {% if conflict.calendarDate %} · {{ conflict.calendarDate }} {{ conflict.calendarTime }}{% endif %}
+                        </p>
+                        <p>
+                            <strong>Reserva:</strong>
+                            {% if conflict.savedTherapy or conflict.savedGuest or conflict.savedDate %}
+                                {{ conflict.savedTherapy|default('Terapia') }}
+                                {% if conflict.savedGuest %} · {{ conflict.savedGuest }}{% endif %}
+                                {% if conflict.savedDate %} · {{ conflict.savedDate }} {{ conflict.savedTime }}{% endif %}
+                            {% else %}
+                                sessão removida desta reserva
+                            {% endif %}
+                        </p>
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="admin-notice-actions">
+                <form method="post" action="{{ path('admin_booking_pull_rajaaram_calendar', {id: booking.id}) }}">
+                    {{ csrf.csrf() }}
+                    <button type="submit" class="btn btn-primary btn-sm">Usar o calendário Rajaaram</button>
+                </form>
+                <form method="post" action="{{ path('admin_booking_force_rajaaram_calendar', {id: booking.id}) }}">
+                    {{ csrf.csrf() }}
+                    <button type="submit" class="btn btn-outline btn-sm">Actualizar o calendário Rajaaram</button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if rajaaramBusy|length > 0 %}
+        <div class="admin-notice admin-notice--error">
+            <p class="admin-notice-title">Horário ocupado no calendário Rajaaram</p>
+            {% for conflict in rajaaramBusy %}
+                <p>{{ conflict.message }}</p>
+            {% endfor %}
+            <p>
+                A terapia ficou na reserva e o hóspede já a vê no concierge.
+                O evento no calendário Rajaaram não foi criado. Criar mesmo assim?
+            </p>
+            <div class="admin-notice-actions">
+                <form method="post" action="{{ path('admin_booking_force_rajaaram_calendar', {id: booking.id}) }}">
+                    {{ csrf.csrf() }}
+                    <button type="submit" class="btn btn-primary btn-sm">Criar no calendário Rajaaram</button>
+                </form>
+                {% if not isEditing %}
+                    <a href="{{ path('admin_booking_show', {id: booking.id, edit: 1}) }}" class="btn btn-outline btn-sm">Escolher outro horário</a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if rajaaramSuggestions|default([])|length > 0 %}
+        <div class="admin-notice">
+            <p class="admin-notice-title">Terapia no calendário Rajaaram</p>
+            <p>
+                Encontrámos {{ rajaaramSuggestions|length == 1 ? 'uma sessão' : rajaaramSuggestions|length ~ ' sessões' }}
+                durante esta estadia. Se adicionar, a reserva passa a origem Rajaaram e o hóspede vê a jornada no concierge.
+            </p>
+            <form method="post" action="{{ path('admin_booking_apply_rajaaram_suggestion', {id: booking.id}) }}" class="admin-suggestion-form">
+                {{ csrf.csrf() }}
+                <ul class="admin-suggestion-list">
+                    {% for suggestion in rajaaramSuggestions %}
+                        <li>
+                            <label class="admin-suggestion-item">
+                                <input type="checkbox" name="eventIds[]" value="{{ suggestion.eventId }}" checked>
+                                <span>
+                                    <strong>{{ suggestion.therapyLabel }}</strong>
+                                    · {{ suggestion.date }} {{ suggestion.time }}
+                                    {% if suggestion.guest %} · {{ suggestion.guest }}{% endif %}
+                                    {% if suggestion.nameMatch %}
+                                        <em class="admin-suggestion-match">coincide com o nome da reserva</em>
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="admin-notice-actions">
+                    <button type="submit" class="btn btn-primary btn-sm">Adicionar à reserva</button>
+                    <button type="submit" class="btn btn-outline btn-sm" form="rajaaram-suggestion-dismiss">Ignorar</button>
+                </div>
+            </form>
+            <form id="rajaaram-suggestion-dismiss" method="post" action="{{ path('admin_booking_dismiss_rajaaram_suggestion', {id: booking.id}) }}">
+                {{ csrf.csrf() }}
+                {% for suggestion in rajaaramSuggestions %}
+                    <input type="hidden" name="eventIds[]" value="{{ suggestion.eventId }}">
+                {% endfor %}
+            </form>
         </div>
     {% endif %}
 
@@ -119,7 +228,9 @@
                     <div class="admin-detail-row">
                         <span>WhatsApp</span>
                         <strong>
-                            {% if booking.guestWhatsapp %}
+                            {% if booking.guestWhatsappUrl %}
+                                <a href="{{ booking.guestWhatsappUrl }}" target="_blank" rel="noopener noreferrer">{{ booking.guestWhatsapp }}</a>
+                            {% elseif booking.guestWhatsapp %}
                                 {{ booking.guestWhatsapp }}
                             {% else %}
                                 -
@@ -210,6 +321,18 @@
                                         <strong>{{ session.guest }}</strong>
                                     </div>
                                 {% endif %}
+                                {% if session.whatsapp %}
+                                    <div class="admin-detail-row">
+                                        <span>WhatsApp da terapia</span>
+                                        <strong>
+                                            {% if session.whatsappUrl %}
+                                                <a href="{{ session.whatsappUrl }}" target="_blank" rel="noopener noreferrer">{{ session.whatsapp }}</a>
+                                            {% else %}
+                                                {{ session.whatsapp }}
+                                            {% endif %}
+                                        </strong>
+                                    </div>
+                                {% endif %}
                                 {% if session.therapy %}
                                     <div class="admin-detail-row">
                                         <span>Terapia</span>
@@ -263,15 +386,18 @@
                             <strong>{{ booking.googleCalendarSyncedAt|date('d/m/Y H:i') }}</strong>
                         </div>
                     {% endif %}
-                    {% if booking.googleCalendarTherapyConflicts|length > 0 %}
+                    {% if rajaaramBusy|length > 0 or rajaaramDrift|length > 0 %}
                         <div class="admin-detail-row admin-detail-row--stack">
                             <span>Terapias · calendário Rajaaram</span>
-                            <div class="admin-notice admin-notice--error" style="margin-top:.5rem">
-                                {% for conflict in booking.googleCalendarTherapyConflicts %}
-                                    <p style="margin:0 0 .35rem">{{ conflict.message }}</p>
-                                {% endfor %}
-                                <p style="margin:.5rem 0 0;font-size:.9rem">Edite a reserva para escolher outro horário. Eventos existentes no calendário Rajaaram nunca são alterados automaticamente.</p>
-                            </div>
+                            <strong>
+                                {% if rajaaramDrift|length > 0 and rajaaramBusy|length > 0 %}
+                                    Conteúdo diferente e horário ocupado — use os avisos acima.
+                                {% elseif rajaaramDrift|length > 0 %}
+                                    Conteúdo diferente do calendário — use o aviso acima para escolher a fonte.
+                                {% else %}
+                                    Horário ocupado — use o aviso acima para criar o evento ou escolher outro horário.
+                                {% endif %}
+                            </strong>
                         </div>
                     {% endif %}
                     {% if booking.icalSummary %}
@@ -293,6 +419,10 @@
 
     {% if isEditing %}
         {{ form_end(form) }}
+    {% endif %}
+
+    {% if followUps is defined %}
+        {% include 'admin/bookings/_followup_whatsapp.html.twig' with { followUps: followUps } %}
     {% endif %}
 
     <section class="admin-section admin-section--activity">
@@ -454,9 +584,10 @@
 <textarea id="guest-welcome-message" hidden>{{ guestWelcomeMessage }}</textarea>
 
 <script>
-document.querySelectorAll('[data-copy-code], [data-copy-target]').forEach((btn) => {
+document.querySelectorAll('[data-copy-code], [data-copy-target], [data-copy-text]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-        const text = btn.dataset.copyCode
+        const text = btn.dataset.copyText
+            ?? btn.dataset.copyCode
             ?? document.querySelector(btn.dataset.copyTarget)?.value;
         if (!text) return;
 
@@ -466,6 +597,22 @@ document.querySelectorAll('[data-copy-code], [data-copy-target]').forEach((btn) 
             btn.textContent = 'Copiado!';
             setTimeout(() => { btn.textContent = original; }, 2000);
         } catch (_) {}
+    });
+});
+
+document.querySelectorAll('[data-followups]').forEach((root) => {
+    const buttons = root.querySelectorAll('[data-followup-lang]');
+    const setLocale = (locale) => {
+        root.dataset.followupLocale = locale;
+        buttons.forEach((btn) => {
+            btn.classList.toggle('is-active', btn.getAttribute('data-followup-lang') === locale);
+        });
+        root.querySelectorAll('[data-followup-panel]').forEach((panel) => {
+            panel.hidden = panel.getAttribute('data-followup-panel') !== locale;
+        });
+    };
+    buttons.forEach((btn) => {
+        btn.addEventListener('click', () => setLocale(btn.getAttribute('data-followup-lang') || 'pt'));
     });
 });
 </script>

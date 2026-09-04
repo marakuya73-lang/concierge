@@ -18,6 +18,8 @@ use App\Service\AccessCodeGenerator;
 use App\Service\BookingCalendarSyncDispatcher;
 use App\Service\BookingLifecycleService;
 use App\Service\BookingWhatsAppService;
+use App\Service\FollowUpWhatsAppService;
+use App\Service\RajaaramCalendarSuggestionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,9 +37,11 @@ class BookingController extends AbstractAdminController
         private AccessCodeGenerator $accessCodeGenerator,
         private BookingLifecycleService $bookingLifecycleService,
         private BookingWhatsAppService $bookingWhatsAppService,
+        private FollowUpWhatsAppService $followUpWhatsAppService,
         private BookingCalendarSyncDispatcher $bookingCalendarSyncDispatcher,
         private PropertyRepository $propertyRepository,
         private EntityManagerInterface $em,
+        private RajaaramCalendarSuggestionService $rajaaramCalendarSuggestionService,
     ) {
     }
 
@@ -71,8 +75,7 @@ class BookingController extends AbstractAdminController
             $this->em->persist($booking);
             $this->em->flush();
             $this->bookingCalendarSyncDispatcher->afterBookingSaved($booking);
-
-            $this->addFlash('success', 'Reserva criada. Código de acesso: '.$booking->getAccessCode());
+            $this->flashAfterBookingSaved($booking, 'Reserva criada. Código de acesso: '.$booking->getAccessCode());
 
             return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
         }
@@ -95,7 +98,7 @@ class BookingController extends AbstractAdminController
             $this->bookingLifecycleService->refreshStatus($booking);
             $this->em->flush();
             $this->bookingCalendarSyncDispatcher->afterBookingSaved($booking);
-            $this->addFlash('success', 'Reserva atualizada.');
+            $this->flashAfterBookingSaved($booking, 'Reserva atualizada.');
 
             return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
         }
@@ -112,9 +115,80 @@ class BookingController extends AbstractAdminController
             'availableExtras' => $this->extraRepository->findActive(),
             'disabledExtraIds' => $this->bookingDisabledExtraRepository->findDisabledExtraIds($booking),
             'guestWelcomeMessage' => $this->bookingWhatsAppService->buildWelcomeMessage($booking),
+            'followUps' => $this->followUpWhatsAppService->panelForBooking($booking),
             'activityLogs' => $this->guestActivityLogRepository->findByBooking($booking),
             'property' => $this->propertyRepository->getOrCreate(),
+            'rajaaramSuggestions' => $this->rajaaramCalendarSuggestionService->suggestionsFor($booking),
         ]);
+    }
+
+    #[Route('/{id}/rajaaram-calendar-force', name: 'admin_booking_force_rajaaram_calendar', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function forceRajaaramCalendar(Booking $booking, Request $request): Response
+    {
+        $this->validateAdminCsrf($request);
+        $this->bookingCalendarSyncDispatcher->afterBookingSaved($booking, true);
+
+        if ($booking->rajaaramCalendarConflictsOf('busy')) {
+            $this->addFlash('error', 'O horário continua ocupado ou o calendário Rajaaram não aceitou o evento.');
+        } elseif ($booking->rajaaramCalendarConflictsOf('drift')) {
+            $this->addFlash('error', 'Ainda há diferenças com o calendário Rajaaram.');
+        } else {
+            $this->addFlash('success', 'O calendário Rajaaram foi actualizado com esta reserva.');
+        }
+
+        return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+    }
+
+    #[Route('/{id}/rajaaram-calendar-pull', name: 'admin_booking_pull_rajaaram_calendar', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function pullRajaaramCalendar(Booking $booking, Request $request): Response
+    {
+        $this->validateAdminCsrf($request);
+        $this->bookingCalendarSyncDispatcher->pullTherapiesFromRajaaram($booking);
+        $this->addFlash('success', 'A reserva foi actualizada com o que está no calendário Rajaaram.');
+
+        return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+    }
+
+    #[Route('/{id}/rajaaram-suggestion', name: 'admin_booking_apply_rajaaram_suggestion', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function applyRajaaramSuggestion(Booking $booking, Request $request): Response
+    {
+        $this->validateAdminCsrf($request);
+
+        $eventIds = $request->request->all('eventIds');
+        $eventIds = \is_array($eventIds) ? array_values(array_map('strval', $eventIds)) : [];
+        $applied = $this->rajaaramCalendarSuggestionService->apply($booking, $eventIds);
+
+        if (0 === $applied) {
+            $this->addFlash('error', 'Seleccione pelo menos uma terapia do calendário Rajaaram.');
+
+            return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+        }
+
+        $this->em->flush();
+        $this->bookingCalendarSyncDispatcher->afterBookingSaved($booking);
+        $this->flashAfterBookingSaved($booking, $applied > 1
+            ? 'Reserva passou a Rajaaram e as terapias foram adicionadas. O hóspede já as vê no concierge.'
+            : 'Reserva passou a Rajaaram e a terapia foi adicionada. O hóspede já a vê no concierge.');
+
+        return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+    }
+
+    #[Route('/{id}/rajaaram-suggestion/dismiss', name: 'admin_booking_dismiss_rajaaram_suggestion', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function dismissRajaaramSuggestion(Booking $booking, Request $request): Response
+    {
+        $this->validateAdminCsrf($request);
+
+        $eventIds = $request->request->all('eventIds');
+        $eventIds = \is_array($eventIds) ? array_values(array_map('strval', $eventIds)) : [];
+        if ([] === $eventIds) {
+            $eventIds = array_column($this->rajaaramCalendarSuggestionService->suggestionsFor($booking), 'eventId');
+        }
+
+        $this->rajaaramCalendarSuggestionService->dismiss($booking, $eventIds);
+        $this->em->flush();
+        $this->addFlash('success', 'Sugestão de terapia ignorada para esta reserva.');
+
+        return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
     }
 
     #[Route('/{id}/regenerate-code', name: 'admin_booking_regenerate_code', methods: ['POST'], requirements: ['id' => '\d+'])]
@@ -316,6 +390,21 @@ class BookingController extends AbstractAdminController
         $this->addFlash('success', 'Extra personalizado adicionado: '.$be->getDisplayName().'.');
 
         return $this->redirectToRoute('admin_booking_show', ['id' => $booking->getId()]);
+    }
+
+    private function flashAfterBookingSaved(Booking $booking, string $successMessage): void
+    {
+        if ($booking->rajaaramCalendarConflictsOf('busy')) {
+            $this->addFlash('error', 'Este horário parece ocupado no calendário Rajaaram. A reserva foi guardada. Pode escolher outro horário ou criar o evento mesmo assim.');
+        }
+
+        if ($booking->rajaaramCalendarConflictsOf('drift')) {
+            $this->addFlash('error', 'A reserva foi guardada. O calendário Rajaaram tem conteúdo diferente — use o aviso para actualizar a reserva ou o calendário.');
+        }
+
+        if (!$booking->getGoogleCalendarTherapyConflicts()) {
+            $this->addFlash('success', $successMessage);
+        }
     }
 
     private function lockDatesIfManuallyChanged(Booking $booking): void
